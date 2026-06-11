@@ -639,9 +639,31 @@
     </div>
   </footer>
 
+  <!-- Digital twin chat -->
+  <button class="chat-launch" id="chatLaunch" aria-haspopup="dialog" aria-controls="chatPanel" aria-expanded="false">Ask Sofina</button>
+
+  <section class="chat-panel" id="chatPanel" role="dialog" aria-label="Chat with Sofina Johari's digital twin" hidden>
+    <header class="chat-panel__header">
+      <div>
+        <p class="chat-panel__title">Sofina Johari</p>
+        <p class="chat-panel__status">Digital twin</p>
+      </div>
+      <button class="chat-panel__close" id="chatClose">Close</button>
+    </header>
+    <div class="chat-panel__messages" id="chatMessages" aria-live="polite">
+      <div class="chat-msg chat-msg--assistant">Hello — I'm Sofina's digital twin. Ask me anything about financial planning, my services, or how we'd work together.</div>
+    </div>
+    <form class="chat-panel__form" id="chatForm">
+      <input type="text" id="chatInput" aria-label="Your message" placeholder="Ask about financial planning" autocomplete="off" />
+      <button type="submit" id="chatSend" class="chat-panel__send">Send</button>
+    </form>
+    <p class="chat-panel__note">AI-generated for general education — not personalised financial advice.</p>
+  </section>
+
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
   <script src="main.js"></script>
+  <script src="chat.js"></script>
 </body>
 </html>

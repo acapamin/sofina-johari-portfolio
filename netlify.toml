@@ -2,6 +2,15 @@
   command = "echo 'Static site - no build needed'"
   publish = "."
 
+[functions]
+  directory = "netlify/functions"
+
+# Function route must precede the SPA catch-all
+[[redirects]]
+  from = "/api/chat"
+  to = "/.netlify/functions/chat"
+  status = 200
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
