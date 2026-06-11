@@ -665,8 +665,9 @@ ul { list-style: none; }
   gap: clamp(3rem, 6vw, 5rem);
   align-items: center;
 }
-/* ebook animated visual — premium leather book */
+/* ebook animated visual — gilded horizon edition */
 .ebook__book-wrap {
+  position: relative;
   display: flex;
   align-items: stretch;
   filter: drop-shadow(0 40px 70px rgba(0,0,0,0.55)) drop-shadow(0 8px 20px rgba(0,0,0,0.4));
@@ -704,16 +705,18 @@ ul { list-style: none; }
 /* main cover face */
 .ebook__visual {
   position: relative;
-  width: 216px;
-  height: 310px;
-  background: linear-gradient(145deg, #0f2d22 0%, #0b1f1a 40%, #112a1f 70%, #0d2119 100%);
+  width: clamp(208px, 56vw, 232px);
+  aspect-ratio: 232 / 332;
+  background:
+    radial-gradient(120% 60% at 50% 78%, rgba(201,161,74,0.12) 0%, transparent 55%),
+    linear-gradient(165deg, #11302a 0%, #0b1f1a 45%, #0a1c16 100%);
   border-radius: 0 14px 14px 0;
   border: 1px solid rgba(201,161,74,0.3);
   border-left: none;
   overflow: hidden;
   flex-shrink: 0;
 }
-/* leather grain texture */
+/* paper grain texture */
 .ebook__vis-grain {
   position: absolute;
   inset: 0;
@@ -722,239 +725,208 @@ ul { list-style: none; }
     repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(255,255,255,0.015) 3px, rgba(255,255,255,0.015) 6px);
   pointer-events: none;
 }
-/* ambient top-right glow */
+/* ambient glow behind the horizon motif */
 .ebook__vis-glow {
   position: absolute;
-  top: -50px; right: -50px;
-  width: 180px; height: 180px;
+  top: 16%; left: 50%;
+  width: 200px; height: 200px;
+  transform: translateX(-50%);
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(201,161,74,0.2) 0%, transparent 70%);
-  animation: ebookGlowPulse 3.8s ease-in-out infinite;
+  background: radial-gradient(circle, rgba(201,161,74,0.18) 0%, transparent 65%);
+  animation: ebookGlowPulse 4.5s ease-in-out infinite;
   pointer-events: none;
 }
 @keyframes ebookGlowPulse {
-  0%, 100% { opacity: 0.55; transform: scale(1); }
-  50%       { opacity: 1;    transform: scale(1.15); }
+  0%, 100% { opacity: 0.5; transform: translateX(-50%) scale(1); }
+  50%       { opacity: 1;   transform: translateX(-50%) scale(1.12); }
 }
-/* floating gold particles */
-.ebook__vis-particles {
+/* fine inset gold frame */
+.ebook__vis-frame {
   position: absolute;
-  inset: 0;
+  inset: 9px;
+  border: 1px solid rgba(201,161,74,0.28);
+  border-radius: 0 8px 8px 0;
   pointer-events: none;
 }
-.ebook__vis-particles span {
+.ebook__vis-frame::after {
+  content: "";
   position: absolute;
-  bottom: -6px;
-  left: var(--x);
-  width: calc(2.5px * var(--s));
-  height: calc(2.5px * var(--s));
-  border-radius: 50%;
-  background: var(--gold);
-  opacity: 0;
-  animation: ebookParticle 5s ease-in-out var(--d) infinite;
-}
-@keyframes ebookParticle {
-  0%   { opacity: 0;   transform: translateY(0)      scale(0.4); }
-  20%  { opacity: 0.65; }
-  80%  { opacity: 0.25; }
-  100% { opacity: 0;   transform: translateY(-280px) scale(1); }
+  inset: 3px;
+  border: 1px solid rgba(201,161,74,0.1);
+  border-radius: 0 6px 6px 0;
 }
 
-/* SJ heraldic crest — top-left overlay */
-.ebook__vis-crest {
+/* rotating FREE EBOOK badge — overlapping top-right corner */
+.ebook__vis-badge {
   position: absolute;
-  top: 12px;
-  left: 10px;
-  width: 54px;
-  height: 60px;
-  pointer-events: none;
+  top: -20px;
+  right: -20px;
+  width: 78px;
+  height: 78px;
+  z-index: 3;
+  filter: drop-shadow(0 6px 16px rgba(0,0,0,0.5));
 }
-.ebook__vis-crest svg { width: 100%; height: 100%; }
-
-/* FREE wax seal — top-right overlay */
-.ebook__vis-seal {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 60px;
-  height: 74px;
-  pointer-events: none;
-  animation: sealBob 4.5s ease-in-out 1s infinite;
+.ebook__vis-badge svg { width: 100%; height: 100%; overflow: visible; }
+.ebook__badge-spin {
+  transform-origin: 50px 50px;
+  animation: badgeSpin 16s linear infinite;
 }
-@keyframes sealBob {
-  0%, 100% { transform: rotate(-2deg) scale(1); }
-  50%       { transform: rotate(2deg)  scale(1.04); }
+@keyframes badgeSpin { to { transform: rotate(360deg); } }
+.ebook__badge-text {
+  font-family: var(--font-body);
+  font-size: 9.2px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  fill: var(--gold-soft);
 }
-.ebook__vis-seal svg { width: 100%; height: 100%; }
 
 /* inner layout */
 .ebook__vis-inner {
   position: absolute;
   inset: 0;
-  padding: 82px 0.9rem 0.9rem;
+  padding: 7.5% 8.5% 8%;
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
 }
 
-/* chart wrapper */
-.ebook__vis-chart-wrap {
+/* eyebrow — small caps with side rules */
+.ebook__vis-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 0.44rem;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(224,201,140,0.75);
+  white-space: nowrap;
+}
+.ebook__vis-eyebrow span {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(201,161,74,0.4));
+}
+.ebook__vis-eyebrow span:last-child {
+  background: linear-gradient(to left, transparent, rgba(201,161,74,0.4));
+}
+
+/* gilded horizon motif */
+.ebook__vis-motif {
+  margin-top: 0.85rem;
   flex-shrink: 0;
-  width: 100%;
 }
-.ebook__vis-chart-svg { width: 100%; display: block; }
+.ebook__vis-motif svg { width: 100%; display: block; }
 
-/* 4-curve chart animations */
-.evis-area {
-  fill: url(#areaGrad);
-  opacity: 0;
-  animation: fadeInArea 0.7s ease-out 2s forwards;
-}
-@keyframes fadeInArea { to { opacity: 1; } }
-
-/* subdued curves 1–3 */
-.evis-c1 {
-  stroke: rgba(201,161,74,0.18);
-  stroke-width: 0.8;
-  stroke-linecap: round;
-  fill: none;
-  stroke-dasharray: 200;
-  stroke-dashoffset: 200;
-  animation: drawLine 1.4s ease-out 1.2s forwards;
-}
-.evis-c2 {
-  stroke: rgba(201,161,74,0.28);
+.evis-horizon {
+  stroke: rgba(201,161,74,0.6);
   stroke-width: 1;
   stroke-linecap: round;
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  animation: drawLine 1.2s var(--ease-out) 0.2s forwards;
+}
+.evis-arc {
+  stroke: var(--gold);
   fill: none;
-  stroke-dasharray: 220;
-  stroke-dashoffset: 220;
-  animation: drawLine 1.5s ease-out 0.9s forwards;
-}
-.evis-c3 {
-  stroke: rgba(201,161,74,0.38);
-  stroke-width: 1.2;
   stroke-linecap: round;
-  fill: none;
-  stroke-dasharray: 240;
-  stroke-dashoffset: 240;
-  animation: drawLine 1.6s ease-out 0.6s forwards;
+  stroke-dasharray: 320;
+  stroke-dashoffset: 320;
 }
-/* main glowing gold curve */
-.evis-line {
-  stroke: #c9a14a;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  fill: none;
-  stroke-dasharray: 260;
-  stroke-dashoffset: 260;
-  animation: drawLine 1.8s cubic-bezier(0.22,1,0.36,1) 0.3s forwards;
-}
-.evis-arrow-line {
-  stroke: #c9a14a;
-  stroke-width: 1.5;
-  stroke-linecap: round;
-  opacity: 0;
-  animation: fadeInArea 0.4s ease-out 2.1s forwards;
-}
+.evis-arc--1 { stroke-width: 1.6; stroke-opacity: 0.9;  animation: drawLine 1.3s var(--ease-out) 0.5s  forwards; }
+.evis-arc--2 { stroke-width: 1.2; stroke-opacity: 0.55; animation: drawLine 1.5s var(--ease-out) 0.75s forwards; }
+.evis-arc--3 { stroke-width: 1;   stroke-opacity: 0.32; animation: drawLine 1.7s var(--ease-out) 1s    forwards; }
+.evis-arc--4 { stroke-width: 0.8; stroke-opacity: 0.16; animation: drawLine 1.9s var(--ease-out) 1.25s forwards; }
 @keyframes drawLine { to { stroke-dashoffset: 0; } }
 
-/* dots */
-.evis-dot-main {
-  fill: #c9a14a;
+.evis-sun {
   opacity: 0;
-  animation: dotPop 0.35s ease-out calc(2s + var(--i, 0) * 0.1s) forwards;
+  transform: translateY(10px);
+  animation: sunRise 1.4s var(--ease-out) 1.1s forwards;
 }
-.evis-dot-sub3 {
-  fill: rgba(201,161,74,0.55);
+@keyframes sunRise {
+  to { opacity: 1; transform: translateY(0); }
+}
+.evis-spark {
+  fill: var(--gold-soft);
   opacity: 0;
-  animation: dotPop 0.3s ease-out calc(1.9s + var(--i, 0) * 0.08s) forwards;
+  animation: sparkPop 0.5s ease-out forwards;
 }
-.evis-dot-sub2 {
-  fill: rgba(201,161,74,0.35);
-  opacity: 0;
-  animation: dotPop 0.3s ease-out calc(1.8s + var(--i, 0) * 0.07s) forwards;
-}
-.evis-dot-sub1 {
-  fill: rgba(201,161,74,0.2);
-  opacity: 0;
-  animation: dotPop 0.3s ease-out calc(1.7s + var(--i, 0) * 0.06s) forwards;
-}
-@keyframes dotPop {
-  0%   { opacity: 0; transform: scale(0); }
-  70%  { opacity: 1; transform: scale(1.3); }
-  100% { opacity: 1; transform: scale(1); }
+.evis-spark--a { animation-delay: 2.1s; }
+.evis-spark--b { animation-delay: 2.35s; }
+.evis-spark--c { animation-delay: 2.6s; }
+@keyframes sparkPop {
+  0%   { opacity: 0; transform: scale(0); transform-origin: center; transform-box: fill-box; }
+  70%  { opacity: 1; transform: scale(1.5); }
+  100% { opacity: 0.9; transform: scale(1); }
 }
 
-/* book title — large embossed text */
+/* book title — display serif with gold italic accent */
 .ebook__vis-title {
+  margin: auto 0 0;
   font-family: var(--font-display);
-  font-weight: 500;
-  font-size: 1.3rem;
-  line-height: 1.12;
-  letter-spacing: -0.01em;
-  background: linear-gradient(135deg, #f5ece0 20%, #e5d09a 55%, #f5ece0 90%);
-  background-size: 200% 100%;
+  font-weight: 450;
+  font-size: clamp(1.45rem, 6.5vw, 1.7rem);
+  line-height: 1.04;
+  letter-spacing: -0.015em;
+  color: #f2ece0;
+}
+.ebook__vis-title em {
+  font-style: italic;
+  background: linear-gradient(110deg, #e5d09a 10%, #f5e7bd 45%, #c9a14a 90%);
+  background-size: 220% 100%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  animation: shimmerTitle 4s linear 2.5s infinite;
-  margin: 0;
+  animation: shimmerTitle 5s linear 2.5s infinite;
 }
 @keyframes shimmerTitle {
-  0%   { background-position: 100% 0; }
-  100% { background-position: -100% 0; }
+  0%   { background-position: 120% 0; }
+  100% { background-position: -120% 0; }
 }
 
 /* subtitle */
 .ebook__vis-sub {
-  font-size: 0.6rem;
-  color: rgba(224,201,140,0.7);
-  line-height: 1.5;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-}
-.ebook__vis-icon {
-  font-size: 0.45rem;
-  color: rgba(201,161,74,0.8);
+  margin: 0.55rem 0 0;
+  font-size: 0.58rem;
+  letter-spacing: 0.04em;
+  line-height: 1.55;
+  color: rgba(184,196,190,0.85);
 }
 
-/* gold horizontal divider */
-.ebook__vis-sep {
-  height: 1px;
-  background: linear-gradient(to right, transparent, rgba(201,161,74,0.55), transparent);
-  margin-top: auto;
-  flex-shrink: 0;
-}
-
-/* footer: author + credential seals */
+/* footer: author + credential */
 .ebook__vis-footer {
+  margin-top: 0.65rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(201,161,74,0.3);
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
+  flex-direction: column;
+  gap: 0.12rem;
   flex-shrink: 0;
 }
 .ebook__vis-author {
-  font-size: 0.6rem;
-  color: rgba(201,161,74,0.88);
+  font-size: 0.62rem;
+  color: rgba(224,201,140,0.95);
   font-style: italic;
   font-family: var(--font-display);
   letter-spacing: 0.05em;
-  white-space: nowrap;
 }
-.ebook__vis-creds {
-  display: flex;
-  gap: 0.35rem;
-  flex-shrink: 0;
+.ebook__vis-cred {
+  font-size: 0.4rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(184,196,190,0.55);
 }
-.ebook__vis-badge-svg {
-  width: 34px;
-  height: 34px;
-  flex-shrink: 0;
+
+@media (prefers-reduced-motion: reduce) {
+  .ebook__book-wrap,
+  .ebook__vis-glow,
+  .ebook__badge-spin,
+  .ebook__vis-title em { animation: none; }
+  .evis-horizon, .evis-arc { stroke-dashoffset: 0; animation: none; }
+  .evis-sun { opacity: 1; transform: none; animation: none; }
+  .evis-spark { opacity: 0.9; animation: none; }
 }
 .ebook__eyebrow { color: var(--gold-soft); }
 .ebook__title {
