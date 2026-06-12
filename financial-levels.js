@@ -170,6 +170,7 @@
       return {
         mood: mood,
         score: clamp(Math.round((rate / 0.3) * 100), 0, 100),
+        stat: rmShort(v.income) + "/MO",
         headline: savings >= 0
           ? "You bank " + money(savings) + " a month — a " + Math.round(rate * 100) + "% savings rate."
           : "You overspend by " + money(-savings) + " every month.",
@@ -192,20 +193,20 @@
         var bs = 14;
         var bx = w / 2 - bs / 2, by = 8 + (g.reduced ? 0 : Math.round(Math.abs(Math.sin(g.t * 2)) * -2));
         qBlock(g, bx, by, bs);
-        ptext(g, rmShort(g.values.income) + "/MO", w - 4, 12, GOLD_LIGHT, "right");
 
         var rate = clamp(g.m.rate, 0, 0.6);
         var spendShare = clamp(g.m.spendShare, 0, 1.5);
-        var spendCx = w * 0.22, saveCx = w * 0.78;
+        var spendCx = w * 0.32, saveCx = w * 0.68;
 
-        // spending pipe (money down the drain)
+        // spending pipe (money down the drain); labels hug the left
+        // edge so the coin arc never crosses the text
         var pw = 18, pipeTop = groundY - 26;
         pipe(g, spendCx, pipeTop, pw, groundY, "#2e7d4f", "#1b4a2f", "#5cb87a");
-        ptext(g, "SPEND", spendCx, pipeTop - 14, TEAL);
-        ptext(g, rmShort(g.values.spend), spendCx, pipeTop - 4, TEAL);
+        ptext(g, "SPEND", 3, pipeTop - 12, TEAL, "left");
+        ptext(g, rmShort(g.values.spend), 3, pipeTop - 2, TEAL, "left");
 
-        // savings vault filling with coin rows
-        var vw = 36, vh = 28;
+        // savings vault filling with coin rows; labels hug the right edge
+        var vw = 34, vh = 28;
         var vx = Math.round(saveCx - vw / 2), vTop = groundY - vh;
         ctx.fillStyle = "#0a1a14";
         ctx.fillRect(vx, vTop, vw, vh);
@@ -216,13 +217,14 @@
         ctx.fillRect(vx, groundY - 2, vw, 2);
         ctx.fillStyle = GOLD;
         ctx.fillRect(vx - 1, vTop, 4, 2); ctx.fillRect(vx + vw - 3, vTop, 4, 2);
-        ptext(g, "SAVE", saveCx, vTop - 14, GOLD);
-        ptext(g, rmShort(g.m.savings), saveCx, vTop - 4, GOLD);
+        ptext(g, "SAVE", w - 3, vTop - 12, GOLD, "right");
+        ptext(g, rmShort(g.m.savings), w - 3, vTop - 2, GOLD, "right");
 
-        // coins spurting from the block
+        // coins spurting from the block (saved coins drop into the
+        // left half of the vault, clear of the right-edge labels)
         if (!g.reduced && g.dt) {
           if (Math.random() < Math.min(0.8, spendShare * 0.45)) spawnCoin(g, w / 2, by + bs, spendCx, pipeTop);
-          if (rate > 0.01 && Math.random() < Math.min(0.8, rate * 2)) spawnCoin(g, w / 2, by + bs, saveCx, vTop);
+          if (rate > 0.01 && Math.random() < Math.min(0.8, rate * 2)) spawnCoin(g, w / 2, by + bs, saveCx - 8, vTop);
           if (spendShare > 1 && Math.random() < 0.3) {
             g.particles.spawn({
               x: spendCx + (Math.random() - 0.5) * pw, y: pipeTop + 4,
@@ -233,7 +235,7 @@
         }
 
         brickGround(g, groundY);
-        mascot.draw(ctx, w / 2, groundY, Math.min(h * 0.22, 34), { gaze: rate >= 0.05 ? 0.5 : -0.5 });
+        mascot.draw(ctx, w / 2, groundY, Math.min(h * 0.26, 40), { gaze: rate >= 0.05 ? 0.5 : -0.5 });
       }
     }
   });
@@ -276,6 +278,7 @@
       return {
         mood: mood,
         score: clamp(Math.round(ratio * 100), 0, 100),
+        stat: "SHIELD " + clamp(Math.round(ratio * 100), 0, 120) + "%",
         headline: ratio >= 1
           ? "Fully shielded — cover is " + Math.round(ratio * 100) + "% of the " + money(need) + " safety target."
           : "Protection gap: " + money(gap) + " of a " + money(need) + " target.",
@@ -353,9 +356,8 @@
           });
         }
 
-        ptext(g, "SHIELD " + Math.round(Math.min(ratio, 1.2) * 100) + "%", w - 4, 12, GOLD_LIGHT, "right");
         brickGround(g, groundY);
-        mascot.draw(ctx, mx, groundY, Math.min(h * 0.22, 34), { gaze: 0.7 });
+        mascot.draw(ctx, mx, groundY, Math.min(h * 0.26, 40), { gaze: 0.7 });
       }
     }
   });
@@ -401,6 +403,7 @@
       return {
         mood: mood,
         score: clamp(Math.round(ratio * 100), 0, 100),
+        stat: "AGE " + v.age + "-" + v.retireAge,
         headline: "Projected pot at " + v.retireAge + ": " + money(fv) + " — "
           + Math.round(ratio * 100) + "% of your " + money(need) + " goal.",
         coach: coach,
@@ -416,10 +419,12 @@
         var ratio = clamp(g.m.ratio, 0, SCALE);
         stars(g, 14, h * 0.4);
 
-        // staircase of blocks, total height = trajectory
+        // staircase of blocks, total height = trajectory; the last
+        // step lands flush against the flagpole
         var nSteps = 8;
         var stairX0 = Math.round(w * 0.1);
-        var stepW = Math.max(8, Math.floor((w * 0.56) / nSteps));
+        var poleX = Math.round(w * 0.86);
+        var stairSpan = poleX - stairX0;
         var maxClimb = groundY - 22;
         var climb = maxClimb * (ratio / SCALE);
         var ea = Math.exp(2) - 1;
@@ -428,13 +433,15 @@
           var f = (Math.exp(2 * (i + 1) / nSteps) - 1) / ea;
           var sh = Math.max(2, Math.round(climb * f));
           tops.push(groundY - sh);
-          var x = stairX0 + i * stepW;
+          var x = stairX0 + Math.round(i * stairSpan / nSteps);
+          var xw = stairX0 + Math.round((i + 1) * stairSpan / nSteps) - x;
           ctx.fillStyle = BRICK;
-          ctx.fillRect(x, groundY - sh, stepW - 1, sh);
+          ctx.fillRect(x, groundY - sh, xw, sh);
           ctx.fillStyle = BRICK_DARK;
-          for (var yy = groundY - sh + 4; yy < groundY; yy += 5) ctx.fillRect(x, yy, stepW - 1, 1);
+          for (var yy = groundY - sh + 4; yy < groundY; yy += 5) ctx.fillRect(x, yy, xw, 1);
+          ctx.fillRect(x + xw - 1, groundY - sh, 1, sh);
           ctx.fillStyle = GOLD;
-          ctx.fillRect(x, groundY - sh, stepW - 1, 1);
+          ctx.fillRect(x, groundY - sh, xw, 1);
         }
 
         // goal line
@@ -444,7 +451,6 @@
         ptext(g, "GOAL", stairX0 + 2, goalY - 4, "rgba(231,192,105,0.8)", "left");
 
         // flagpole — the flag rises with the funding ratio
-        var poleX = Math.round(w * 0.85);
         var poleTop = goalY - 6;
         ctx.fillStyle = "#8aa89c";
         ctx.fillRect(poleX, poleTop, 2, groundY - poleTop);
@@ -470,15 +476,12 @@
 
         brickGround(g, groundY);
 
-        // Capy climbs the staircase on loop
+        // Capy climbs the staircase on loop, all the way to the pole
         var p = g.reduced ? 0.6 : (g.t * 0.07) % 1;
         var stepIdx = Math.min(nSteps - 1, Math.floor(p * nSteps));
-        var capX = stairX0 + p * nSteps * stepW;
+        var capX = stairX0 + p * stairSpan;
         var capY = tops[stepIdx];
-        mascot.draw(ctx, capX, capY, Math.min(h * 0.18, 28), { walk: g.t * 6, gaze: 0.8 });
-
-        // age range, top-right (the bottom edge sits under the power bar)
-        ptext(g, "AGE " + g.values.age + "-" + g.values.retireAge, w - 4, 12, GOLD_LIGHT, "right");
+        mascot.draw(ctx, capX, capY, Math.min(h * 0.2, 32), { walk: g.t * 6, gaze: 0.8 });
       }
     }
   });
@@ -512,6 +515,7 @@
       return {
         mood: mood,
         score: Math.round(readiness * 100),
+        stat: "READY " + Math.round(readiness * 100) + "%",
         headline: Math.round(readiness * 100) + "% legacy-ready for "
           + v.loved + (v.loved === 1 ? " loved one." : " loved ones."),
         coach: coach,
@@ -526,19 +530,18 @@
         var v = g.values;
         stars(g, 30, h * 0.6);
 
-        // pixel moon (top-right, clear of the speech bubble)
-        var moonX = w - 26;
+        // pixel moon (mid-left sky, clear of the HUD strip and the map)
         ctx.fillStyle = "rgba(246,231,189,0.8)";
-        ctx.fillRect(moonX + 2, 10, 8, 8);
-        ctx.fillRect(moonX, 12, 12, 4);
+        ctx.fillRect(12, 28, 8, 8);
+        ctx.fillRect(10, 30, 12, 4);
         ctx.fillStyle = "rgba(201,161,74,0.4)";
-        ctx.fillRect(moonX + 5, 13, 2, 2);
+        ctx.fillRect(15, 31, 2, 2);
 
-        // the family map panel
+        // the family map panel (sits below the HUD strip)
         var mw = Math.round(Math.min(w * 0.52, 120));
         var mh = Math.round(Math.min(h * 0.62, 96));
         var mx0 = Math.round(w * 0.62 - mw / 2);
-        var my0 = Math.round(h * 0.46 - mh / 2);
+        var my0 = Math.round(h * 0.52 - mh / 2);
         ctx.fillStyle = "rgba(246,241,231,0.08)";
         ctx.fillRect(mx0, my0, mw, mh);
         ctx.fillStyle = GOLD;
@@ -606,7 +609,7 @@
         ctx.fillStyle = "rgba(159,216,196,0.5)";
         ctx.fillRect(0, groundY, w, 1);
 
-        mascot.draw(ctx, w * 0.2, groundY, Math.min(h * 0.2, 32), { gaze: 0.8 });
+        mascot.draw(ctx, w * 0.15, groundY, Math.min(h * 0.24, 36), { gaze: 0.8 });
       }
     }
   });
@@ -622,6 +625,7 @@
   var headlineEl = document.getElementById("journeyHeadline");
   var coachEl = document.getElementById("journeyCoach");
   var bubbleEl = document.getElementById("journeyBubble");
+  var statEl = document.getElementById("journeyStat");
   var vibeEl = document.getElementById("journeyVibe");
 
   var progress = {};
@@ -661,7 +665,7 @@
     controlsEl.innerHTML = "";
     def.inputs.forEach(function (inp) {
       var row = document.createElement("div");
-      row.className = "journey__control";
+      row.className = "journey__control" + (inp.type === "toggle" ? " journey__control--toggle" : "");
       if (inp.type === "toggle") {
         row.innerHTML =
           '<label class="journey__toggle">' +
@@ -708,6 +712,8 @@
   engine.on("state", function (s) {
     headlineEl.textContent = s.headline || "";
     coachEl.textContent = s.coach || "";
+    statEl.textContent = s.stat || "";
+    statEl.style.display = s.stat ? "" : "none";
     if (s.say && s.say !== lastSay) {
       lastSay = s.say;
       bubbleEl.textContent = s.say;

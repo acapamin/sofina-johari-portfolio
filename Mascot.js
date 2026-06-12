@@ -48,25 +48,28 @@
      "...oo...oo...oo.."]
   ];
 
+  /* Face overlays are deliberately chunky (2×2 eyes, thick brows,
+     visible mouths) so the mood reads even at small mobile sizes. */
   var EYES = {
-    open:    [[12, 4, "k"]],
-    happy:   [[11, 4, "k"], [12, 3, "k"], [13, 4, "k"]],
-    star:    [[12, 3, "g"], [11, 4, "g"], [12, 4, "G"], [13, 4, "g"], [12, 5, "g"]],
-    closed:  [[11, 4, "k"], [12, 4, "k"], [13, 4, "k"]],
-    soft:    [[11, 5, "k"], [12, 5, "k"]],
-    worried: [[12, 5, "k"]]
+    open:    [[12, 3, "k"], [11, 4, "k"], [12, 4, "k"], [11, 3, "G"]],
+    happy:   [[10, 4, "k"], [11, 3, "k"], [12, 3, "k"], [13, 4, "k"]],
+    star:    [[11, 2, "g"], [10, 3, "g"], [12, 3, "g"], [11, 4, "g"], [11, 3, "G"]],
+    closed:  [[10, 4, "k"], [11, 4, "k"], [12, 4, "k"], [13, 4, "k"]],
+    soft:    [[10, 5, "k"], [11, 5, "k"], [12, 5, "k"]],
+    worried: [[11, 5, "k"], [12, 5, "k"], [11, 6, "k"], [12, 6, "k"]]
   };
   var BROWS = {
     none:  [],
-    knit:  [[11, 3, "k"], [12, 3, "k"]],
-    flat:  [[11, 3, "k"], [12, 3, "k"], [13, 3, "k"]],
-    raise: [[11, 2, "k"], [12, 2, "k"]]
+    knit:  [[9, 2, "k"], [10, 3, "k"], [11, 4, "k"]],
+    flat:  [[10, 2, "k"], [11, 2, "k"], [12, 2, "k"]],
+    raise: [[9, 3, "k"], [10, 2, "k"], [11, 2, "k"], [12, 3, "k"]]
   };
   var MOUTHS = {
     none: [],
-    grin: [[12, 8, "k"], [13, 8, "k"]]
+    grin: [[12, 8, "k"], [13, 8, "k"], [14, 8, "k"], [13, 9, "k"]],
+    sad:  [[11, 9, "k"], [12, 9, "k"], [13, 9, "k"]]
   };
-  var BLUSH = [[10, 7, "r"], [11, 7, "r"]];
+  var BLUSH = [[9, 6, "r"], [10, 6, "r"]];
 
   var SPR_W = 17, SPR_H = 13;
   var frameCache = {};
@@ -120,7 +123,7 @@
     joyful:     { bounce: 4, speed: 6.0, eyes: "happy",   brows: "none",  mouth: "grin", blush: true,  sparkle: true,  sweat: false, hearts: false },
     growth:     { bounce: 3, speed: 4.0, eyes: "star",    brows: "none",  mouth: "grin", blush: false, sparkle: true,  sweat: false, hearts: false },
     cautious:   { bounce: 1, speed: 1.2, eyes: "open",    brows: "flat",  mouth: "none", blush: false, sparkle: false, sweat: false, hearts: false },
-    concerned:  { bounce: 0, speed: 0.9, eyes: "worried", brows: "knit",  mouth: "none", blush: false, sparkle: false, sweat: true,  hearts: false },
+    concerned:  { bounce: 0, speed: 0.9, eyes: "worried", brows: "knit",  mouth: "sad",  blush: false, sparkle: false, sweat: true,  hearts: false },
     serene:     { bounce: 1, speed: 1.0, eyes: "closed",  brows: "none",  mouth: "none", blush: true,  sparkle: false, sweat: false, hearts: true },
     calm:       { bounce: 1, speed: 1.4, eyes: "soft",    brows: "none",  mouth: "none", blush: false, sparkle: false, sweat: false, hearts: false },
     thoughtful: { bounce: 0, speed: 1.0, eyes: "soft",    brows: "raise", mouth: "none", blush: false, sparkle: false, sweat: false, hearts: false }

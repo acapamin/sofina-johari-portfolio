@@ -693,12 +693,22 @@ ul { list-style: none; }
   pointer-events: none;
   background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.14) 0 1px, transparent 1px 3px);
 }
-.journey__bubble {
+/* HUD strip: speech bubble + level stat laid out with flex so they
+   can never overlap each other (or canvas text — there is none now) */
+.journey__hud {
   position: absolute;
-  top: 0.9rem;
-  left: 0.9rem;
+  top: 0.7rem;
+  left: 0.7rem;
+  right: 0.7rem;
   z-index: 2;
-  max-width: 66%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  pointer-events: none;
+}
+.journey__bubble {
+  max-width: 68%;
   background: var(--cream);
   color: var(--ink);
   border: 2px solid var(--ink);
@@ -709,7 +719,18 @@ ul { list-style: none; }
   font-size: 0.55rem;
   line-height: 1.7;
   text-transform: uppercase;
-  pointer-events: none;
+}
+.journey__stat {
+  flex-shrink: 0;
+  background: rgba(11, 31, 26, 0.85);
+  color: var(--gold-soft);
+  border: 2px solid rgba(201, 161, 74, 0.7);
+  padding: 0.4rem 0.5rem;
+  font-family: var(--font-pixel);
+  font-size: 0.5rem;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 .journey__bubble.is-pop { animation: bubblePop 0.3s steps(3); }
 @keyframes bubblePop {
@@ -1373,11 +1394,49 @@ ul { list-style: none; }
 @media (max-width: 620px) {
   .services__grid { grid-template-columns: 1fr; }
   .videos__grid { grid-template-columns: 1fr; }
-  .journey__stage { min-height: 320px; box-shadow: 0 0 0 3px var(--gold), 6px 8px 0 rgba(11, 31, 26, 0.2); }
-  .journey__bubble { max-width: 80%; font-size: 0.5rem; }
-  .journey__panel { padding: 1.3rem 1.1rem; box-shadow: 5px 5px 0 rgba(11, 31, 26, 0.15); }
-  .journey__chip { font-size: 0.5rem; padding: 0.45rem 0.7rem 0.45rem 0.4rem; }
-  .journey__chip-num { width: 22px; height: 22px; font-size: 0.5rem; }
+
+  /* Compact one-screen game layout: stage + controls + summary
+     should fit a phone viewport without scrolling between them. */
+  .journey { margin-top: 1.6rem; }
+  .journey__levels {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    margin-bottom: 0.8rem;
+    padding: 2px 2px 6px;
+  }
+  .journey__levels::-webkit-scrollbar { display: none; }
+  .journey__chip { flex-shrink: 0; font-size: 0.5rem; padding: 0.4rem 0.65rem 0.4rem 0.35rem; }
+  .journey__chip-num { width: 20px; height: 20px; font-size: 0.5rem; }
+  .journey__board { gap: 0.8rem; }
+  .journey__stage {
+    min-height: 0;
+    height: 210px;
+    box-shadow: 0 0 0 3px var(--gold), 5px 6px 0 rgba(11, 31, 26, 0.2);
+  }
+  .journey__hud { top: 0.5rem; left: 0.5rem; right: 0.5rem; }
+  .journey__bubble { max-width: 70%; font-size: 0.5rem; padding: 0.4rem 0.5rem; }
+  .journey__vibe { left: 0.6rem; right: 0.6rem; bottom: 0.55rem; }
+  .journey__panel { gap: 0.55rem; padding: 0.85rem 0.8rem; box-shadow: 4px 4px 0 rgba(11, 31, 26, 0.15); }
+  .journey__panel-eyebrow { font-size: 0.48rem; }
+  .journey__panel-title { font-size: 0.62rem; margin-top: -0.35rem; }
+  /* sliders pair up two per row so four inputs stay compact */
+  .journey__controls { grid-template-columns: 1fr 1fr; gap: 0.45rem 0.8rem; }
+  .journey__control--toggle { grid-column: 1 / -1; }
+  .journey__control-head { margin-bottom: 0; gap: 0.4rem; flex-wrap: wrap; row-gap: 0; }
+  .journey__control-label { font-size: 0.7rem; line-height: 1.35; }
+  .journey__control output { font-size: 0.74rem; }
+  .journey__range { height: 20px; }
+  .journey__toggle-track { width: 36px; height: 20px; }
+  .journey__toggle-track::after { width: 12px; height: 12px; }
+  .journey__toggle input:checked + .journey__toggle-track::after { transform: translateX(16px); }
+  .journey__readout { padding-top: 0.5rem; }
+  .journey__headline { font-size: 0.92rem; }
+  .journey__coach { font-size: 0.78rem; margin-top: 0.25rem; }
+  .journey__cta { margin-top: 0.25rem; padding: 0.5rem 0.7rem; font-size: 0.48rem; }
+  .journey__fine { font-size: 0.68rem; margin-top: 0.6rem; }
   .hero { padding-top: 6rem; }
   .hero__scroll { display: none; }
   .hero__actions .btn { width: 100%; max-width: 320px; }
