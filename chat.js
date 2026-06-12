@@ -18,6 +18,7 @@
 
   var history = [];
   var streaming = false;
+  var touchDevice = window.matchMedia("(pointer: coarse)").matches;
 
   function addBubble(role, text) {
     var el = document.createElement("div");
@@ -39,16 +40,20 @@
   /* ---------- Open / close ---------- */
   function openPanel() {
     panel.hidden = false;
+    document.body.classList.add("chat-open");
     launch.setAttribute("aria-expanded", "true");
     requestAnimationFrame(function () {
       panel.classList.add("is-open");
     });
     scrollToEnd();
-    input.focus();
+    // on touch devices, let the user tap the input themselves so the
+    // keyboard doesn't cover the conversation the moment the chat opens
+    if (!touchDevice) input.focus();
   }
 
   function closePanel() {
     panel.classList.remove("is-open");
+    document.body.classList.remove("chat-open");
     launch.setAttribute("aria-expanded", "false");
     setTimeout(function () {
       panel.hidden = true;
@@ -158,7 +163,7 @@
       })
       .then(function () {
         setBusy(false);
-        input.focus();
+        if (!touchDevice) input.focus();
       });
   }
 
@@ -169,6 +174,14 @@
     input.value = "";
     send(text);
   });
+
+  // keep the latest message in view when the on-screen keyboard
+  // resizes the viewport
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", function () {
+      if (!panel.hidden) scrollToEnd();
+    });
+  }
 
   input.addEventListener("keydown", function (e) {
     if (e.key === "Enter" && !e.shiftKey) {

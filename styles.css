@@ -1235,14 +1235,35 @@ ul { list-style: none; }
   text-align: center;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .chat-panel {
-    right: 0.75rem;
-    left: 0.75rem;
+    inset: 0;
     width: auto;
-    height: min(70dvh, 560px);
-    bottom: calc(0.75rem + 4rem);
+    height: 100dvh;
+    border-radius: 0;
+    border: none;
   }
+  .chat-panel__header {
+    padding-top: calc(1rem + env(safe-area-inset-top));
+  }
+  /* 16px stops iOS Safari from zooming the page on focus */
+  .chat-panel__form input {
+    font-size: 1rem;
+  }
+  .chat-panel__note {
+    padding-bottom: calc(0.9rem + env(safe-area-inset-bottom));
+  }
+  /* hide the launcher and lock page scroll while the sheet is open */
+  body.chat-open .chat-launch { display: none; }
+  body.chat-open { overflow: hidden; }
+}
+
+/* compact chrome when the on-screen keyboard shrinks the viewport */
+@media (max-width: 640px) and (max-height: 500px) {
+  .chat-panel__header { padding: 0.55rem 1.25rem; }
+  .chat-panel__status { display: none; }
+  .chat-panel__messages { padding: 0.85rem 1.25rem; }
+  .chat-panel__note { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
