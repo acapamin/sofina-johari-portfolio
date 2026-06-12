@@ -83,7 +83,7 @@ export default async function handler(req) {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
       "HTTP-Referer": "https://sofina-johari.netlify.app/",
-      "X-Title": "Sofina Johari - Amy AI Assistant",
+      "X-Title": "Amy - Sofina Johari Digital Twin",
     },
     body: JSON.stringify({
       model,
