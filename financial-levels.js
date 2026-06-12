@@ -251,8 +251,8 @@
     title: "World 1-2 · The Brick Shield",
     inputs: [
       { key: "income", label: "Monthly income", min: 1000, max: 30000, step: 100, value: 5000, fmt: "money" },
-      { key: "cover", label: "Current life / takaful cover", min: 0, max: 2000000, step: 10000, value: 100000, fmt: "money" },
-      { key: "deps", label: "People depending on you", min: 0, max: 6, step: 1, value: 2, fmt: "people" }
+      { key: "cover", label: "Life / takaful cover", min: 0, max: 2000000, step: 10000, value: 100000, fmt: "money" },
+      { key: "deps", label: "Dependants", min: 0, max: 6, step: 1, value: 2, fmt: "people" }
     ],
     compute: function (v) {
       // simple heuristic: ~10× annual income + a cushion per dependant
@@ -370,10 +370,10 @@
     name: "Future",
     title: "World 1-3 · The Flagpole Climb",
     inputs: [
-      { key: "age", label: "Your age today", min: 20, max: 60, step: 1, value: 30, fmt: "age" },
+      { key: "age", label: "Age today", min: 20, max: 60, step: 1, value: 30, fmt: "age" },
       { key: "retireAge", label: "Retirement age", min: 40, max: 70, step: 1, value: 60, fmt: "age" },
       { key: "monthly", label: "Invested monthly", min: 0, max: 10000, step: 50, value: 600, fmt: "money" },
-      { key: "wantIncome", label: "Retirement income you want", min: 1000, max: 20000, step: 100, value: 3000, fmt: "money" }
+      { key: "wantIncome", label: "Retirement income /mo", min: 1000, max: 20000, step: 100, value: 3000, fmt: "money" }
     ],
     compute: function (v) {
       var years = Math.max(1, v.retireAge - v.age);
@@ -495,8 +495,8 @@
     name: "Legacy",
     title: "World 1-4 · The Map Home",
     inputs: [
-      { key: "loved", label: "Loved ones to provide for", min: 1, max: 8, step: 1, value: 3, fmt: "people" },
-      { key: "docs", label: "Assets listed & documented", min: 0, max: 100, step: 5, value: 25, fmt: "percent" },
+      { key: "loved", label: "Loved ones", min: 1, max: 8, step: 1, value: 3, fmt: "people" },
+      { key: "docs", label: "Assets documented", min: 0, max: 100, step: 5, value: 25, fmt: "percent" },
       { key: "will", label: "Will / wasiat written", type: "toggle", value: 0 }
     ],
     compute: function (v) {
@@ -627,6 +627,7 @@
   var bubbleEl = document.getElementById("journeyBubble");
   var statEl = document.getElementById("journeyStat");
   var vibeEl = document.getElementById("journeyVibe");
+  var vibePctEl = document.getElementById("journeyVibePct");
 
   var progress = {};
   var chips = {};
@@ -722,9 +723,15 @@
       bubbleEl.classList.add("is-pop");
     }
     progress[engine.levelId] = s.score || 0;
-    var total = 0;
-    engine.order.forEach(function (id) { total += progress[id] || 0; });
-    vibeEl.style.width = Math.round(total / engine.order.length) + "%";
+    // power = average score across the levels played so far, so a
+    // maxed first level reads 100%, not 25%
+    var total = 0, visited = 0;
+    engine.order.forEach(function (id) {
+      if (progress[id] != null) { visited++; total += progress[id]; }
+    });
+    var pct = visited ? Math.round(total / visited) : 0;
+    vibeEl.style.width = pct + "%";
+    vibePctEl.textContent = pct + "%";
     engine.order.forEach(function (id) {
       chips[id].classList.toggle("is-done", (progress[id] || 0) >= 60);
     });

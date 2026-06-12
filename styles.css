@@ -778,6 +778,14 @@ ul { list-style: none; }
   background: repeating-linear-gradient(90deg, transparent 0 8px, #0d231c 8px 10px);
   pointer-events: none;
 }
+.journey__vibe-pct {
+  font-family: var(--font-pixel);
+  font-size: 0.5rem;
+  color: var(--gold-soft);
+  min-width: 2.1rem;
+  text-align: right;
+  white-space: nowrap;
+}
 
 .journey__panel {
   display: flex;
@@ -1422,10 +1430,21 @@ ul { list-style: none; }
   .journey__panel { gap: 0.55rem; padding: 0.85rem 0.8rem; box-shadow: 4px 4px 0 rgba(11, 31, 26, 0.15); }
   .journey__panel-eyebrow { font-size: 0.48rem; }
   .journey__panel-title { font-size: 0.62rem; margin-top: -0.35rem; }
-  /* sliders pair up two per row so four inputs stay compact */
-  .journey__controls { grid-template-columns: 1fr 1fr; gap: 0.45rem 0.8rem; }
+  /* Sliders pair up two per row so four inputs stay compact.
+     Each control stacks label → value → slider, with the value and
+     slider anchored to the bottom of the cell so the pair always
+     lines up perfectly even if a label ever wraps. */
+  .journey__controls { grid-template-columns: 1fr 1fr; gap: 0.45rem 0.8rem; align-items: stretch; }
+  .journey__control { display: flex; flex-direction: column; }
   .journey__control--toggle { grid-column: 1 / -1; }
-  .journey__control-head { margin-bottom: 0; gap: 0.4rem; flex-wrap: wrap; row-gap: 0; }
+  .journey__control-head {
+    flex: 1;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-end;
+    gap: 0;
+    margin-bottom: 0;
+  }
   .journey__control-label { font-size: 0.7rem; line-height: 1.35; }
   .journey__control output { font-size: 0.74rem; }
   .journey__range { height: 20px; }
