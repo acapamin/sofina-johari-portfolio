@@ -77,9 +77,8 @@
       var k = 1 - p.age / p.life;
       ctx.globalAlpha = p.alpha * Math.min(1, k * 3);
       ctx.fillStyle = p.color;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size * (0.6 + 0.4 * k), 0, Math.PI * 2);
-      ctx.fill();
+      var s = Math.max(1, Math.round(p.size));
+      ctx.fillRect(Math.round(p.x - s / 2), Math.round(p.y - s / 2), s, s);
     }
     ctx.globalAlpha = 1;
   };
@@ -166,15 +165,18 @@
     this._emit("state", out);
   };
 
+  /* Retro mode: render to a low-resolution backing buffer and let CSS
+     (image-rendering: pixelated) blow it up to chunky NES pixels.
+     This is also a big mobile win — far fewer pixels to fill. */
   FinancialEngine.prototype._resize = function () {
-    var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    var w = this.canvas.clientWidth || 640;
-    var h = this.canvas.clientHeight || 420;
-    this.canvas.width = Math.round(w * dpr);
-    this.canvas.height = Math.round(h * dpr);
-    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    this.w = w;
-    this.h = h;
+    var cw = this.canvas.clientWidth || 640;
+    var ch = this.canvas.clientHeight || 420;
+    this.scale = cw > 560 ? 3 : 2;
+    this.w = Math.max(120, Math.floor(cw / this.scale));
+    this.h = Math.max(100, Math.floor(ch / this.scale));
+    this.canvas.width = this.w;
+    this.canvas.height = this.h;
+    this.ctx.imageSmoothingEnabled = false;
     if (this.reduced && this.level) this._renderFrame(0);
   };
 
@@ -207,13 +209,15 @@
     this.particles.update(dt);
 
     var ctx = this.ctx;
+    ctx.imageSmoothingEnabled = false;
     ctx.clearRect(0, 0, this.w, this.h);
     this.level.scene.draw({
       ctx: ctx, w: this.w, h: this.h, t: this.t, dt: dt,
       values: this.values, state: this.state, m: this.metrics,
       mascot: this.mascot, particles: this.particles,
       colors: COLORS, rr: roundRect, money: money,
-      clamp: clamp, lerp: lerp, reduced: this.reduced
+      clamp: clamp, lerp: lerp, reduced: this.reduced,
+      pixelScale: this.scale
     });
     this.particles.draw(ctx);
   };

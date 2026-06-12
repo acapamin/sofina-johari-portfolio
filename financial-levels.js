@@ -1,9 +1,10 @@
-/* financial-levels.js — the four playable levels of the money journey,
-   plus the DOM wiring between the sliders and the FinancialEngine.
+/* financial-levels.js — the four playable worlds of the 8-bit money
+   quest, plus the DOM wiring between the sliders and the engine.
 
-   Adding a fifth level is one registerLevel() call: declare inputs,
-   a pure compute() (numbers in → mood + copy out) and a scene.draw().
-   Mascot.js and FinancialEngine.js stay untouched. */
+   Everything renders into the engine's low-resolution buffer, so all
+   coordinates here are chunky internal pixels (~170–230 wide stage).
+   Adding a fifth world is one registerLevel() call — Mascot.js and
+   FinancialEngine.js stay untouched. */
 
 (function () {
   "use strict";
@@ -19,71 +20,127 @@
   function clamp(v, a, b) { return Math.min(b, Math.max(a, v)); }
   function lerp(a, b, k) { return a + (b - a) * k; }
 
-  /* ---------- shared scene helpers ---------- */
+  /* ---------- 8-bit scene helpers ---------- */
 
-  function glow(g, x, y, r, color) {
-    var grad = g.ctx.createRadialGradient(x, y, 0, x, y, r);
-    grad.addColorStop(0, color);
-    grad.addColorStop(1, "rgba(0,0,0,0)");
-    g.ctx.fillStyle = grad;
-    g.ctx.fillRect(x - r, y - r, r * 2, r * 2);
+  var PFONT = '"Press Start 2P", "Courier New", monospace';
+  var GOLD = "#e7c069", GOLD_LIGHT = "#f6e7bd", GOLD_DARK = "#7a5a1e";
+  var BRICK = "#16382d", BRICK_DARK = "#0a1a14", TEAL = "#9fd8c4", RED = "#d96a4a";
+
+  function rmShort(v) {
+    v = Math.round(v);
+    if (v >= 1e6) return "RM" + (Math.round(v / 1e5) / 10) + "M";
+    if (v >= 1e4) return "RM" + Math.round(v / 1e3) + "K";
+    if (v >= 1e3) return "RM" + (Math.round(v / 100) / 10) + "K";
+    return "RM" + v;
   }
 
-  function groundLine(g, y) {
-    g.ctx.strokeStyle = g.colors.line;
-    g.ctx.lineWidth = 1;
-    g.ctx.beginPath();
-    g.ctx.moveTo(g.w * 0.05, y);
-    g.ctx.lineTo(g.w * 0.95, y);
-    g.ctx.stroke();
+  function ptext(g, str, x, y, color, align) {
+    var ctx = g.ctx;
+    ctx.font = "8px " + PFONT;
+    ctx.fillStyle = color || "rgba(242,236,224,0.9)";
+    ctx.textAlign = align || "center";
+    ctx.fillText(str, Math.round(x), Math.round(y));
   }
 
-  function text(g, str, x, y, opts) {
-    opts = opts || {};
-    g.ctx.fillStyle = opts.color || g.colors.muted;
-    g.ctx.font = (opts.weight || "600") + " " + (opts.size || 12) + "px 'Instrument Sans', sans-serif";
-    g.ctx.textAlign = opts.align || "center";
-    g.ctx.fillText(str, x, y);
+  function brickGround(g, topY) {
+    var ctx = g.ctx, w = g.w, h = g.h;
+    topY = Math.round(topY);
+    ctx.fillStyle = BRICK;
+    ctx.fillRect(0, topY, w, h - topY);
+    ctx.fillStyle = BRICK_DARK;
+    var row = 0;
+    for (var y = topY; y < h; y += 6, row++) {
+      ctx.fillRect(0, y, w, 1);
+      for (var x = (row % 2 ? 6 : 0); x < w; x += 12) ctx.fillRect(x, y, 1, 6);
+    }
+    ctx.fillStyle = "rgba(231,192,105,0.9)";
+    ctx.fillRect(0, topY, w, 1);
+  }
+
+  function qBlock(g, x, y, s) {
+    var ctx = g.ctx;
+    x = Math.round(x); y = Math.round(y);
+    var lit = g.reduced || ((g.t * 2) | 0) % 2 === 0;
+    ctx.fillStyle = lit ? GOLD : "#c9a14a";
+    ctx.fillRect(x, y, s, s);
+    ctx.fillStyle = GOLD_DARK;
+    ctx.fillRect(x, y, s, 1); ctx.fillRect(x, y + s - 1, s, 1);
+    ctx.fillRect(x, y, 1, s); ctx.fillRect(x + s - 1, y, 1, s);
+    ctx.fillRect(x + 1, y + 1, 1, 1); ctx.fillRect(x + s - 2, y + 1, 1, 1);
+    ctx.fillRect(x + 1, y + s - 2, 1, 1); ctx.fillRect(x + s - 2, y + s - 2, 1, 1);
+    ctx.font = "8px " + PFONT;
+    ctx.fillStyle = "#3a2a10";
+    ctx.textAlign = "center";
+    ctx.fillText("?", x + s / 2 + 1, y + s - 4);
+  }
+
+  function pipe(g, cx, topY, pw, bottomY, main, dark, light) {
+    var ctx = g.ctx;
+    cx = Math.round(cx); topY = Math.round(topY);
+    var rimH = 6, rimW = pw + 6;
+    var bx = Math.round(cx - pw / 2);
+    ctx.fillStyle = main;
+    ctx.fillRect(bx, topY + rimH, pw, bottomY - topY - rimH);
+    ctx.fillStyle = light;
+    ctx.fillRect(bx + 2, topY + rimH, 3, bottomY - topY - rimH);
+    ctx.fillStyle = dark;
+    ctx.fillRect(bx + pw - 3, topY + rimH, 3, bottomY - topY - rimH);
+    var rx = Math.round(cx - rimW / 2);
+    ctx.fillStyle = main;
+    ctx.fillRect(rx, topY, rimW, rimH);
+    ctx.fillStyle = light;
+    ctx.fillRect(rx, topY, rimW, 2);
+    ctx.fillStyle = dark;
+    ctx.fillRect(rx, topY + rimH - 2, rimW, 2);
+  }
+
+  function coinRow(g, x, y, count) {
+    var ctx = g.ctx;
+    for (var i = 0; i < count; i++) {
+      ctx.fillStyle = GOLD;
+      ctx.fillRect(x + i * 5, y, 4, 4);
+      ctx.fillStyle = GOLD_LIGHT;
+      ctx.fillRect(x + i * 5 + 1, y + 1, 1, 2);
+    }
+  }
+
+  function heart(ctx, x, y, c) {
+    ctx.fillStyle = c;
+    ctx.fillRect(x, y, 2, 1); ctx.fillRect(x + 3, y, 2, 1);
+    ctx.fillRect(x, y + 1, 5, 2);
+    ctx.fillRect(x + 1, y + 3, 3, 1);
+    ctx.fillRect(x + 2, y + 4, 1, 1);
+  }
+
+  function stars(g, count, maxY) {
+    var ctx = g.ctx;
+    for (var i = 0; i < count; i++) {
+      var sx = ((i * 73) % 97) / 97 * g.w;
+      var sy = ((i * 41) % 89) / 89 * maxY;
+      ctx.globalAlpha = 0.15 + 0.5 * Math.abs(Math.sin(g.t * 0.8 + i * 1.3));
+      ctx.fillStyle = "#f6f1e7";
+      ctx.fillRect(Math.round(sx), Math.round(sy), 1, 1);
+    }
+    ctx.globalAlpha = 1;
   }
 
   /* ============================================================
-     LEVEL 1 — Cashflow: the two buckets
+     WORLD 1-1 — Cashflow: the coin pipes
      ============================================================ */
 
-  function spawnDrop(g, x0, y0, x1, y1, color) {
-    var T = 0.75, G = 420;
+  function spawnCoin(g, x0, y0, x1, y1) {
+    var T = 0.7, G = 180;
     g.particles.spawn({
-      x: x0 + (Math.random() - 0.5) * 12, y: y0,
-      vx: (x1 - x0) / T + (Math.random() - 0.5) * 24,
+      x: x0 + (Math.random() - 0.5) * 6, y: y0,
+      vx: (x1 - x0) / T + (Math.random() - 0.5) * 8,
       vy: (y1 - y0) / T - 0.5 * G * T,
-      g: G,
-      size: 2.4 + Math.random() * 1.6,
-      life: T, color: color, alpha: 0.9
+      g: G, size: 3, life: T, color: GOLD, alpha: 1
     });
-  }
-
-  function bucket(g, cx, top, bw, bh, fill, color, title, amount, overflowing) {
-    var ctx = g.ctx, x = cx - bw / 2;
-    ctx.save();
-    g.rr(ctx, x, top, bw, bh, 14);
-    ctx.clip();
-    var fh = bh * clamp(fill, 0, 1);
-    ctx.globalAlpha = 0.8;
-    ctx.fillStyle = color;
-    ctx.fillRect(x, top + bh - fh, bw, fh);
-    ctx.globalAlpha = 1;
-    ctx.restore();
-    g.rr(ctx, x, top, bw, bh, 14);
-    ctx.strokeStyle = overflowing ? "rgba(208,122,94,0.9)" : "rgba(242,236,224,0.5)";
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    text(g, title, cx, top + bh + 18, { color: "rgba(242,236,224,0.85)" });
-    text(g, amount, cx, top + bh + 34, { color: "rgba(224,201,140,0.9)" });
   }
 
   engine.registerLevel("budget", {
     name: "Cashflow",
-    title: "The Two Buckets",
+    title: "World 1-1 · The Coin Pipes",
     inputs: [
       { key: "income", label: "Monthly take-home", min: 1000, max: 30000, step: 100, value: 5000, fmt: "money" },
       { key: "spend", label: "Monthly spending", min: 500, max: 30000, step: 100, value: 4000, fmt: "money" }
@@ -97,17 +154,17 @@
         : rate >= 0 ? "cautious"
         : "concerned";
       var say = {
-        joyful: "Look at my jar go! ✨",
-        growth: "Ooh, we're growing nicely!",
-        stable: "Steady lah. Slow and sure.",
-        cautious: "Hmm… the jar feels a bit light.",
-        concerned: "Eh — the bucket is leaking!"
+        joyful: "Coin shower! Top score!",
+        growth: "Level up! We're growing!",
+        stable: "Steady lah, steady.",
+        cautious: "Hmm... coins feel light.",
+        concerned: "The pipe eats everything!"
       }[mood];
       var coach = {
-        joyful: "Sen is thrilled — saving 28%+ of income is elite territory. The next question is whether that money is working as hard as you do.",
+        joyful: "Capy is thrilled — saving 28%+ of income is elite territory. The next question is whether that money is working as hard as you do.",
         growth: "A 15–28% savings rate compounds beautifully over a decade. Keep this up and the next levels get much easier.",
-        stable: "You're saving something every month — that habit matters more than the amount. A small trim to spending lifts Sen's whole mood.",
-        cautious: "It's tight. Under 5% saved means one surprise bill wipes out the month. Try nudging spending down and watch the gold stream appear.",
+        stable: "You're saving something every month — that habit matters more than the amount. A small trim to spending lifts Capy's whole mood.",
+        cautious: "It's tight. Under 5% saved means one surprise bill wipes out the month. Try nudging spending down and watch the gold coins appear.",
         concerned: "Spending exceeds income, so the gap is quietly filling up on credit. This is exactly the conversation a planner untangles — no judgement."
       }[mood];
       return {
@@ -128,78 +185,68 @@
     scene: {
       draw: function (g) {
         var ctx = g.ctx, w = g.w, h = g.h;
-        var groundY = h * 0.78;
-        glow(g, w * 0.5, h * 0.2, h * 0.5, "rgba(201,161,74,0.10)");
+        var groundY = h - 14;
+        stars(g, 14, h * 0.4);
 
-        var sx = w * 0.5, sy = h * 0.16;
-        var bw = Math.min(w * 0.24, 170), bh = Math.min(h * 0.28, 120);
-        var spendCx = w * 0.24, saveCx = w * 0.76;
-        var bTop = groundY - bh;
+        // "?" pay block
+        var bs = 14;
+        var bx = w / 2 - bs / 2, by = 8 + (g.reduced ? 0 : Math.round(Math.abs(Math.sin(g.t * 2)) * -2));
+        qBlock(g, bx, by, bs);
+        ptext(g, rmShort(g.values.income) + "/MO", w - 4, 12, GOLD_LIGHT, "right");
 
-        // income source orb
-        ctx.fillStyle = g.colors.goldSoft;
-        ctx.beginPath();
-        ctx.arc(sx, sy, 9 + Math.sin(g.t * 2.4) * 1.5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = "rgba(224,201,140,0.4)";
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.arc(sx, sy, 16 + Math.sin(g.t * 2.4) * 2, 0, Math.PI * 2);
-        ctx.stroke();
-        text(g, "Income " + money(g.values.income), w - 16, 26,
-          { align: "right", color: "rgba(242,236,224,0.85)" });
-
-        // faint stream guides
-        ctx.lineCap = "round";
-        ctx.lineWidth = 9;
-        ctx.strokeStyle = "rgba(159,216,196,0.12)";
-        ctx.beginPath();
-        ctx.moveTo(sx, sy);
-        ctx.quadraticCurveTo((sx + spendCx) / 2, sy + (bTop - sy) * 0.2, spendCx, bTop - 6);
-        ctx.stroke();
         var rate = clamp(g.m.rate, 0, 0.6);
-        if (rate > 0.01) {
-          ctx.strokeStyle = "rgba(201,161,74,0.14)";
-          ctx.beginPath();
-          ctx.moveTo(sx, sy);
-          ctx.quadraticCurveTo((sx + saveCx) / 2, sy + (bTop - sy) * 0.2, saveCx, bTop - 6);
-          ctx.stroke();
-        }
-
-        // cashflow particles
         var spendShare = clamp(g.m.spendShare, 0, 1.5);
+        var spendCx = w * 0.22, saveCx = w * 0.78;
+
+        // spending pipe (money down the drain)
+        var pw = 18, pipeTop = groundY - 26;
+        pipe(g, spendCx, pipeTop, pw, groundY, "#2e7d4f", "#1b4a2f", "#5cb87a");
+        ptext(g, "SPEND", spendCx, pipeTop - 14, TEAL);
+        ptext(g, rmShort(g.values.spend), spendCx, pipeTop - 4, TEAL);
+
+        // savings vault filling with coin rows
+        var vw = 36, vh = 28;
+        var vx = Math.round(saveCx - vw / 2), vTop = groundY - vh;
+        ctx.fillStyle = "#0a1a14";
+        ctx.fillRect(vx, vTop, vw, vh);
+        var fillRows = Math.floor(clamp(rate / 0.4, 0, 1) * 4);
+        for (var r = 0; r < fillRows; r++) coinRow(g, vx + 4, groundY - 7 - r * 5, 6);
+        ctx.fillStyle = GOLD_DARK;
+        ctx.fillRect(vx, vTop, 2, vh); ctx.fillRect(vx + vw - 2, vTop, 2, vh);
+        ctx.fillRect(vx, groundY - 2, vw, 2);
+        ctx.fillStyle = GOLD;
+        ctx.fillRect(vx - 1, vTop, 4, 2); ctx.fillRect(vx + vw - 3, vTop, 4, 2);
+        ptext(g, "SAVE", saveCx, vTop - 14, GOLD);
+        ptext(g, rmShort(g.m.savings), saveCx, vTop - 4, GOLD);
+
+        // coins spurting from the block
         if (!g.reduced && g.dt) {
-          if (Math.random() < Math.min(0.9, spendShare * 0.5)) spawnDrop(g, sx, sy, spendCx, bTop, g.colors.teal);
-          if (rate > 0.01 && Math.random() < Math.min(0.9, rate * 2.4)) spawnDrop(g, sx, sy, saveCx, bTop, g.colors.goldSoft);
-          if (spendShare > 1 && Math.random() < 0.35) {
+          if (Math.random() < Math.min(0.8, spendShare * 0.45)) spawnCoin(g, w / 2, by + bs, spendCx, pipeTop);
+          if (rate > 0.01 && Math.random() < Math.min(0.8, rate * 2)) spawnCoin(g, w / 2, by + bs, saveCx, vTop);
+          if (spendShare > 1 && Math.random() < 0.3) {
             g.particles.spawn({
-              x: spendCx + (Math.random() - 0.5) * bw * 0.9, y: groundY - 4,
-              vx: (Math.random() - 0.5) * 30, vy: 30, g: 140,
-              size: 2.5, life: 0.8, color: g.colors.rust, alpha: 0.85
+              x: spendCx + (Math.random() - 0.5) * pw, y: pipeTop + 4,
+              vx: (Math.random() - 0.5) * 14, vy: -20, g: 90,
+              size: 2, life: 0.9, color: RED, alpha: 0.9
             });
           }
         }
 
-        bucket(g, spendCx, bTop, bw, bh, Math.min(1, spendShare), g.colors.teal,
-          "Spending", money(g.values.spend) + " /mo", spendShare > 1);
-        bucket(g, saveCx, bTop, bw, bh, clamp(rate / 0.4, 0, 1), g.colors.gold,
-          "Savings", money(g.m.savings) + " /mo", false);
-
-        groundLine(g, groundY);
-        mascot.draw(ctx, w * 0.5, groundY, Math.min(h * 0.21, 84), { gaze: rate >= 0.05 ? 0.5 : -0.5 });
+        brickGround(g, groundY);
+        mascot.draw(ctx, w / 2, groundY, Math.min(h * 0.22, 34), { gaze: rate >= 0.05 ? 0.5 : -0.5 });
       }
     }
   });
 
   /* ============================================================
-     LEVEL 2 — Protection: the shield
+     WORLD 1-2 — Protection: the brick shield
      ============================================================ */
 
-  var shieldRef = { ratio: 1, x: 0 }; // read by hazard particles in flight
+  var shieldRef = { ratio: 1, x: 0 };
 
   engine.registerLevel("insurance", {
     name: "Protection",
-    title: "The Shield",
+    title: "World 1-2 · The Brick Shield",
     inputs: [
       { key: "income", label: "Monthly income", min: 1000, max: 30000, step: 100, value: 5000, fmt: "money" },
       { key: "cover", label: "Current life / takaful cover", min: 0, max: 2000000, step: 10000, value: 100000, fmt: "money" },
@@ -215,16 +262,16 @@
         : ratio >= 0.45 ? "risk-averse"
         : "concerned";
       var say = {
-        joyful: "Full shield! Nothing gets past us.",
-        stable: "Decent armour. A few thin spots.",
-        cautious: "My shield is flickering a bit…",
-        concerned: "This shield is barely holding!"
+        joyful: "Full wall! Bring it on!",
+        stable: "Decent armour. Few thin spots.",
+        cautious: "My wall is flickering...",
+        concerned: "The wall is barely holding!"
       }[mood === "risk-averse" ? "cautious" : mood];
       var coach = {
         joyful: "Cover meets the safety target, so a worst day wouldn't become a financial one too. Worth reviewing whenever income or family grows.",
         stable: "You're mostly protected — the remaining gap is the deductible life would charge your family. Often cheap to close with term cover.",
-        "risk-averse": "Sen is being careful: under half the target means your dependants would feel a real shortfall. Comparing 8+ providers usually finds an affordable fix.",
-        concerned: "A thin shield with people relying on you is the riskiest spot on this whole journey. The good news: protection is usually the cheapest problem to solve."
+        "risk-averse": "Capy is being careful: under half the target means your dependants would feel a real shortfall. Comparing 8+ providers usually finds an affordable fix.",
+        concerned: "A thin wall with people relying on you is the riskiest spot on this whole quest. The good news: protection is usually the cheapest problem to solve."
       }[mood];
       return {
         mood: mood,
@@ -240,87 +287,86 @@
     scene: {
       draw: function (g) {
         var ctx = g.ctx, w = g.w, h = g.h;
-        var groundY = h * 0.82;
-        var size = Math.min(h * 0.22, 88);
-        var mx = w * 0.36;
+        var groundY = h - 14;
         var ratio = clamp(g.m.ratio, 0, 1.2);
-        var cy = groundY - size * 0.55;
-        var R = size * 1.1;
+        var mx = w * 0.3;
+        stars(g, 12, h * 0.35);
 
+        // wall of shield blocks: 2 cols × 5 rows, lit count = coverage
+        var bsz = 8;
+        var wallX = Math.round(w * 0.58);
+        var rows = 5, cols = 2;
+        var lit = Math.round(clamp(ratio, 0, 1) * rows * cols);
         shieldRef.ratio = ratio;
-        shieldRef.x = mx + R * 0.9;
+        shieldRef.x = wallX;
 
-        glow(g, mx, cy, h * 0.45, "rgba(159,216,196,0.07)");
-        groundLine(g, groundY);
+        var flicker = ratio < 0.45 && !g.reduced ? (((g.t * 9) | 0) % 3 !== 0) : true;
+        var idx = 0;
+        for (var r = 0; r < rows; r++) {
+          for (var c = 0; c < cols; c++) {
+            var x = wallX + c * bsz;
+            var y = groundY - (r + 1) * bsz;
+            if (idx < lit && flicker) {
+              ctx.fillStyle = GOLD;
+              ctx.fillRect(x, y, bsz, bsz);
+              ctx.fillStyle = GOLD_LIGHT;
+              ctx.fillRect(x + 1, y + 1, 2, 1);
+              ctx.fillStyle = GOLD_DARK;
+              ctx.fillRect(x, y + bsz - 1, bsz, 1);
+              ctx.fillRect(x + bsz - 1, y, 1, bsz);
+            } else {
+              ctx.strokeStyle = "rgba(231,192,105,0.25)";
+              ctx.strokeRect(x + 0.5, y + 0.5, bsz - 1, bsz - 1);
+            }
+            idx++;
+          }
+        }
+        if (ratio >= 1 && !g.reduced && Math.random() < 0.1) {
+          g.particles.spawn({
+            x: wallX + Math.random() * bsz * 2, y: groundY - Math.random() * bsz * rows,
+            vx: 0, vy: -8, size: 1, life: 0.8, color: GOLD_LIGHT, alpha: 0.9
+          });
+        }
 
         // incoming "life happens" hazards
-        if (!g.reduced && g.dt && Math.random() < 0.07) {
+        if (!g.reduced && g.dt && Math.random() < 0.06) {
           g.particles.spawn({
-            x: w + 10,
-            y: h * 0.25 + Math.random() * (groundY - h * 0.3),
-            vx: -(90 + Math.random() * 70), vy: 0,
-            size: 3, life: 8, color: "rgba(242,236,224,0.55)", alpha: 0.8,
+            x: w + 6,
+            y: h * 0.25 + Math.random() * (groundY - h * 0.32),
+            vx: -(28 + Math.random() * 22), vy: 0,
+            size: 3, life: 10, color: "rgba(242,236,224,0.6)", alpha: 0.9,
             update: function (p) {
-              if (p.resolved || p.x > shieldRef.x) return;
+              if (p.resolved || p.x > shieldRef.x + bsz * 2 + 2) return;
               p.resolved = true;
               if (Math.random() < Math.min(1, shieldRef.ratio)) {
-                p.vx = 130 + Math.random() * 60;   // deflected
-                p.vy = -70 - Math.random() * 50;
-                p.g = 220;
-                p.color = "#e0c98c";
-                p.life = p.age + 0.55;
-              } else {
-                p.color = "rgba(208,122,94,0.85)"; // slipped through the gap
+                p.vx = 40 + Math.random() * 25;   // bounced off the wall
+                p.vy = -30 - Math.random() * 20;
+                p.g = 100;
+                p.color = GOLD_LIGHT;
+                p.size = 2;
                 p.life = p.age + 0.6;
+              } else {
+                p.color = RED;                     // slipped through the gap
+                p.life = p.age + 0.7;
               }
             }
           });
         }
 
-        // the shield — thickness and steadiness scale with cover ratio
-        var flicker = 1;
-        if (ratio < 0.45 && !g.reduced) {
-          flicker = clamp(0.45 + 0.55 * Math.sin(g.t * 13) * Math.sin(g.t * 5.1), 0.18, 1);
-        }
-        var lw = 3 + 13 * Math.min(1, ratio);
-        var alpha = (0.25 + 0.75 * Math.min(1, ratio)) * flicker;
-        ctx.lineCap = "round";
-        ctx.strokeStyle = g.colors.gold;
-        ctx.globalAlpha = alpha;
-        ctx.lineWidth = lw;
-        ctx.beginPath();
-        ctx.arc(mx, cy, R, -0.95, 0.95);
-        ctx.stroke();
-        ctx.globalAlpha = alpha * 0.45;
-        ctx.lineWidth = lw * 0.45;
-        ctx.beginPath();
-        ctx.arc(mx, cy, R * 0.86, -0.85, 0.85);
-        ctx.stroke();
-        if (ratio >= 1) {
-          ctx.globalAlpha = 0.14 + 0.06 * Math.sin(g.t * 3);
-          ctx.lineWidth = lw * 2.2;
-          ctx.beginPath();
-          ctx.arc(mx, cy, R * 1.06, -1, 1);
-          ctx.stroke();
-        }
-        ctx.globalAlpha = 1;
-
-        text(g, Math.round(Math.min(ratio, 1.2) * 100) + "% shielded",
-          mx + R * 0.7, cy - R * 0.95,
-          { color: "rgba(224,201,140,0.9)", size: 13 });
-
-        mascot.draw(ctx, mx, groundY, size, { gaze: 0.7 });
+        ptext(g, "SHIELD " + Math.round(Math.min(ratio, 1.2) * 100) + "%", w - 4, 12, GOLD_LIGHT, "right");
+        brickGround(g, groundY);
+        mascot.draw(ctx, mx, groundY, Math.min(h * 0.22, 34), { gaze: 0.7 });
       }
     }
   });
 
   /* ============================================================
-     LEVEL 3 — Future: the climb (growth trajectory)
+     WORLD 1-3 — Future: the flagpole climb
      ============================================================ */
 
   engine.registerLevel("retirement", {
     name: "Future",
-    title: "The Climb",
+    title: "World 1-3 · The Flagpole Climb",
     inputs: [
       { key: "age", label: "Your age today", min: 20, max: 60, step: 1, value: 30, fmt: "age" },
       { key: "retireAge", label: "Retirement age", min: 40, max: 70, step: 1, value: 60, fmt: "age" },
@@ -339,17 +385,17 @@
         : ratio >= 0.25 ? "cautious"
         : "concerned";
       var say = {
-        joyful: "The summit! I can see it from here!",
-        growth: "What a view — keep climbing!",
-        stable: "Halfway up. One step at a time.",
-        cautious: "This slope is gentler than I'd like…",
-        concerned: "The peak looks very far away."
+        joyful: "The flag! I can reach it!",
+        growth: "Great view from up here!",
+        stable: "Halfway up the staircase.",
+        cautious: "These stairs feel short...",
+        concerned: "The flag is so far away."
       }[mood];
       var coach = {
         joyful: "Your projected pot clears the target with room to spare. Now it's about the right vehicles — EPF, unit trusts, Shariah-compliant options — and staying the course.",
         growth: "You're on a strong trajectory. A small bump in monthly contributions, or a year or two more of compounding, closes the rest.",
         stable: "Solid base camp. Compounding does the heavy lifting from here — the earlier you raise contributions, the cheaper the summit gets.",
-        cautious: "The maths says the current pace lands well short. Retiring slightly later or automating a bigger contribution changes this curve dramatically.",
+        cautious: "The maths says the current pace lands well short. Retiring slightly later or automating a bigger contribution changes this staircase dramatically.",
         concerned: "At this pace the pot covers only a fraction of the income you want. Don't panic — starting is the hard part, and the curve is very sensitive to small changes."
       }[mood];
       return {
@@ -365,112 +411,86 @@
     scene: {
       draw: function (g) {
         var ctx = g.ctx, w = g.w, h = g.h;
-        var x0 = w * 0.1, x1 = w * 0.9;
-        var baseY = h * 0.8, topY = h * 0.16;
-        var maxClimb = baseY - topY;
+        var groundY = h - 12;
         var SCALE = 1.3;
         var ratio = clamp(g.m.ratio, 0, SCALE);
+        stars(g, 14, h * 0.4);
+
+        // staircase of blocks, total height = trajectory
+        var nSteps = 8;
+        var stairX0 = Math.round(w * 0.1);
+        var stepW = Math.max(8, Math.floor((w * 0.56) / nSteps));
+        var maxClimb = groundY - 22;
         var climb = maxClimb * (ratio / SCALE);
-        var a = 2.0; // growth-curve steepness
-
-        function px(p) { return lerp(x0, x1, p); }
-        function py(p) { return baseY - climb * ((Math.exp(a * p) - 1) / (Math.exp(a) - 1)); }
-
-        glow(g, x1, topY + maxClimb * (1 - 1 / SCALE), h * 0.4, "rgba(201,161,74,0.10)");
-
-        // goal line (= 100% of the target pot)
-        var goalY = baseY - maxClimb * (1 / SCALE);
-        ctx.setLineDash([6, 7]);
-        ctx.strokeStyle = "rgba(224,201,140,0.45)";
-        ctx.lineWidth = 1.4;
-        ctx.beginPath();
-        ctx.moveTo(x0, goalY);
-        ctx.lineTo(x1, goalY);
-        ctx.stroke();
-        ctx.setLineDash([]);
-        text(g, "Goal", x0 - 8, goalY + 4, { align: "right", color: "rgba(224,201,140,0.7)" });
-
-        // trajectory area + line
-        ctx.beginPath();
-        ctx.moveTo(x0, baseY);
-        for (var i = 0; i <= 40; i++) ctx.lineTo(px(i / 40), py(i / 40));
-        ctx.lineTo(x1, baseY);
-        ctx.closePath();
-        var fillGrad = ctx.createLinearGradient(0, topY, 0, baseY);
-        fillGrad.addColorStop(0, "rgba(201,161,74,0.16)");
-        fillGrad.addColorStop(1, "rgba(201,161,74,0.02)");
-        ctx.fillStyle = fillGrad;
-        ctx.fill();
-        ctx.beginPath();
-        for (var j = 0; j <= 40; j++) {
-          var pp = j / 40;
-          if (j === 0) ctx.moveTo(px(pp), py(pp));
-          else ctx.lineTo(px(pp), py(pp));
-        }
-        ctx.strokeStyle = g.colors.gold;
-        ctx.lineWidth = 3;
-        ctx.lineCap = "round";
-        ctx.stroke();
-
-        groundLine(g, baseY);
-
-        // age markers
-        var v = g.values;
-        [0, 0.5, 1].forEach(function (p) {
-          var ageAt = Math.round(lerp(v.age, v.retireAge, p));
-          ctx.strokeStyle = g.colors.line;
-          ctx.beginPath();
-          ctx.moveTo(px(p), baseY);
-          ctx.lineTo(px(p), baseY + 6);
-          ctx.stroke();
-          text(g, String(ageAt), px(p), baseY + 22);
-        });
-
-        // the goal "sun" at the end of the path
-        var sunY = py(1) - 26;
-        if (ratio >= 1) {
-          glow(g, x1, sunY, 46, "rgba(224,201,140,0.5)");
-          ctx.fillStyle = g.colors.goldSoft;
-          ctx.beginPath();
-          ctx.arc(x1, sunY, 13, 0, Math.PI * 2);
-          ctx.fill();
-        } else {
-          ctx.strokeStyle = "rgba(224,201,140,0.6)";
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.arc(x1, sunY, 11, 0, Math.PI * 2);
-          ctx.stroke();
+        var ea = Math.exp(2) - 1;
+        var tops = [];
+        for (var i = 0; i < nSteps; i++) {
+          var f = (Math.exp(2 * (i + 1) / nSteps) - 1) / ea;
+          var sh = Math.max(2, Math.round(climb * f));
+          tops.push(groundY - sh);
+          var x = stairX0 + i * stepW;
+          ctx.fillStyle = BRICK;
+          ctx.fillRect(x, groundY - sh, stepW - 1, sh);
+          ctx.fillStyle = BRICK_DARK;
+          for (var yy = groundY - sh + 4; yy < groundY; yy += 5) ctx.fillRect(x, yy, stepW - 1, 1);
+          ctx.fillStyle = GOLD;
+          ctx.fillRect(x, groundY - sh, stepW - 1, 1);
         }
 
-        // Sen walks the trajectory on loop
-        var pw = g.reduced ? 0.55 : (g.t * 0.055) % 1;
-        var slope = (py(Math.min(1, pw + 0.02)) - py(pw)) / (px(0.02) - px(0));
-        mascot.draw(ctx, px(pw), py(pw) + 2, Math.min(h * 0.16, 64), {
-          walk: g.t * 7,
-          lean: Math.atan(slope) * 0.35,
-          gaze: 0.8
-        });
+        // goal line
+        var goalY = Math.round(groundY - maxClimb / SCALE);
+        ctx.fillStyle = "rgba(231,192,105,0.5)";
+        for (var dx2 = stairX0; dx2 < w * 0.9; dx2 += 6) ctx.fillRect(dx2, goalY, 3, 1);
+        ptext(g, "GOAL", stairX0 + 2, goalY - 4, "rgba(231,192,105,0.8)", "left");
 
-        // sparkle trail on strong trajectories
-        if (!g.reduced && g.dt && ratio >= 0.8 && Math.random() < 0.2) {
-          g.particles.spawn({
-            x: px(pw) - 10, y: py(pw) - 8,
-            vx: -20 - Math.random() * 20, vy: -10 - Math.random() * 20,
-            size: 2, life: 0.9, color: g.colors.goldSoft, alpha: 0.7
-          });
+        // flagpole — the flag rises with the funding ratio
+        var poleX = Math.round(w * 0.85);
+        var poleTop = goalY - 6;
+        ctx.fillStyle = "#8aa89c";
+        ctx.fillRect(poleX, poleTop, 2, groundY - poleTop);
+        ctx.fillStyle = GOLD_LIGHT;
+        ctx.fillRect(poleX - 1, poleTop - 3, 4, 3);
+        var flagY = Math.round(lerp(groundY - 10, poleTop + 2, clamp(ratio, 0, 1)));
+        ctx.fillStyle = ratio >= 1 ? GOLD : "#c9a14a";
+        ctx.fillRect(poleX - 9, flagY, 9, 4);
+        ctx.fillRect(poleX - 6, flagY + 4, 6, 2);
+
+        // fireworks when the goal is beaten
+        if (ratio >= 1 && !g.reduced && Math.random() < 0.05) {
+          var fx2 = poleX - 10 + Math.random() * 20, fy2 = poleTop - 4 - Math.random() * 10;
+          for (var s2 = 0; s2 < 8; s2++) {
+            var ang = (s2 / 8) * Math.PI * 2;
+            g.particles.spawn({
+              x: fx2, y: fy2,
+              vx: Math.cos(ang) * 20, vy: Math.sin(ang) * 20,
+              size: 1, life: 0.7, color: s2 % 2 ? GOLD_LIGHT : TEAL, alpha: 1
+            });
+          }
         }
+
+        brickGround(g, groundY);
+
+        // Capy climbs the staircase on loop
+        var p = g.reduced ? 0.6 : (g.t * 0.07) % 1;
+        var stepIdx = Math.min(nSteps - 1, Math.floor(p * nSteps));
+        var capX = stairX0 + p * nSteps * stepW;
+        var capY = tops[stepIdx];
+        mascot.draw(ctx, capX, capY, Math.min(h * 0.18, 28), { walk: g.t * 6, gaze: 0.8 });
+
+        // age range, top-right (the bottom edge sits under the power bar)
+        ptext(g, "AGE " + g.values.age + "-" + g.values.retireAge, w - 4, 12, GOLD_LIGHT, "right");
       }
     }
   });
 
   /* ============================================================
-     LEVEL 4 — Legacy: the map home
-     (handled gently — a calm scene, never an alarmed mascot)
+     WORLD 1-4 — Legacy: the map home
+     (handled gently — a calm night scene, never an alarmed mascot)
      ============================================================ */
 
   engine.registerLevel("legacy", {
     name: "Legacy",
-    title: "The Map Home",
+    title: "World 1-4 · The Map Home",
     inputs: [
       { key: "loved", label: "Loved ones to provide for", min: 1, max: 8, step: 1, value: 3, fmt: "people" },
       { key: "docs", label: "Assets listed & documented", min: 0, max: 100, step: 5, value: 25, fmt: "percent" },
@@ -480,9 +500,9 @@
       var readiness = (v.will ? 0.5 : 0) + (v.docs / 100) * 0.5;
       var mood = readiness >= 0.7 ? "serene" : readiness >= 0.35 ? "calm" : "thoughtful";
       var say = {
-        serene: "Everything in its place. They'll be okay.",
-        calm: "A good start. We'll go gently.",
-        thoughtful: "It's tender to think about… but it's love, really."
+        serene: "All mapped. They'll be okay.",
+        calm: "A good start. Gently does it.",
+        thoughtful: "It's love, really."
       }[mood];
       var coach = {
         serene: "With a will or wasiat in place and your assets mapped, you've given your loved ones clarity instead of paperwork during the hardest week of their lives.",
@@ -502,118 +522,97 @@
     scene: {
       draw: function (g) {
         var ctx = g.ctx, w = g.w, h = g.h;
-        var groundY = h * 0.84;
+        var groundY = h - 10;
         var v = g.values;
+        stars(g, 30, h * 0.6);
 
-        // quiet night sky
-        glow(g, w * 0.65, h * 0.3, h * 0.6, "rgba(159,216,196,0.05)");
-        for (var i = 0; i < 26; i++) {
-          var sxr = ((i * 73) % 97) / 97, syr = ((i * 41) % 89) / 89;
-          ctx.globalAlpha = 0.1 + 0.4 * Math.abs(Math.sin(g.t * 0.6 + i * 1.3));
-          ctx.fillStyle = g.colors.cream;
-          ctx.fillRect(sxr * w, syr * h * 0.5, 1.6, 1.6);
-        }
-        ctx.globalAlpha = 1;
+        // pixel moon (top-right, clear of the speech bubble)
+        var moonX = w - 26;
+        ctx.fillStyle = "rgba(246,231,189,0.8)";
+        ctx.fillRect(moonX + 2, 10, 8, 8);
+        ctx.fillRect(moonX, 12, 12, 4);
+        ctx.fillStyle = "rgba(201,161,74,0.4)";
+        ctx.fillRect(moonX + 5, 13, 2, 2);
 
-        // the family map
-        var mw = Math.min(w * 0.46, 330), mh = Math.min(h * 0.56, 250);
-        var mcx = w * 0.65, mcy = h * 0.5;
-        ctx.save();
-        ctx.translate(mcx, mcy);
-        ctx.rotate(-0.03);
-        g.rr(ctx, -mw / 2, -mh / 2, mw, mh, 18);
-        ctx.fillStyle = "rgba(246,241,231,0.07)";
-        ctx.fill();
-        ctx.strokeStyle = "rgba(201,161,74,0.5)";
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-        g.rr(ctx, -mw / 2 + 8, -mh / 2 + 8, mw - 16, mh - 16, 12);
-        ctx.strokeStyle = "rgba(201,161,74,0.18)";
-        ctx.stroke();
+        // the family map panel
+        var mw = Math.round(Math.min(w * 0.52, 120));
+        var mh = Math.round(Math.min(h * 0.62, 96));
+        var mx0 = Math.round(w * 0.62 - mw / 2);
+        var my0 = Math.round(h * 0.46 - mh / 2);
+        ctx.fillStyle = "rgba(246,241,231,0.08)";
+        ctx.fillRect(mx0, my0, mw, mh);
+        ctx.fillStyle = GOLD;
+        ctx.fillRect(mx0, my0, mw, 1); ctx.fillRect(mx0, my0 + mh - 1, mw, 1);
+        ctx.fillRect(mx0, my0, 1, mh); ctx.fillRect(mx0 + mw - 1, my0, 1, mh);
 
-        // home node → loved-one nodes
-        var hx = 0, hy = -mh * 0.26;
+        // home: a little pixel house at the top of the map
+        var hx = mx0 + mw / 2, hy = my0 + 14;
+        ctx.fillStyle = GOLD;
+        ctx.fillRect(Math.round(hx - 5), hy - 4, 10, 7);
+        ctx.fillRect(Math.round(hx - 3), hy - 7, 6, 3);
+        ctx.fillRect(Math.round(hx - 1), hy - 9, 2, 2);
+        ctx.fillStyle = BRICK_DARK;
+        ctx.fillRect(Math.round(hx - 1), hy, 2, 3);
+
+        // dotted paths to each heart; documented = bright gold trail
         var n = v.loved;
         var solid = Math.round((v.docs / 100) * n);
         for (var k = 0; k < n; k++) {
-          var nx = n === 1 ? 0 : -mw * 0.36 + (mw * 0.72) * (k / (n - 1));
-          var ny = mh * 0.26 + Math.sin(k * 2.1) * mh * 0.05;
+          // span stops short of the wasiat seal in the bottom-right corner
+          var tx = n === 1 ? hx : mx0 + 10 + (mw - 32) * (k / (n - 1));
+          var ty = my0 + mh - 16 + ((k % 2) * 4);
           var documented = k < solid;
-          ctx.beginPath();
-          ctx.moveTo(hx, hy);
-          ctx.quadraticCurveTo((hx + nx) / 2, (hy + ny) / 2 + 14, nx, ny);
-          if (documented) {
-            ctx.setLineDash([]);
-            ctx.strokeStyle = "rgba(224,201,140,0.85)";
-            ctx.lineWidth = 2;
-          } else {
-            ctx.setLineDash([3, 6]);
-            ctx.strokeStyle = "rgba(242,236,224,0.25)";
-            ctx.lineWidth = 1.2;
+          var step = documented ? 4 : 8;
+          var dist = Math.hypot(tx - hx, ty - hy - 4);
+          for (var d = 6; d < dist - 4; d += step) {
+            var pxd = hx + (tx - hx) * (d / dist);
+            var pyd = (hy + 4) + (ty - hy - 4) * (d / dist);
+            ctx.fillStyle = documented ? "rgba(231,192,105,0.9)" : "rgba(242,236,224,0.25)";
+            ctx.fillRect(Math.round(pxd), Math.round(pyd), 1, 1);
           }
-          ctx.stroke();
-          ctx.setLineDash([]);
-          ctx.fillStyle = documented ? g.colors.goldSoft : "rgba(242,236,224,0.4)";
-          ctx.beginPath();
-          ctx.arc(nx, ny, documented ? 6 : 4.5, 0, Math.PI * 2);
-          ctx.fill();
+          heart(ctx, Math.round(tx - 2), Math.round(ty), documented ? RED : "rgba(242,236,224,0.3)");
         }
 
-        // home: a little house
-        ctx.fillStyle = g.colors.gold;
-        ctx.beginPath();
-        ctx.arc(hx, hy, 9, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = g.colors.goldSoft;
-        ctx.lineWidth = 2;
-        ctx.lineCap = "round";
-        ctx.beginPath();
-        ctx.moveTo(hx - 9, hy - 9);
-        ctx.lineTo(hx, hy - 17);
-        ctx.lineTo(hx + 9, hy - 9);
-        ctx.stroke();
-
-        // wasiat seal in the map corner
-        var wx = mw / 2 - 26, wy = mh / 2 - 26;
-        ctx.beginPath();
-        ctx.arc(wx, wy, 13, 0, Math.PI * 2);
+        // wasiat scroll in the map corner
+        var wx2 = mx0 + mw - 12, wy2 = my0 + mh - 14;
         if (v.will) {
-          ctx.fillStyle = g.colors.gold;
-          ctx.fill();
-          ctx.strokeStyle = g.colors.ink;
-          ctx.lineWidth = 2.4;
-          ctx.beginPath();
-          ctx.moveTo(wx - 5, wy);
-          ctx.lineTo(wx - 1.5, wy + 4);
-          ctx.lineTo(wx + 5.5, wy - 4);
-          ctx.stroke();
+          ctx.fillStyle = "#f6f1e7";
+          ctx.fillRect(wx2, wy2, 7, 9);
+          ctx.fillStyle = GOLD;
+          ctx.fillRect(wx2, wy2 + 3, 7, 2);
+          ctx.fillStyle = BRICK_DARK;
+          ctx.fillRect(wx2 + 1, wy2 + 6, 5, 1);
         } else {
-          ctx.setLineDash([3, 4]);
-          ctx.strokeStyle = "rgba(224,201,140,0.45)";
-          ctx.lineWidth = 1.5;
-          ctx.stroke();
-          ctx.setLineDash([]);
+          ctx.fillStyle = "rgba(242,236,224,0.3)";
+          ctx.fillRect(wx2, wy2, 2, 1); ctx.fillRect(wx2 + 5, wy2, 2, 1);
+          ctx.fillRect(wx2, wy2 + 8, 2, 1); ctx.fillRect(wx2 + 5, wy2 + 8, 2, 1);
+          ctx.fillRect(wx2, wy2, 1, 2); ctx.fillRect(wx2 + 6, wy2, 1, 2);
+          ctx.fillRect(wx2, wy2 + 7, 1, 2); ctx.fillRect(wx2 + 6, wy2 + 7, 1, 2);
         }
-        ctx.restore();
 
         // drifting fireflies
-        if (!g.reduced && g.dt && Math.random() < 0.05) {
+        if (!g.reduced && g.dt && Math.random() < 0.04) {
           g.particles.spawn({
-            x: mcx + (Math.random() - 0.5) * mw,
-            y: mcy + mh * 0.4,
-            vx: (Math.random() - 0.5) * 8, vy: -10 - Math.random() * 10,
-            size: 1.8, life: 4, color: g.colors.goldSoft, alpha: 0.45
+            x: mx0 + Math.random() * mw,
+            y: my0 + mh,
+            vx: (Math.random() - 0.5) * 3, vy: -4 - Math.random() * 4,
+            size: 1, life: 4, color: GOLD_LIGHT, alpha: 0.5
           });
         }
 
-        groundLine(g, groundY);
-        mascot.draw(ctx, w * 0.2, groundY, Math.min(h * 0.2, 80), { gaze: 0.8 });
+        // thin grass ground
+        ctx.fillStyle = BRICK;
+        ctx.fillRect(0, groundY, w, h - groundY);
+        ctx.fillStyle = "rgba(159,216,196,0.5)";
+        ctx.fillRect(0, groundY, w, 1);
+
+        mascot.draw(ctx, w * 0.2, groundY, Math.min(h * 0.2, 32), { gaze: 0.8 });
       }
     }
   });
 
   /* ============================================================
-     DOM wiring — chips, sliders, coach copy, vibe meter
+     DOM wiring — chips, sliders, coach copy, power meter
      ============================================================ */
 
   var chipsEl = document.getElementById("journeyLevels");
@@ -699,8 +698,8 @@
   var lastSay = "";
   engine.on("level", function (e) {
     var i = engine.order.indexOf(e.id);
-    tagEl.textContent = "Level " + (i + 1) + " of " + engine.order.length;
-    titleEl.textContent = e.def.title;
+    tagEl.textContent = "World 1-" + (i + 1);
+    titleEl.textContent = e.def.title.split("·")[1].trim();
     buildControls(e.def);
     for (var id in chips) chips[id].classList.toggle("is-active", id === e.id);
     lastSay = "";
@@ -726,6 +725,9 @@
   });
 
   engine.start(engine.order[0]);
-  // re-measure once layout (fonts, grid) has settled
+  // re-measure once layout has settled, and repaint when the pixel font lands
   requestAnimationFrame(function () { engine._resize(); });
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(function () { if (engine.level) engine._renderFrame(0); });
+  }
 })();
