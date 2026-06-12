@@ -1,4 +1,4 @@
-/* Sofina Johari - digital twin chat
+/* Amy - AI assistant chat for Sofina Johari
    Streams replies from /api/chat (Netlify function -> OpenRouter).
    Conversation history lives in memory - resets on page refresh. */
 
