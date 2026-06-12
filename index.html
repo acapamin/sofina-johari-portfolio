@@ -273,31 +273,42 @@
       <div class="container">
         <p class="section-eyebrow section-eyebrow--center reveal">What I Do</p>
         <h2 class="section-title section-title--center reveal">Advice that answers<br/><em>only to you.</em></h2>
-        <div class="services__grid">
-          <article class="service-card reveal">
-            <div class="service-card__icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        <div class="carousel-wrapper">
+          <div class="carousel services__carousel" role="region" aria-label="Services carousel">
+            <div class="carousel__track" id="servicesTrack">
+              <article class="service-card carousel__slide reveal">
+                <div class="service-card__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                </div>
+                <h3>Comprehensive Planning</h3>
+                <p>A full financial health assessment — cash flow, protection, investments, retirement and estate — with goals evaluated and progress monitored over time.</p>
+                <span class="service-card__num" aria-hidden="true">01</span>
+              </article>
+              <article class="service-card service-card--featured carousel__slide reveal">
+                <div class="service-card__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                </div>
+                <h3>One-off Modular Planning</h3>
+                <p>Targeted advice on a specific concern — a major purchase, your will and wasiat, or whether your retirement savings are on track. No long-term commitment required.</p>
+                <span class="service-card__num" aria-hidden="true">02</span>
+              </article>
+              <article class="service-card carousel__slide reveal">
+                <div class="service-card__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                </div>
+                <h3>Unbiased Recommendations</h3>
+                <p>Access to 8+ insurance and takaful providers and hundreds of unit trusts — so the product fits your plan, never the other way around.</p>
+                <span class="service-card__num" aria-hidden="true">03</span>
+              </article>
             </div>
-            <h3>Comprehensive Planning</h3>
-            <p>A full financial health assessment — cash flow, protection, investments, retirement and estate — with goals evaluated and progress monitored over time.</p>
-            <span class="service-card__num" aria-hidden="true">01</span>
-          </article>
-          <article class="service-card service-card--featured reveal">
-            <div class="service-card__icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-            </div>
-            <h3>One-off Modular Planning</h3>
-            <p>Targeted advice on a specific concern — a major purchase, your will and wasiat, or whether your retirement savings are on track. No long-term commitment required.</p>
-            <span class="service-card__num" aria-hidden="true">02</span>
-          </article>
-          <article class="service-card reveal">
-            <div class="service-card__icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
-            </div>
-            <h3>Unbiased Recommendations</h3>
-            <p>Access to 8+ insurance and takaful providers and hundreds of unit trusts — so the product fits your plan, never the other way around.</p>
-            <span class="service-card__num" aria-hidden="true">03</span>
-          </article>
+          </div>
+          <button class="carousel__control carousel__control--prev" id="servicesPrev" aria-label="Previous service">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          </button>
+          <button class="carousel__control carousel__control--next" id="servicesNext" aria-label="Next service">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
+          <div class="carousel__indicators" id="servicesIndicators"></div>
         </div>
       </div>
     </section>
@@ -369,60 +380,71 @@
       <div class="container">
         <p class="section-eyebrow section-eyebrow--center reveal">Client Stories</p>
         <h2 class="section-title section-title--center reveal">Real results,<br/><em>real people.</em></h2>
-        <div class="testimonials__grid">
+        <div class="carousel-wrapper">
+          <div class="carousel testimonials__carousel" role="region" aria-label="Testimonials carousel">
+            <div class="carousel__track" id="testimonialsTrack">
 
-          <article class="testimonial-card reveal">
-            <div class="testimonial-card__stars" aria-label="5 stars" aria-hidden="true">
-              <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+              <article class="testimonial-card carousel__slide reveal">
+                <div class="testimonial-card__stars" aria-label="5 stars" aria-hidden="true">
+                  <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+                </div>
+                <blockquote>
+                  <p>Thankful to have met Sofina during a sudden financial panic attack. She patiently walked us through the financial planning process and the implementation went smoothly. We finally got validation that we were on the right path — and we finally wrote a will, something we'd been talking about for years! I appreciate our quarterly meet-ups. Have been recommending Sofina to friends.</p>
+                </blockquote>
+                <footer class="testimonial-card__footer">
+                  <span class="testimonial-card__client">Married couple, early 40s</span>
+                  <span class="testimonial-card__role">Senior Manager &amp; Offshore Supervisor</span>
+                </footer>
+              </article>
+
+              <article class="testimonial-card carousel__slide reveal">
+                <div class="testimonial-card__stars" aria-label="5 stars" aria-hidden="true">
+                  <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+                </div>
+                <blockquote>
+                  <p>When I first connected with Sofina, I was deeply concerned about my financial future, having started late. Her ability to explain financial products clearly and tailor them to my needs consistently exceeded my expectations. Her financial expertise, dedication, and unwavering ethical integrity are highly valued. I wholeheartedly recommend her services.</p>
+                </blockquote>
+                <footer class="testimonial-card__footer">
+                  <span class="testimonial-card__client">Single female, mid-30s</span>
+                  <span class="testimonial-card__role">Regional Manager</span>
+                </footer>
+              </article>
+
+              <article class="testimonial-card carousel__slide reveal">
+                <div class="testimonial-card__stars" aria-label="5 stars" aria-hidden="true">
+                  <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+                </div>
+                <blockquote>
+                  <p>Sofina's warmth really helped with my anxiety in conversing about finances. I truly appreciate her advice covering blind spots I'd missed, and the reassurance that I'm on the right track.</p>
+                </blockquote>
+                <footer class="testimonial-card__footer">
+                  <span class="testimonial-card__client">Single female, late 20s</span>
+                  <span class="testimonial-card__role">Analyst</span>
+                </footer>
+              </article>
+
+              <article class="testimonial-card carousel__slide reveal">
+                <div class="testimonial-card__stars" aria-label="5 stars" aria-hidden="true">
+                  <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+                </div>
+                <blockquote>
+                  <p>I have been working with Sofina for about 2 years. From a comprehensive fact-finding process to implementation — she advised on loan settlement, guided a real estate name transfer, and proposed new investments. Sofina has been very professional and treats my information with utmost privacy throughout.</p>
+                </blockquote>
+                <footer class="testimonial-card__footer">
+                  <span class="testimonial-card__client">Married couple, mid-50s</span>
+                  <span class="testimonial-card__role">Retiree</span>
+                </footer>
+              </article>
+
             </div>
-            <blockquote>
-              <p>Thankful to have met Sofina during a sudden financial panic attack. She patiently walked us through the financial planning process and the implementation went smoothly. We finally got validation that we were on the right path — and we finally wrote a will, something we'd been talking about for years! I appreciate our quarterly meet-ups. Have been recommending Sofina to friends.</p>
-            </blockquote>
-            <footer class="testimonial-card__footer">
-              <span class="testimonial-card__client">Married couple, early 40s</span>
-              <span class="testimonial-card__role">Senior Manager &amp; Offshore Supervisor</span>
-            </footer>
-          </article>
-
-          <article class="testimonial-card reveal">
-            <div class="testimonial-card__stars" aria-label="5 stars" aria-hidden="true">
-              <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
-            </div>
-            <blockquote>
-              <p>When I first connected with Sofina, I was deeply concerned about my financial future, having started late. Her ability to explain financial products clearly and tailor them to my needs consistently exceeded my expectations. Her financial expertise, dedication, and unwavering ethical integrity are highly valued. I wholeheartedly recommend her services.</p>
-            </blockquote>
-            <footer class="testimonial-card__footer">
-              <span class="testimonial-card__client">Single female, mid-30s</span>
-              <span class="testimonial-card__role">Regional Manager</span>
-            </footer>
-          </article>
-
-          <article class="testimonial-card reveal">
-            <div class="testimonial-card__stars" aria-label="5 stars" aria-hidden="true">
-              <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
-            </div>
-            <blockquote>
-              <p>Sofina's warmth really helped with my anxiety in conversing about finances. I truly appreciate her advice covering blind spots I'd missed, and the reassurance that I'm on the right track.</p>
-            </blockquote>
-            <footer class="testimonial-card__footer">
-              <span class="testimonial-card__client">Single female, late 20s</span>
-              <span class="testimonial-card__role">Analyst</span>
-            </footer>
-          </article>
-
-          <article class="testimonial-card reveal">
-            <div class="testimonial-card__stars" aria-label="5 stars" aria-hidden="true">
-              <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
-            </div>
-            <blockquote>
-              <p>I have been working with Sofina for about 2 years. From a comprehensive fact-finding process to implementation — she advised on loan settlement, guided a real estate name transfer, and proposed new investments. Sofina has been very professional and treats my information with utmost privacy throughout.</p>
-            </blockquote>
-            <footer class="testimonial-card__footer">
-              <span class="testimonial-card__client">Married couple, mid-50s</span>
-              <span class="testimonial-card__role">Retiree</span>
-            </footer>
-          </article>
-
+          </div>
+          <button class="carousel__control carousel__control--prev" id="testimonialsPrev" aria-label="Previous testimonial">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          </button>
+          <button class="carousel__control carousel__control--next" id="testimonialsNext" aria-label="Next testimonial">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
+          <div class="carousel__indicators" id="testimonialsIndicators"></div>
         </div>
       </div>
     </section>
@@ -432,19 +454,30 @@
       <div class="container">
         <p class="section-eyebrow section-eyebrow--center reveal">Watch &amp; Learn</p>
         <h2 class="section-title section-title--center reveal">Financial insights<br/><em>on YouTube.</em></h2>
-        <div class="videos__grid">
-          <div class="video-embed reveal">
-            <iframe src="https://www.youtube.com/embed/63BmVA0eV6c" title="Bersedia Menghadapi Kemelesetan Ekonomi" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+        <div class="carousel-wrapper">
+          <div class="carousel videos__carousel" role="region" aria-label="Videos carousel">
+            <div class="carousel__track" id="videosTrack">
+              <div class="video-embed carousel__slide reveal">
+                <iframe src="https://www.youtube.com/embed/63BmVA0eV6c" title="Bersedia Menghadapi Kemelesetan Ekonomi" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+              </div>
+              <div class="video-embed carousel__slide reveal">
+                <iframe src="https://www.youtube.com/embed/0btngTNoWq8" title="Tengok Ini Dulu Sebelum Cuba Buy Now Pay Later" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+              </div>
+              <div class="video-embed carousel__slide reveal">
+                <iframe src="https://www.youtube.com/embed/4WS38jKTnyM" title="Apa Beza Active dengan Passive Income?" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+              </div>
+              <div class="video-embed carousel__slide reveal">
+                <iframe src="https://www.youtube.com/embed/PAXuVwB92wc" title="Buat 4 Benda Ini Supaya Tak Pokai Hujung Bulan" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+              </div>
+            </div>
           </div>
-          <div class="video-embed reveal">
-            <iframe src="https://www.youtube.com/embed/0btngTNoWq8" title="Tengok Ini Dulu Sebelum Cuba Buy Now Pay Later" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
-          </div>
-          <div class="video-embed reveal">
-            <iframe src="https://www.youtube.com/embed/4WS38jKTnyM" title="Apa Beza Active dengan Passive Income?" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
-          </div>
-          <div class="video-embed reveal">
-            <iframe src="https://www.youtube.com/embed/PAXuVwB92wc" title="Buat 4 Benda Ini Supaya Tak Pokai Hujung Bulan" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
-          </div>
+          <button class="carousel__control carousel__control--prev" id="videosPrev" aria-label="Previous video">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          </button>
+          <button class="carousel__control carousel__control--next" id="videosNext" aria-label="Next video">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
+          <div class="carousel__indicators" id="videosIndicators"></div>
         </div>
       </div>
     </section>
@@ -682,6 +715,7 @@
   <script src="Mascot.js"></script>
   <script src="FinancialEngine.js"></script>
   <script src="financial-levels.js"></script>
+  <script src="carousel.js"></script>
   <script src="main.js"></script>
   <script src="chat.js"></script>
 </body>
