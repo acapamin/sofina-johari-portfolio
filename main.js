@@ -1,5 +1,5 @@
 /* Sofina Johari — landing page interactions
-   GSAP scroll choreography + Three.js particle fields */
+   GSAP scroll choreography + Three.js particle fields & water simulation */
 
 (function () {
   "use strict";
@@ -182,6 +182,248 @@
   createParticleField(document.getElementById("ctaCanvas"), {
     count: 450, color: 0x9fd8c4, size: 0.04, opacity: 0.5, parallax: false
   });
+
+  /* ---------- Story water simulation ----------
+     GPU height-field ripple solver (ping-pong render targets) layered
+     with procedural ambient waves, shaded with fresnel + gold sun glints. */
+  function createWaterSurface(canvas, pointerTarget) {
+    if (!canvas) return null;
+    if (!hasThree || prefersReducedMotion) {
+      canvas.style.display = "none";
+      return null;
+    }
+    var renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: false });
+    } catch (e) {
+      canvas.style.display = "none";
+      return null;
+    }
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    var SIM_RES = 256;
+    var rtOptions = {
+      type: THREE.HalfFloatType,
+      format: THREE.RGBAFormat,
+      minFilter: THREE.LinearFilter,
+      magFilter: THREE.LinearFilter,
+      depthBuffer: false,
+      stencilBuffer: false
+    };
+    var rtA = new THREE.WebGLRenderTarget(SIM_RES, SIM_RES, rtOptions);
+    var rtB = new THREE.WebGLRenderTarget(SIM_RES, SIM_RES, rtOptions);
+
+    var quadVert = [
+      "varying vec2 vUv;",
+      "void main() {",
+      "  vUv = uv;",
+      "  gl_Position = vec4(position.xy, 0.0, 1.0);",
+      "}"
+    ].join("\n");
+
+    /* r = height, g = velocity */
+    var simFrag = [
+      "precision highp float;",
+      "varying vec2 vUv;",
+      "uniform sampler2D uPrev;",
+      "uniform vec2 uTexel;",
+      "uniform vec2 uDrop;",
+      "uniform float uDropStrength;",
+      "uniform float uDropRadius;",
+      "void main() {",
+      "  vec2 c = texture2D(uPrev, vUv).rg;",
+      "  float l = texture2D(uPrev, vUv - vec2(uTexel.x, 0.0)).r;",
+      "  float r = texture2D(uPrev, vUv + vec2(uTexel.x, 0.0)).r;",
+      "  float b = texture2D(uPrev, vUv - vec2(0.0, uTexel.y)).r;",
+      "  float t = texture2D(uPrev, vUv + vec2(0.0, uTexel.y)).r;",
+      "  float lap = (l + r + b + t) * 0.25 - c.r;",
+      "  float vel = (c.g + lap * 1.7) * 0.984;",
+      "  float h = (c.r + vel) * 0.9985;",
+      "  if (uDrop.x >= 0.0) {",
+      "    float d = distance(vUv, uDrop);",
+      "    h += uDropStrength * exp(-d * d / (uDropRadius * uDropRadius));",
+      "  }",
+      "  gl_FragColor = vec4(h, vel, 0.0, 1.0);",
+      "}"
+    ].join("\n");
+
+    var renderFrag = [
+      "precision highp float;",
+      "varying vec2 vUv;",
+      "uniform sampler2D uHeight;",
+      "uniform vec2 uTexel;",
+      "uniform float uTime;",
+      "uniform float uAspect;",
+      "float ambient(vec2 p, float t) {",
+      "  float h = 0.0;",
+      "  h += 0.40 * sin(dot(p, vec2(5.2, 1.4)) + t * 0.9);",
+      "  h += 0.28 * sin(dot(p, vec2(-3.1, 4.7)) + t * 0.7);",
+      "  h += 0.20 * sin(dot(p, vec2(8.6, -3.2)) + t * 1.3);",
+      "  h += 0.12 * sin(dot(p, vec2(-11.4, -7.3)) + t * 1.8);",
+      "  h += 0.08 * sin(dot(p, vec2(16.0, 9.0)) + t * 2.4);",
+      "  return h;",
+      "}",
+      "void main() {",
+      "  vec2 p = vec2(vUv.x * uAspect, vUv.y) * 4.0;",
+      "  float e = 0.04;",
+      "  float hs  = texture2D(uHeight, vUv).r;",
+      "  float hsx = texture2D(uHeight, vUv + vec2(uTexel.x, 0.0)).r;",
+      "  float hsy = texture2D(uHeight, vUv + vec2(0.0, uTexel.y)).r;",
+      "  float ha  = ambient(p, uTime);",
+      "  float hax = ambient(p + vec2(e, 0.0), uTime);",
+      "  float hay = ambient(p + vec2(0.0, e), uTime);",
+      "  vec2 slope = vec2(hsx - hs, hsy - hs) * 55.0",
+      "             + vec2(hax - ha, hay - ha) / e * 0.10;",
+      "  vec3 n = normalize(vec3(-slope, 1.0));",
+      "  vec3 viewDir = normalize(vec3(0.0, 0.30, 1.0));",
+      "  vec3 lightDir = normalize(vec3(-0.45, 0.65, 0.55));",
+      "  float fresnel = pow(1.0 - max(dot(n, viewDir), 0.0), 3.0);",
+      "  vec3 deep = vec3(0.031, 0.110, 0.090);",
+      "  vec3 shallow = vec3(0.125, 0.310, 0.255);",
+      "  vec3 skyCol = vec3(0.78, 0.81, 0.74);",
+      "  vec3 gold = vec3(0.788, 0.631, 0.290);",
+      "  vec2 ruv = clamp(vUv + n.xy * 0.12, 0.0, 1.0);",
+      "  float crest = clamp(hs * 7.0 + ha * 0.5 + 0.5, 0.0, 1.0);",
+      "  vec3 col = mix(deep, shallow, crest * 0.55 + ruv.y * 0.45);",
+      "  col = mix(col, skyCol, fresnel * 0.5);",
+      "  vec3 hv = normalize(lightDir + viewDir);",
+      "  float ndh = max(dot(n, hv), 0.0);",
+      "  col += gold * pow(ndh, 140.0) * 1.6;",
+      "  col += gold * pow(ndh, 12.0) * 0.15;",
+      "  float ca = ambient(p * 2.1 + vec2(uTime * 0.12, -uTime * 0.08), uTime * 1.5);",
+      "  float web = pow(clamp(1.0 - abs(ca), 0.0, 1.0), 11.0);",
+      "  float mask = smoothstep(-0.2, 0.9, ambient(p * 0.6 + vec2(uTime * 0.05, 0.0), uTime * 0.35));",
+      "  col += vec3(0.50, 0.68, 0.57) * web * mask * 0.2 * (1.0 - fresnel);",
+      "  col += vec3(0.93, 0.86, 0.68) * smoothstep(0.5, 1.1, vUv.y) * 0.12;",
+      "  float vig = smoothstep(0.0, 0.12, vUv.x) * smoothstep(1.0, 0.88, vUv.x)",
+      "            * smoothstep(0.0, 0.10, vUv.y) * smoothstep(1.0, 0.90, vUv.y);",
+      "  col *= mix(0.62, 1.0, vig);",
+      "  gl_FragColor = vec4(col, 1.0);",
+      "}"
+    ].join("\n");
+
+    var camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+    var simMaterial = new THREE.ShaderMaterial({
+      vertexShader: quadVert,
+      fragmentShader: simFrag,
+      uniforms: {
+        uPrev: { value: null },
+        uTexel: { value: new THREE.Vector2(1 / SIM_RES, 1 / SIM_RES) },
+        uDrop: { value: new THREE.Vector2(-1, -1) },
+        uDropStrength: { value: 0 },
+        uDropRadius: { value: 0.02 }
+      },
+      depthTest: false,
+      depthWrite: false
+    });
+    var renderMaterial = new THREE.ShaderMaterial({
+      vertexShader: quadVert,
+      fragmentShader: renderFrag,
+      uniforms: {
+        uHeight: { value: null },
+        uTexel: { value: new THREE.Vector2(1 / SIM_RES, 1 / SIM_RES) },
+        uTime: { value: 0 },
+        uAspect: { value: 1 }
+      },
+      depthTest: false,
+      depthWrite: false
+    });
+
+    var quadGeo = new THREE.PlaneGeometry(2, 2);
+    var simScene = new THREE.Scene();
+    var simMesh = new THREE.Mesh(quadGeo, simMaterial);
+    simMesh.frustumCulled = false;
+    simScene.add(simMesh);
+    var renderScene = new THREE.Scene();
+    var renderMesh = new THREE.Mesh(quadGeo, renderMaterial);
+    renderMesh.frustumCulled = false;
+    renderScene.add(renderMesh);
+
+    var drops = [];
+    function addDrop(u, v, strength, radius) {
+      if (drops.length > 8) drops.shift();
+      drops.push({ u: u, v: v, strength: strength, radius: radius });
+    }
+
+    var lastU = -10, lastV = -10;
+    pointerTarget.addEventListener("pointermove", function (e) {
+      var rect = canvas.getBoundingClientRect();
+      var u = (e.clientX - rect.left) / rect.width;
+      var v = 1 - (e.clientY - rect.top) / rect.height;
+      if (u < 0 || u > 1 || v < 0 || v > 1) return;
+      var dx = u - lastU, dy = v - lastV;
+      if (dx * dx + dy * dy < 0.0002) return;
+      lastU = u; lastV = v;
+      addDrop(u, v, 0.05, 0.02);
+    }, { passive: true });
+    pointerTarget.addEventListener("pointerdown", function (e) {
+      var rect = canvas.getBoundingClientRect();
+      addDrop(
+        (e.clientX - rect.left) / rect.width,
+        1 - (e.clientY - rect.top) / rect.height,
+        0.22, 0.035
+      );
+    }, { passive: true });
+
+    function resize() {
+      var w = canvas.clientWidth || canvas.parentElement.clientWidth;
+      var h = canvas.clientHeight || canvas.parentElement.clientHeight;
+      renderer.setSize(w, h, false);
+      renderMaterial.uniforms.uAspect.value = w / h;
+    }
+    resize();
+    window.addEventListener("resize", resize);
+
+    var visible = true;
+    var observer = new IntersectionObserver(function (entries) {
+      visible = entries[0].isIntersecting;
+    });
+    observer.observe(canvas);
+
+    /* occasional ambient raindrop */
+    var nextRain = 1.2;
+    var clock = new THREE.Clock();
+
+    function simStep() {
+      var drop = drops.shift();
+      if (drop) {
+        simMaterial.uniforms.uDrop.value.set(drop.u, drop.v);
+        simMaterial.uniforms.uDropStrength.value = drop.strength;
+        simMaterial.uniforms.uDropRadius.value = drop.radius;
+      } else {
+        simMaterial.uniforms.uDrop.value.set(-1, -1);
+      }
+      simMaterial.uniforms.uPrev.value = rtA.texture;
+      renderer.setRenderTarget(rtB);
+      renderer.render(simScene, camera);
+      var tmp = rtA; rtA = rtB; rtB = tmp;
+    }
+
+    function tick() {
+      requestAnimationFrame(tick);
+      if (!visible) return;
+      var t = clock.getElapsedTime();
+      if (t > nextRain) {
+        nextRain = t + 1.6 + Math.random() * 2.4;
+        addDrop(0.12 + Math.random() * 0.76, 0.12 + Math.random() * 0.76,
+          0.08 + Math.random() * 0.1, 0.02 + Math.random() * 0.02);
+      }
+      simStep();
+      simStep();
+      renderMaterial.uniforms.uHeight.value = rtA.texture;
+      renderMaterial.uniforms.uTime.value = t;
+      renderer.setRenderTarget(null);
+      renderer.render(renderScene, camera);
+    }
+    tick();
+    return renderer;
+  }
+
+  createWaterSurface(
+    document.getElementById("storyWaterCanvas"),
+    document.getElementById("storyWater")
+  );
 
   /* ---------- GSAP ---------- */
   if (!hasGSAP || prefersReducedMotion) {
