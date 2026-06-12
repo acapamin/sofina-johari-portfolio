@@ -109,10 +109,7 @@
       body: JSON.stringify({ messages: history }),
     })
       .then(function (res) {
-        if (!res.ok || !res.body) throw new Error("Request failed");
-        var reader = res.body.getReader();
-        var decoder = new TextDecoder();
-        var buffer = "";
+        if (!res.ok) throw new Error("Request failed");
 
         function onDelta(delta) {
           if (reply === "") bubble.classList.remove("is-pending");
@@ -120,6 +117,19 @@
           bubble.textContent = reply;
           scrollToEnd();
         }
+
+        // Older mobile WebKit and in-app browsers (WhatsApp/Instagram/FB)
+        // don't expose res.body as a readable stream — fall back to
+        // buffering the whole SSE response and parsing it at once.
+        if (!res.body || typeof res.body.getReader !== "function") {
+          return res.text().then(function (text) {
+            parseSSEChunk(text + "\n", onDelta);
+          });
+        }
+
+        var reader = res.body.getReader();
+        var decoder = new TextDecoder();
+        var buffer = "";
 
         function pump() {
           return reader.read().then(function (result) {

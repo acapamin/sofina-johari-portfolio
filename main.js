@@ -40,47 +40,6 @@
   window.addEventListener("scroll", onScroll, { passive: true });
   onScroll();
 
-  /* ---------- Ebook PDF download (mobile) ---------- */
-  var ebookBtn = document.getElementById("ebookDownloadBtn");
-  if (ebookBtn) {
-    var ua = navigator.userAgent || "";
-    var isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
-    var isAndroid = /Android/i.test(ua);
-
-    if (isIOS) {
-      ebookBtn.removeAttribute("download");
-      ebookBtn.addEventListener("click", function () {
-        var toast = document.createElement("div");
-        toast.textContent = "PDF opened — tap the Share button → Save to Files to keep it.";
-        toast.style.cssText = "position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:12px 20px;border-radius:8px;font-size:14px;line-height:1.4;z-index:9999;max-width:88vw;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.5)";
-        document.body.appendChild(toast);
-        setTimeout(function () { toast.remove(); }, 5500);
-      });
-    } else if (isAndroid) {
-      ebookBtn.addEventListener("click", function (e) {
-        e.preventDefault();
-        var url = ebookBtn.getAttribute("href");
-        var filename = ebookBtn.getAttribute("download") || "financial-planning-sofina-johari.pdf";
-        fetch(url)
-          .then(function (r) { return r.blob(); })
-          .then(function (blob) {
-            var blobUrl = URL.createObjectURL(blob);
-            var a = document.createElement("a");
-            a.href = blobUrl;
-            a.download = filename;
-            a.style.display = "none";
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(function () {
-              document.body.removeChild(a);
-              URL.revokeObjectURL(blobUrl);
-            }, 300);
-          })
-          .catch(function () { window.open(url, "_blank"); });
-      });
-    }
-  }
-
   /* ---------- Three.js particle field ---------- */
   var particleSprite = null;
   function getParticleSprite() {
