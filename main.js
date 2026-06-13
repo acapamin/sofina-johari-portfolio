@@ -540,7 +540,7 @@
   /* Preloader -> hero intro */
   var intro = gsap.timeline();
   intro
-    .to(".preloader__name", { opacity: 1, duration: 0.6, ease: "power2.out", delay: 0.5 })
+    .to(".preloader__name", { opacity: 1, duration: 0.6, ease: "power2.out", delay: 2 })
     .to(".preloader__line", { scaleX: 1, duration: 0.7, ease: "power3.inOut" }, "-=0.2")
     .to(".preloader__inner", { opacity: 0, y: -20, duration: 0.45, ease: "power2.in", delay: 0.15 })
     .to("#preloader", {
