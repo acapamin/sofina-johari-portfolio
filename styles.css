@@ -369,6 +369,31 @@ ul { list-style: none; }
   text-shadow: 0 1px 8px rgba(11, 31, 26, 0.6);
   pointer-events: none;
 }
+.story__eyebrow {
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+.story__portrait-title {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  max-width: 85%;
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(1.3rem, 3.5vw, 2rem);
+  line-height: 1.08;
+  letter-spacing: -0.018em;
+  color: var(--text-on-dark);
+  text-shadow: 0 2px 12px rgba(11, 31, 26, 0.8);
+  pointer-events: none;
+}
+.story__portrait-title em {
+  font-style: italic;
+  color: var(--gold-soft);
+}
 .story__paragraphs { margin-top: 1.8rem; display: grid; gap: 1.2rem; max-width: 56ch; }
 .story__paragraphs p { color: var(--text-muted); font-size: 1.04rem; }
 .story__paragraphs strong { color: var(--text); }
@@ -1278,7 +1303,7 @@ ul { list-style: none; }
   .evis-sun { opacity: 1; transform: none; animation: none; }
   .evis-spark { opacity: 0.9; animation: none; }
 }
-.ebook__eyebrow { color: var(--gold-soft); }
+.ebook__eyebrow { text-align: center; color: var(--gold-soft); }
 .ebook__title {
   color: var(--text-on-dark);
   margin-top: 0.5rem;
