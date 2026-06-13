@@ -799,14 +799,14 @@ ul { list-style: none; }
 }
 .journey__panel-eyebrow {
   font-family: var(--font-pixel);
-  font-size: 0.55rem;
+  font-size: 0.7rem;
   text-transform: uppercase;
   color: var(--gold);
 }
 .journey__panel-title {
   font-family: var(--font-pixel);
   font-weight: 400;
-  font-size: 0.85rem;
+  font-size: 1rem;
   line-height: 1.6;
   text-transform: uppercase;
   color: var(--ink);
@@ -820,7 +820,7 @@ ul { list-style: none; }
   gap: 1rem;
   margin-bottom: 0.3rem;
 }
-.journey__control-label { font-size: 0.86rem; font-weight: 600; color: var(--text); }
+.journey__control-label { font-size: 1rem; font-weight: 600; color: var(--text); }
 .journey__control output {
   font-size: 0.86rem;
   font-weight: 600;
