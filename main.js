@@ -425,6 +425,103 @@
     document.getElementById("storyWater")
   );
 
+  var finePointer = window.matchMedia("(pointer: fine)").matches;
+
+  /* ---------- Service card pointer sheen ----------
+     Tracks the cursor so the gold glow follows the pointer across the card. */
+  if (finePointer) {
+    document.querySelectorAll(".service-card").forEach(function (card) {
+      card.addEventListener("pointermove", function (e) {
+        var r = card.getBoundingClientRect();
+        card.style.setProperty("--mx", ((e.clientX - r.left) / r.width) * 100 + "%");
+        card.style.setProperty("--my", ((e.clientY - r.top) / r.height) * 100 + "%");
+      }, { passive: true });
+    });
+  }
+
+  /* ---------- Magnetic primary buttons ----------
+     A subtle pull toward the cursor — premium tactility, desktop only. */
+  if (finePointer && !prefersReducedMotion) {
+    document.querySelectorAll(".btn--gold, .bridge__cta").forEach(function (btn) {
+      btn.addEventListener("pointermove", function (e) {
+        var r = btn.getBoundingClientRect();
+        var mx = e.clientX - (r.left + r.width / 2);
+        var my = e.clientY - (r.top + r.height / 2);
+        btn.style.transform = "translate(" + mx * 0.18 + "px," + my * 0.3 + "px)";
+      });
+      btn.addEventListener("pointerleave", function () {
+        btn.style.transform = "";
+      });
+    });
+  }
+
+  /* ---------- Contextual content-to-CTA bridge ----------
+     Once a visitor actively engages with the journey tool (or opens Amy),
+     a contextual CTA slides into view with copy tuned to their progress,
+     bridging interactive play straight into booking a consultation. */
+  (function setupBridge() {
+    var bridge = document.getElementById("bridge");
+    if (!bridge) return;
+    var titleEl = document.getElementById("bridgeTitle");
+    var eyebrowEl = document.getElementById("bridgeEyebrow");
+    var closeBtn = document.getElementById("bridgeClose");
+    var ctaEl = document.getElementById("bridgeCta");
+    var controls = document.getElementById("journeyControls");
+    var vibePct = document.getElementById("journeyVibePct");
+
+    var dismissed = false, shown = false, moves = 0, contactInView = false;
+    try { dismissed = sessionStorage.getItem("bridgeDismissed") === "1"; } catch (e) {}
+
+    function copyForPct(pct) {
+      if (pct >= 75) return { e: "You're building real momentum", t: "Let's turn this into a personalised plan." };
+      if (pct >= 40) return { e: "You're on your way", t: "See how much further a tailored plan goes." };
+      return { e: "Every plan starts here", t: "Ready to make these numbers real?" };
+    }
+    function show() {
+      if (dismissed || shown || contactInView) return;
+      shown = true;
+      var pct = parseInt((vibePct && vibePct.textContent) || "0", 10) || 0;
+      var c = copyForPct(pct);
+      eyebrowEl.textContent = c.e;
+      titleEl.textContent = c.t;
+      bridge.hidden = false;
+      bridge.setAttribute("aria-hidden", "false");
+      requestAnimationFrame(function () { bridge.classList.add("is-visible"); });
+    }
+    function hide() {
+      if (!shown) return;
+      shown = false;
+      bridge.classList.remove("is-visible");
+      bridge.setAttribute("aria-hidden", "true");
+    }
+    function dismiss() {
+      dismissed = true;
+      hide();
+      try { sessionStorage.setItem("bridgeDismissed", "1"); } catch (e) {}
+    }
+
+    // Hide whenever the contact section is on screen — never compete with it.
+    var contact = document.getElementById("contact");
+    if (contact && "IntersectionObserver" in window) {
+      new IntersectionObserver(function (entries) {
+        contactInView = entries[0].isIntersecting;
+        if (contactInView) hide();
+      }, { threshold: 0.1 }).observe(contact);
+    }
+
+    if (controls) {
+      controls.addEventListener("input", function () {
+        if (++moves >= 3) show();
+      });
+    }
+    var chatLaunch = document.getElementById("chatLaunch");
+    if (chatLaunch) {
+      chatLaunch.addEventListener("click", function () { setTimeout(show, 500); });
+    }
+    closeBtn.addEventListener("click", dismiss);
+    ctaEl.addEventListener("click", function () { setTimeout(dismiss, 350); });
+  })();
+
   /* ---------- GSAP ---------- */
   if (!hasGSAP || prefersReducedMotion) {
     document.documentElement.classList.add("gsap-off");
@@ -461,12 +558,16 @@
   for (var c = 0; c < 3; c++) track.appendChild(group.cloneNode(true));
   gsap.to(track, { xPercent: -25, duration: 22, ease: "none", repeat: -1 });
 
-  /* Generic reveals */
-  gsap.utils.toArray(".reveal").forEach(function (el) {
-    gsap.to(el, {
-      opacity: 1, y: 0, duration: 0.9, ease: "power3.out",
-      scrollTrigger: { trigger: el, start: "top 86%" }
-    });
+  /* Generic reveals — batched so elements entering together cascade in,
+     giving each section a choreographed rhythm rather than popping at once. */
+  ScrollTrigger.batch(".reveal", {
+    start: "top 88%",
+    onEnter: function (batch) {
+      gsap.to(batch, {
+        opacity: 1, y: 0, duration: 0.9, ease: "power3.out",
+        stagger: 0.09, overwrite: true
+      });
+    }
   });
 
   /* Stat counters */
