@@ -140,6 +140,7 @@
 
   <!-- Preloader -->
   <div class="preloader" id="preloader" aria-hidden="true">
+    <canvas class="preloader__canvas" id="preloaderCanvas" aria-hidden="true"></canvas>
     <div class="preloader__inner">
       <span class="preloader__name">Sofina Johari</span>
       <span class="preloader__line"></span>
@@ -152,7 +153,7 @@
   <!-- Navigation -->
   <header class="nav" id="nav">
     <div class="nav__inner">
-      <a href="#top" class="nav__logo" aria-label="Sofina Johari — home">
+      <a href="/" class="nav__logo" aria-label="Sofina Johari — home">
         <span class="nav__monogram" aria-hidden="true">SJ</span>
         <span class="nav__name">Sofina&nbsp;Johari</span>
       </a>
@@ -205,10 +206,6 @@
         </div>
       </div>
 
-      <div class="hero__scroll" aria-hidden="true">
-        <span class="hero__scroll-label">Scroll</span>
-        <span class="hero__scroll-track"><span class="hero__scroll-thumb"></span></span>
-      </div>
     </section>
 
     <!-- ============ MARQUEE ============ -->
@@ -227,15 +224,15 @@
     <section class="story" id="story">
       <div class="container story__grid">
         <div class="story__media reveal">
+          <p class="section-eyebrow section-eyebrow--center reveal story__eyebrow">The Story</p>
           <div class="story__portrait" id="storyWater">
             <canvas class="story__water-canvas" id="storyWaterCanvas" aria-hidden="true"></canvas>
             <div class="story__portrait-ring" aria-hidden="true"></div>
+            <h2 class="story__portrait-title">From quantum problems<br/><em>to money problems.</em></h2>
             <span class="story__portrait-caption">Dr. Sofina Johari</span>
           </div>
         </div>
         <div class="story__text">
-          <p class="section-eyebrow section-eyebrow--center reveal">The Story</p>
-          <h2 class="section-title section-title--center reveal">From quantum problems<br/><em>to money problems.</em></h2>
           <div class="story__paragraphs">
             <p class="reveal">In 2016 I was a fresh physics graduate who could model battery materials at the atomic level — yet I struggled to navigate my own personal finances. Nobody had taught me. That frustration became my calling.</p>
             <p class="reveal">I spent four years at UOB Kay Hian Wealth Advisors learning the craft, earned my licenses, and completed my PhD along the way. Today I apply the same discipline I used in the lab to one question: <strong>how do we make your money work, honestly and optimally?</strong></p>
@@ -626,7 +623,7 @@
           </div><!-- /.ebook__book-wrap -->
         </div>
         <div class="ebook__body">
-          <p class="section-eyebrow ebook__eyebrow reveal">Yours Free</p>
+          <p class="section-eyebrow section-eyebrow--center ebook__eyebrow reveal">Yours Free</p>
           <h2 class="section-title ebook__title reveal">Simple financial concepts<br/><em>for everyone.</em></h2>
           <p class="ebook__sub reveal">Adopt these strategies to improve your financial situation immediately!</p>
           <a
