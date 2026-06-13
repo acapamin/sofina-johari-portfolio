@@ -425,6 +425,11 @@
     document.getElementById("storyWater")
   );
 
+  createWaterSurface(
+    document.getElementById("preloaderCanvas"),
+    document.getElementById("preloader")
+  );
+
   var finePointer = window.matchMedia("(pointer: fine)").matches;
 
   /* ---------- Service card pointer sheen ----------
@@ -579,12 +584,6 @@
       scrollTrigger: { trigger: el, start: "top 88%" },
       onUpdate: function () { el.textContent = Math.round(obj.v); }
     });
-  });
-
-  /* Hero content drifts up as you scroll away */
-  gsap.to(".hero__content", {
-    yPercent: -12, opacity: 0.25, ease: "none",
-    scrollTrigger: { trigger: ".hero", start: "top top", end: "bottom 35%", scrub: true }
   });
 
   /* Portrait gentle parallax */
