@@ -310,9 +310,9 @@ ul { list-style: none; }
 .section-title {
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: clamp(2rem, 5vw, 3.4rem);
-  line-height: 1.1;
-  letter-spacing: -0.01em;
+  font-size: clamp(2.1rem, 5.4vw, 3.8rem);
+  line-height: 1.08;
+  letter-spacing: -0.018em;
   color: var(--ink);
 }
 .section-title em { font-style: italic; color: var(--gold); }
@@ -1877,4 +1877,173 @@ ul { list-style: none; }
 @media (prefers-reduced-motion: reduce) {
   .chat-panel { transition: none; }
   .chat-msg.is-pending::after { animation: none; }
+}
+
+/* ============================================================
+   Premium polish — choreographed micro-interactions, refined
+   hover states, and the contextual content-to-CTA bridge.
+   Layered on top so the conversion structure stays untouched.
+   ============================================================ */
+
+/* --- Section eyebrow: a short gold rule that reads as a kicker --- */
+.section-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+.section-eyebrow::before {
+  content: "";
+  width: 1.8rem;
+  height: 1px;
+  background: linear-gradient(90deg, var(--gold), transparent);
+  flex-shrink: 0;
+}
+.section-eyebrow--center { justify-content: center; }
+
+/* --- Service cards: pointer-tracked sheen, gold accent, icon motion --- */
+.service-card > * { position: relative; z-index: 1; }
+.service-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(180px circle at var(--mx, 50%) var(--my, 0%), rgba(201, 161, 74, 0.14), transparent 60%);
+  opacity: 0;
+  transition: opacity 0.4s var(--ease-out);
+}
+.service-card:hover::before { opacity: 1; }
+.service-card::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  z-index: 2;
+  background: linear-gradient(90deg, var(--gold), var(--gold-soft));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.5s var(--ease-out);
+}
+.service-card:hover::after { transform: scaleX(1); }
+.service-card__icon {
+  transition: transform 0.4s var(--ease-out), background-color 0.4s, color 0.4s;
+}
+.service-card:hover .service-card__icon {
+  transform: translateY(-3px) rotate(-5deg);
+  background: rgba(201, 161, 74, 0.24);
+}
+
+/* --- Stats & credentials: gentle lift on hover for tactile feel --- */
+.stat { transition: transform 0.4s var(--ease-out); }
+.stat:hover { transform: translateY(-5px); }
+.credentials__group {
+  transition: transform 0.4s var(--ease-out), box-shadow 0.4s, border-color 0.4s;
+}
+.credentials__group:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 24px 48px rgba(11, 31, 26, 0.09);
+  border-color: rgba(201, 161, 74, 0.4);
+}
+.credential { transition: transform 0.3s var(--ease-out); }
+.credentials__group:hover .credential:hover { transform: translateX(5px); }
+
+/* --- Contextual content-to-CTA bridge --- */
+.bridge {
+  position: fixed;
+  left: 50%;
+  bottom: clamp(1rem, 3vw, 2rem);
+  transform: translate(-50%, 150%);
+  z-index: 75;
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  max-width: min(560px, calc(100vw - 2rem));
+  padding: 0.85rem 0.95rem 0.85rem 1.45rem;
+  background: rgba(11, 31, 26, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(201, 161, 74, 0.42);
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.42);
+  opacity: 0;
+  transition: transform 0.6s var(--ease-out), opacity 0.45s;
+}
+.bridge.is-visible { transform: translate(-50%, 0); opacity: 1; }
+.bridge[hidden] { display: none; }
+.bridge__body { display: flex; align-items: center; gap: 0.85rem; min-width: 0; }
+.bridge__spark {
+  width: 10px; height: 10px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 12px var(--gold);
+  animation: bridgePulse 2.2s ease-in-out infinite;
+}
+@keyframes bridgePulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.55); opacity: 0.55; }
+}
+.bridge__eyebrow {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold-soft);
+}
+.bridge__title {
+  margin-top: 0.15rem;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  line-height: 1.3;
+  color: var(--text-on-dark);
+}
+.bridge__cta {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--gold);
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 0.92rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 999px;
+  transition: background 0.25s, gap 0.25s var(--ease-out), transform 0.25s;
+}
+.bridge__cta:hover { background: var(--gold-soft); gap: 0.7rem; }
+.bridge__cta:focus-visible { outline: 3px solid var(--gold-soft); outline-offset: 3px; }
+.bridge__close {
+  position: absolute;
+  top: -10px; right: -10px;
+  width: 28px; height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ink);
+  border: 1px solid rgba(201, 161, 74, 0.42);
+  color: var(--text-on-dark-muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, transform 0.2s;
+}
+.bridge__close:hover { color: var(--gold-soft); border-color: var(--gold); transform: scale(1.08); }
+.bridge__close:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+/* Keep the bridge to roomy viewports; on phones the in-tool CTA and the
+   floating chat launcher already own the bottom of the screen. */
+@media (max-width: 767px) {
+  .bridge { display: none !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .service-card::after,
+  .service-card::before,
+  .service-card__icon,
+  .stat,
+  .credentials__group,
+  .credential { transition: none; }
+  .bridge { transition: opacity 0.2s; }
+  .bridge.is-visible { transform: translate(-50%, 0); }
+  .bridge__spark { animation: none; }
 }
