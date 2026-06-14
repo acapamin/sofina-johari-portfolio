@@ -224,6 +224,9 @@
     width: 3.6mm; height: 3.6mm; border: 1.4px solid var(--gold); border-radius: 1mm;
   }
   .checklist b { font-weight: 600; }
+  /* Variant without the checkbox marker (keeps the dashed separators). */
+  .checklist.no-marker li { padding-left: 0; }
+  .checklist.no-marker li::before { display: none; }
 
   .figure { margin-top: 5mm; }
   .figure svg { width: 100%; display: block; }
@@ -600,7 +603,7 @@
 
     <h3 style="margin-top:3mm;">The scam <em>smell test</em></h3>
     <p style="font-size:9.5pt; margin-top:1.5mm;">Malaysians lose hundreds of millions of ringgit to investment scams every year. Three red flags, no exceptions:</p>
-    <ul class="checklist" style="margin-top:1mm;">
+    <ul class="checklist no-marker" style="margin-top:1mm;">
       <li style="padding:1.8mm 0; font-size:9pt;"><b>&ldquo;Guaranteed&rdquo; high returns:</b> Anyone promising fixed 10% a month is not investing your money. They are recruiting your replacement.</li>
       <li style="padding:1.8mm 0; font-size:9pt;"><b>Pressure to act now:</b> Real investments will still exist next week. Scams expire when you start thinking.</li>
       <li style="padding:1.8mm 0; font-size:9pt;"><b>Not licensed:</b> Thirty seconds on the Securities Commission&rsquo;s public lists tells you if an operator is licensed or on the investor alert list.</li>
@@ -902,7 +905,16 @@
         <line x1="2" y1="112" x2="198" y2="112" stroke="#c9a14a" stroke-opacity=".6" stroke-width="1"/>
       </svg>
     </div>
-    <p style="font-family: var(--serif); font-style: italic; font-size: 16pt; line-height: 1.55; color: var(--gold-soft); max-width: 100%; margin-top: 12mm;">&ldquo;The best time to plant a tree was twenty years ago. The second-best time is today.&rdquo;</p>
+    <p style="font-family: var(--serif); font-style: italic; font-size: 14pt; line-height: 1.5; color: var(--gold-soft); max-width: 100%; margin-top: 10mm;">Take advantage of five before five:</p>
+    <ol style="list-style: decimal inside; font-family: var(--serif); font-style: italic; font-size: 12.5pt; line-height: 1.7; color: var(--gold-soft); margin: 4mm 0 0; padding: 0; text-align: center;">
+      <li>Your youth before your old age</li>
+      <li>Your health before your sickness</li>
+      <li>Your wealth before your poverty</li>
+      <li>Your free time before your busyness</li>
+      <li>Your life before your death.</li>
+    </ol>
+    <p style="font-family: var(--serif); font-style: italic; font-size: 11pt; color: var(--gold-soft); margin-top: 5mm;">&mdash; Prophet Muhammad &#65018;</p>
+    <p style="font-family: var(--serif); font-style: italic; font-size: 13pt; line-height: 1.55; color: var(--gold-soft); max-width: 100%; margin-top: 9mm;">Your wealth is not yours to keep. It is yours to steward.</p>
     <p style="margin-top: 10mm; font-size: 9pt; letter-spacing: .3em; text-transform: uppercase; color: rgba(184,196,190,.7); font-weight: 600;">Dr. Sofina Johari &middot; Licensed Financial Planner</p>
   </div>
 </div>
