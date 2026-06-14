@@ -21,6 +21,9 @@
   @font-face { font-family:'Instrument Sans'; font-style:normal; font-weight:600; font-display:block; src:url('../fonts/InstrumentSans-600.ttf') format('truetype'); }
   @font-face { font-family:'Instrument Sans'; font-style:normal; font-weight:700; font-display:block; src:url('../fonts/InstrumentSans-700.ttf') format('truetype'); }
   @font-face { font-family:'Instrument Sans'; font-style:italic; font-weight:400; font-display:block; src:url('../fonts/InstrumentSans-Italic-400.ttf') format('truetype'); }
+  /* Noto Naskh Arabic (the Noto serif-style Arabic family), subset to the
+     U+FDFA ligature ﷺ so the salawat renders as a clear calligraphic glyph. */
+  @font-face { font-family:'Noto Naskh Arabic'; font-style:normal; font-weight:400; font-display:block; src:url('../fonts/NotoNaskhArabic-FDFA.ttf') format('truetype'); }
   @page { size: 210mm 297mm; margin: 0; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   :root {
@@ -913,7 +916,7 @@
       <li>Your free time before your busyness</li>
       <li>Your life before your death.</li>
     </ol>
-    <p style="font-family: var(--serif); font-style: italic; font-size: 11pt; color: var(--gold-soft); margin-top: 5mm;">&mdash; Prophet Muhammad &#65018;</p>
+    <p style="font-family: var(--serif); font-style: italic; font-size: 11pt; color: var(--gold-soft); margin-top: 5mm;">&mdash; Prophet Muhammad <span style="font-family: 'Noto Naskh Arabic', var(--serif); font-style: normal; font-size: 1.25em; line-height: 1;">&#65018;</span></p>
     <p style="font-family: var(--serif); font-style: italic; font-size: 13pt; line-height: 1.55; color: var(--gold-soft); max-width: 100%; margin-top: 9mm;">Your wealth is not yours to keep. It is yours to steward.</p>
     <p style="margin-top: 10mm; font-size: 9pt; letter-spacing: .3em; text-transform: uppercase; color: rgba(184,196,190,.7); font-weight: 600;">Dr. Sofina Johari &middot; Licensed Financial Planner</p>
   </div>
