@@ -53,6 +53,8 @@
 
   function closePanel() {
     panel.classList.remove("is-open");
+    panel.style.height = "";
+    panel.style.top = "";
     document.body.classList.remove("chat-open");
     launch.setAttribute("aria-expanded", "false");
     setTimeout(function () {
@@ -172,21 +174,47 @@
     var text = input.value.trim();
     if (!text || streaming) return;
     input.value = "";
+    input.style.height = "auto";
     send(text);
   });
 
-  // keep the latest message in view when the on-screen keyboard
-  // resizes the viewport
+  // Auto-resize textarea as the user types
+  input.addEventListener("input", function () {
+    this.style.height = "auto";
+    this.style.height = this.scrollHeight + "px";
+  });
+
+  // Keep panel locked to the visible area when the on-screen keyboard appears.
+  // dvh handles this on modern browsers, but older Chrome/Android needs
+  // explicit sizing via the visualViewport API.
   if (window.visualViewport) {
-    window.visualViewport.addEventListener("resize", function () {
-      if (!panel.hidden) scrollToEnd();
-    });
+    function syncToViewport() {
+      if (panel.hidden) return;
+      if (window.matchMedia("(max-width: 1024px)").matches) {
+        var vp = window.visualViewport;
+        panel.style.top = vp.offsetTop + "px";
+        panel.style.height = vp.height + "px";
+      } else {
+        panel.style.top = "";
+        panel.style.height = "";
+      }
+      scrollToEnd();
+    }
+    window.visualViewport.addEventListener("resize", syncToViewport);
+    window.visualViewport.addEventListener("scroll", syncToViewport);
   }
 
   input.addEventListener("keydown", function (e) {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      form.dispatchEvent(new Event("submit", { cancelable: true }));
+    if (e.key === "Enter") {
+      if (touchDevice) {
+        // Mobile/tablet: Enter inserts a new line; tap Send to submit
+        return;
+      }
+      // Desktop: Enter sends, Shift+Enter inserts a new line
+      if (!e.shiftKey) {
+        e.preventDefault();
+        form.dispatchEvent(new Event("submit", { cancelable: true }));
+      }
     }
   });
 })();
