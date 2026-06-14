@@ -1804,6 +1804,7 @@ ul { list-style: none; }
 
 .carousel__track {
   display: flex;
+  align-items: stretch;
   gap: 1.5rem;
   scroll-behavior: smooth;
   scroll-snap-type: x mandatory;
@@ -1822,6 +1823,7 @@ ul { list-style: none; }
   flex: 0 0 calc(100% - 0.75rem);
   scroll-snap-align: start;
   scroll-snap-stop: always;
+  display: flex;
 }
 
 @media (min-width: 768px) {
@@ -1922,9 +1924,14 @@ ul { list-style: none; }
 
 /* Override grid layouts for carousel sections */
 .services__carousel .service-card,
-.testimonials__carousel .testimonial-card,
 .videos__carousel .video-embed {
   height: 100%;
+}
+
+/* Testimonial cards: stretch via flex container, not explicit height */
+.testimonials__carousel .testimonial-card {
+  height: auto;
+  min-height: 100%;
 }
 
 /* Responsive adjustments */

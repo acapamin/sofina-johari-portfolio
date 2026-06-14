@@ -32,6 +32,12 @@
     a.addEventListener("click", closeMenu);
   });
 
+  /* ---------- Logo -> scroll to top ---------- */
+  document.querySelector(".nav__logo").addEventListener("click", function (e) {
+    e.preventDefault();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
   /* ---------- Nav scroll state ---------- */
   var nav = document.getElementById("nav");
   function onScroll() {
