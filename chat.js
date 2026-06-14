@@ -198,7 +198,9 @@
         panel.style.top = "";
         panel.style.height = "";
       }
-      scrollToEnd();
+      // Intentionally not calling scrollToEnd() here — doing so on every
+      // visualViewport scroll/resize event fights the user's own scroll position
+      // in the messages container and causes the visible snap-back glitch.
     }
     window.visualViewport.addEventListener("resize", syncToViewport);
     window.visualViewport.addEventListener("scroll", syncToViewport);

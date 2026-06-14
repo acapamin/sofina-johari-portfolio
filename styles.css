@@ -1688,6 +1688,7 @@ ul { list-style: none; }
 .chat-panel__messages {
   flex: 1;
   overflow-y: auto;
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
