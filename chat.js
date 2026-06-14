@@ -174,7 +174,14 @@
     var text = input.value.trim();
     if (!text || streaming) return;
     input.value = "";
+    input.style.height = "auto";
     send(text);
+  });
+
+  // Auto-resize textarea as the user types
+  input.addEventListener("input", function () {
+    this.style.height = "auto";
+    this.style.height = this.scrollHeight + "px";
   });
 
   // Keep panel locked to the visible area when the on-screen keyboard appears.
@@ -198,9 +205,16 @@
   }
 
   input.addEventListener("keydown", function (e) {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      form.dispatchEvent(new Event("submit", { cancelable: true }));
+    if (e.key === "Enter") {
+      if (touchDevice) {
+        // Mobile/tablet: Enter inserts a new line; tap Send to submit
+        return;
+      }
+      // Desktop: Enter sends, Shift+Enter inserts a new line
+      if (!e.shiftKey) {
+        e.preventDefault();
+        form.dispatchEvent(new Event("submit", { cancelable: true }));
+      }
     }
   });
 })();
