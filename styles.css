@@ -100,14 +100,14 @@ ul { list-style: none; }
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition: transform 0.25s var(--ease-out), background-color 0.25s, color 0.25s, box-shadow 0.25s;
+  transition: transform 0.25s var(--ease-out), translate 0.35s cubic-bezier(0.33,1,0.68,1), background-color 0.25s, color 0.25s, box-shadow 0.25s;
   min-height: 48px;
 }
 .btn:hover { transform: translateY(-2px); }
 .btn:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
-.btn--gold { background: var(--gold); color: var(--ink); }
+.btn--gold { background: var(--gold); color: var(--ink); will-change: transform; }
 .btn--gold:hover { background: var(--gold-soft); box-shadow: 0 12px 32px rgba(201, 161, 74, 0.35); }
-.btn--ghost { border: 1px solid var(--border-on-dark); color: var(--text-on-dark); background: rgba(255,255,255,0.02); backdrop-filter: blur(6px); }
+.btn--ghost { border: 1px solid var(--border-on-dark); color: var(--text-on-dark); background: rgba(255,255,255,0.02); backdrop-filter: blur(6px); will-change: transform; }
 .btn--ghost:hover { border-color: var(--gold); color: var(--gold-soft); }
 .btn--ghost-light { border: 1px solid var(--border-on-dark); color: var(--text-on-dark); }
 .btn--ghost-light:hover { border-color: var(--gold); color: var(--gold-soft); }
@@ -446,6 +446,10 @@ ul { list-style: none; }
 }
 .service-card {
   position: relative;
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
   background: #fffdf8;
   border: 1px solid var(--border);
   border-radius: 20px;
@@ -487,6 +491,12 @@ ul { list-style: none; }
   font-style: italic;
   font-size: 1.1rem;
   color: rgba(201, 161, 74, 0.55);
+}
+/* Restore absolute positioning for the card number — the sheen effect selector
+   .service-card > * sets all children to position: relative, which overrides
+   the intended top-right positioning of the number. */
+.service-card > .service-card__num {
+  position: absolute;
 }
 
 /* ---------- Credentials ---------- */
@@ -2109,7 +2119,7 @@ ul { list-style: none; }
   font-size: 0.92rem;
   padding: 0.75rem 1.25rem;
   border-radius: 999px;
-  transition: background 0.25s, gap 0.25s var(--ease-out), transform 0.25s;
+  transition: background 0.25s, gap 0.25s var(--ease-out), transform 0.25s, translate 0.35s cubic-bezier(0.33,1,0.68,1);
 }
 .bridge__cta:hover { background: var(--gold-soft); gap: 0.7rem; }
 .bridge__cta:focus-visible { outline: 3px solid var(--gold-soft); outline-offset: 3px; }

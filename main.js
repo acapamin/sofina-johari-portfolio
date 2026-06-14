@@ -458,10 +458,10 @@
         var r = btn.getBoundingClientRect();
         var mx = e.clientX - (r.left + r.width / 2);
         var my = e.clientY - (r.top + r.height / 2);
-        btn.style.transform = "translate(" + mx * 0.18 + "px," + my * 0.3 + "px)";
+        btn.style.translate = (mx * 0.18) + "px " + (my * 0.3) + "px";
       });
       btn.addEventListener("pointerleave", function () {
-        btn.style.transform = "";
+        btn.style.translate = "";
       });
     });
   }
