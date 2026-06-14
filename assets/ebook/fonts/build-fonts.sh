@@ -54,4 +54,16 @@ for f in Fraunces-*.ttf InstrumentSans-*.ttf; do
 done
 
 rm -rf "$SRC"
+
+# 3. Noto Naskh Arabic (the Noto serif-style Arabic family — there is no
+#    "Noto Serif Arabic"), subset to the single U+FDFA ligature ﷺ used in the
+#    back-cover salawat. Naskh renders this as a clear calligraphic glyph;
+#    Fraunces has no Arabic coverage and fell back to a cramped system font.
+NOTO_TAG="noto-monthly-release-2025.12.01"
+curl -sL -o "$SRC.naskh.ttf" \
+  "https://raw.githubusercontent.com/notofonts/notofonts.github.io/$NOTO_TAG/fonts/NotoNaskhArabic/unhinted/ttf/NotoNaskhArabic-Regular.ttf"
+pyftsubset "$SRC.naskh.ttf" --unicodes="U+FDFA" --layout-features='*' --no-hinting \
+  --desubroutinize --output-file="NotoNaskhArabic-FDFA.ttf"
+rm -f "$SRC.naskh.ttf"
+
 echo "Done. Static instances rebuilt in $(pwd)"
