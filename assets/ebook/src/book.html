@@ -87,15 +87,15 @@
   .motif svg { width: 100%; display: block; }
   .cover-title {
     margin-top: auto; font-family: var(--serif); font-weight: 450;
-    font-size: 64pt; line-height: 1.02; letter-spacing: -0.015em; color: #f2ece0;
+    font-size: 48pt; line-height: 1.02; letter-spacing: -0.015em; color: #f2ece0;
   }
   .cover-title em { font-style: italic; color: var(--gold-soft); }
-  .cover-sub { margin-top: 7mm; font-size: 13.5pt; letter-spacing: .04em; line-height: 1.6; color: rgba(184,196,190,.88); max-width: 110mm; }
+  .cover-sub { margin-top: 7mm; font-size: 13.5pt; letter-spacing: .04em; line-height: 1.6; color: rgba(184,196,190,.88); max-width: 110mm; text-align: justify; }
   .cover-footer {
     margin-top: 12mm; padding-top: 7mm; border-top: 1px solid rgba(201,161,74,.35);
     display: flex; align-items: flex-end; justify-content: space-between; gap: 8mm;
   }
-  .cover-author { font-family: var(--serif); font-style: italic; font-size: 16pt; letter-spacing: .05em; color: rgba(224,201,140,.95); }
+  .cover-author { font-family: var(--serif); font-style: italic; font-size: 16pt; letter-spacing: .05em; color: rgba(224,201,140,.95); text-align: justify; }
   .cover-cred { display: block; margin-top: 2mm; font-style: normal; font-family: var(--sans); font-size: 8pt; font-weight: 600; letter-spacing: .26em; text-transform: uppercase; color: rgba(184,196,190,.6); }
   .badge { width: 30mm; height: 30mm; flex-shrink: 0; }
   .badge svg { width: 100%; height: 100%; }
@@ -104,7 +104,7 @@
   .letter { padding: 26mm 30mm; height: 100%; display: flex; flex-direction: column; }
   .letter h2 { font-family: var(--serif); font-weight: 450; font-size: 30pt; line-height: 1.12; margin: 7mm 0 0; }
   .letter h2 em { font-style: italic; color: var(--gold-deep); }
-  .letter p { font-size: 11pt; line-height: 1.78; margin-top: 5mm; color: var(--text); max-width: 138mm; }
+  .letter p { font-size: 11pt; line-height: 1.78; margin-top: 5mm; color: var(--text); max-width: 138mm; text-align: justify; }
   .letter .sig { margin-top: 9mm; }
   .sig-name { font-family: var(--serif); font-style: italic; font-size: 19pt; color: var(--gold-deep); }
   .sig-role { margin-top: 1.5mm; font-size: 8pt; font-weight: 600; letter-spacing: .24em; text-transform: uppercase; color: var(--muted); }
@@ -120,8 +120,8 @@
     padding: 4.4mm 0; border-bottom: 1px solid rgba(11,31,26,.12);
   }
   .toc-num { font-family: var(--serif); font-size: 17pt; color: var(--gold); width: 12mm; flex-shrink: 0; }
-  .toc-name { font-family: var(--serif); font-size: 14.5pt; }
-  .toc-desc { font-size: 8.5pt; color: var(--muted); margin-top: 1mm; }
+  .toc-name { font-family: var(--serif); font-size: 14.5pt; text-align: justify; }
+  .toc-desc { font-size: 8.5pt; color: var(--muted); margin-top: 1mm; text-align: justify; }
   .toc-page { margin-left: auto; font-size: 10pt; font-weight: 600; color: var(--gold-deep); }
   .toc-extra { margin-top: 7mm; display: flex; gap: 6mm; }
   .toc-chip {
@@ -141,16 +141,16 @@
   .ch-open .kicker { margin-top: 2mm; }
   .ch-title { font-family: var(--serif); font-weight: 450; font-size: 40pt; line-height: 1.06; margin-top: 7mm; max-width: 140mm; }
   .ch-title em { font-style: italic; color: var(--gold-soft); }
-  .ch-lead { margin-top: 7mm; font-size: 12pt; line-height: 1.75; color: rgba(184,196,190,.92); max-width: 128mm; }
+  .ch-lead { margin-top: 7mm; font-size: 12pt; line-height: 1.75; color: rgba(184,196,190,.92); max-width: 128mm; text-align: justify; }
   .ch-quote {
     margin-top: auto; padding: 7mm 0 6mm; border-top: 1px solid rgba(201,161,74,.3);
     font-family: var(--serif); font-style: italic; font-size: 15.5pt; line-height: 1.5; color: var(--gold-soft);
-    max-width: 132mm;
+    max-width: 132mm; text-align: justify;
   }
   .ch-points { margin-top: 5mm; display: flex; gap: 5mm; }
   .ch-point {
     flex: 1; border: 1px solid rgba(201,161,74,.3); border-radius: 2.5mm; padding: 4.5mm 5mm;
-    font-size: 8.6pt; line-height: 1.5; color: rgba(224,201,140,.85);
+    font-size: 8.6pt; line-height: 1.5; color: rgba(224,201,140,.85); text-align: justify;
   }
   .ch-point b { display: block; font-size: 7pt; letter-spacing: .22em; text-transform: uppercase; color: var(--gold-soft); margin-bottom: 1.6mm; }
 
@@ -158,9 +158,9 @@
   .content { padding: 20mm 24mm 24mm; height: 100%; display: flex; flex-direction: column; }
   .content h3 { font-family: var(--serif); font-weight: 500; font-size: 19pt; line-height: 1.2; margin: 6mm 0 3mm; }
   .content h3 em { font-style: italic; color: var(--gold-deep); }
-  .content p { font-size: 10pt; line-height: 1.72; margin-top: 2.6mm; }
+  .content p { font-size: 10pt; line-height: 1.72; margin-top: 2.6mm; text-align: justify; }
   .content .small { font-size: 8pt; color: var(--muted); line-height: 1.6; }
-  .lead-in { font-size: 11.5pt; line-height: 1.7; }
+  .lead-in { font-size: 11.5pt; line-height: 1.7; text-align: justify; }
   .lead-in::first-letter {
     font-family: var(--serif); font-size: 34pt; float: left; line-height: .85;
     padding-right: 2.5mm; color: var(--gold-deep);
@@ -173,25 +173,25 @@
     padding: 5mm 5.5mm; box-shadow: 0 1mm 3mm rgba(11,31,26,.05);
   }
   .card h4 { font-family: var(--serif); font-size: 12pt; margin-bottom: 1.6mm; }
-  .card p { font-size: 8.8pt; line-height: 1.6; margin: 0; }
+  .card p { font-size: 8.8pt; line-height: 1.6; margin: 0; text-align: justify; }
   .card .num { font-family: var(--serif); font-size: 16pt; color: var(--gold); }
 
   .stat { border-left: 2px solid var(--gold); padding-left: 5mm; }
   .stat .v { font-family: var(--serif); font-size: 24pt; color: var(--gold-deep); line-height: 1.1; }
-  .stat .l { font-size: 8pt; color: var(--muted); margin-top: 1mm; line-height: 1.5; }
+  .stat .l { font-size: 8pt; color: var(--muted); margin-top: 1mm; line-height: 1.5; text-align: justify; }
 
   .tipbox {
     background: var(--ink); color: var(--cream); border-radius: 3mm;
     padding: 6.5mm 7mm; margin-top: 6mm;
   }
   .tipbox b { display: block; font-size: 7.5pt; font-weight: 700; letter-spacing: .3em; text-transform: uppercase; color: var(--gold-soft); margin-bottom: 2mm; }
-  .tipbox p { font-size: 9.6pt; line-height: 1.65; margin: 0; color: rgba(242,236,224,.95); }
+  .tipbox p { font-size: 9.6pt; line-height: 1.65; margin: 0; color: rgba(242,236,224,.95); text-align: justify; }
   .tipbox em { font-family: var(--serif); font-style: italic; color: var(--gold-soft); }
 
   table.tbl { width: 100%; border-collapse: collapse; margin-top: 4mm; }
   .tbl th {
     text-align: left; font-size: 7.5pt; font-weight: 700; letter-spacing: .18em; text-transform: uppercase;
-    color: var(--gold-deep); padding: 2.6mm 3mm; border-bottom: 1.5px solid rgba(201,161,74,.55);
+    color: var(--gold-deep); padding: 2.8mm 3mm; border-bottom: 1.5px solid rgba(201,161,74,.55);
   }
   .tbl td { font-size: 9pt; line-height: 1.5; padding: 2.8mm 3mm; border-bottom: 1px solid rgba(11,31,26,.1); vertical-align: top; }
   .tbl td b { font-family: var(--serif); font-weight: 600; }
@@ -200,7 +200,7 @@
   .checklist { margin-top: 3mm; }
   .checklist li {
     list-style: none; display: flex; gap: 3.5mm; align-items: flex-start;
-    font-size: 9.4pt; line-height: 1.55; padding: 2.4mm 0; border-bottom: 1px dashed rgba(11,31,26,.12);
+    font-size: 9.4pt; line-height: 1.55; padding: 2.4mm 0; border-bottom: 1px dashed rgba(11,31,26,.12); text-align: justify;
   }
   .checklist li::before {
     content: ""; width: 3.6mm; height: 3.6mm; border: 1.4px solid var(--gold); border-radius: 1mm;
@@ -210,7 +210,7 @@
 
   .figure { margin-top: 5mm; }
   .figure svg { width: 100%; display: block; }
-  .figcap { font-size: 7.6pt; color: var(--muted); margin-top: 2mm; letter-spacing: .04em; }
+  .figcap { font-size: 7.6pt; color: var(--muted); margin-top: 2mm; letter-spacing: .04em; text-align: justify; }
 </style>
 </head>
 <body>
@@ -245,7 +245,7 @@
         <line x1="166" y1="112" x2="166" y2="117" stroke="#c9a14a" stroke-opacity=".4" stroke-width=".8"/>
       </svg>
     </div>
-    <h1 class="cover-title">Financial<br><em>Planning</em></h1>
+    <h1 class="cover-title">Financial Planning<br><em>Made Simple</em></h1>
     <p class="cover-sub">Simple money concepts for every Malaysian — practical, honest strategies you can start using today.</p>
     <div class="cover-footer">
       <div>
@@ -271,24 +271,24 @@
 <div class="page page--cream">
   <div class="letter">
     <p class="kicker">Assalamualaikum &amp; Hello</p>
-    <h2>Money worries shouldn&rsquo;t keep<br>you awake at night. <em>Let&rsquo;s fix that.</em></h2>
-    <p class="lead-in" style="margin-top:8mm;">I wrote this little book for the Malaysian who works hard, loves their family, and still feels like the ringgit disappears faster than it arrives. The one who quietly wonders, &ldquo;Am I doing this right? Is it too late for me?&rdquo;</p>
-    <p>Here is the truth no one tells you: financial planning is not about being rich. It is about being <i>ready</i> — ready for the car that breaks down, the parents who grow older, the children who will one day need university fees, and the version of you who deserves to retire with dignity.</p>
-    <p>You don&rsquo;t need a finance degree. You don&rsquo;t need to earn RM20,000 a month. You need a handful of simple concepts, applied consistently, in a way that honours both your wallet and your values. Every strategy in this book is honest and gimmick-free — no fine print, no &ldquo;skim cepat kaya&rdquo; — and for every instrument mentioned, a Shariah-compliant alternative exists if that matters to you.</p>
-    <p>Read it with a cup of teh tarik. Scribble on it. Then — and this is the important part — <b>act on one thing this week.</b> Knowledge only becomes wealth when it is practised.</p>
+    <h2>Money worries shouldn&rsquo;t keep<br>you awake at night. <em>Let&rsquo;s fix that</em></h2>
+    <p class="lead-in" style="margin-top:8mm;">I wrote this little book for the Malaysian who works hard, loves their family, and still feels like their money disappears faster than it arrives. The one who quietly wonders, &ldquo;Am I doing this right? Is it too late for me?&rdquo;</p>
+    <p>Here is the truth no one tells you: financial planning is not about being rich. It is about being <i>ready</i>. Ready for the car that breaks down, the parents who grow older, the children who will one day need university fees, and the version of you who deserves to retire with dignity.</p>
+    <p>You don&rsquo;t need a finance degree. You don&rsquo;t need to earn RM20,000 a month. You just need a handful of simple concepts, applied consistently, in a way that honours both your wallet and your values. Every strategy in this book is honest and gimmick-free. No fine print and no &ldquo;skim cepat kaya&rdquo;.</p>
+    <p>Read it with a cup of morning coffee and ponder upon the chapters. Then, and this is the important part, <b>act on one thing this week.</b> Knowledge only becomes wealth when it is practised.</p>
     <div class="sig">
-      <div class="sig-name">Dr. Sofina Johari</div>
+      <div class="sig-name">Sofina Johari</div>
       <div class="sig-role">Licensed Financial Planner &middot; Malaysia</div>
     </div>
     <div class="letter-arcs">
       <svg viewBox="0 0 200 36" fill="none" xmlns="http://www.w3.org/2000/svg">
         <clipPath id="lh"><rect x="0" y="0" width="200" height="30"/></clipPath>
         <g clip-path="url(#lh)">
-          <path d="M60 30 A40 40 0 0 1 140 30" stroke="#c9a14a" stroke-opacity=".5" stroke-width="1"/>
-          <path d="M76 30 A24 24 0 0 1 124 30" stroke="#c9a14a" stroke-opacity=".75" stroke-width="1.2"/>
-          <path d="M89 30 A11 11 0 0 1 111 30 Z" fill="#c9a14a" fill-opacity=".85"/>
+          <path d="M71 30 A29 29 0 0 1 129 30" stroke="#c9a14a" stroke-opacity=".5" stroke-width="1"/>
+          <path d="M82.5 30 A17.5 17.5 0 0 1 117.5 30" stroke="#c9a14a" stroke-opacity=".75" stroke-width="1.2"/>
+          <path d="M92 30 A8 8 0 0 1 108 30 Z" fill="#c9a14a" fill-opacity=".85"/>
         </g>
-        <line x1="30" y1="30" x2="170" y2="30" stroke="#c9a14a" stroke-opacity=".55" stroke-width="1"/>
+        <line x1="50" y1="30" x2="150" y2="30" stroke="#c9a14a" stroke-opacity=".55" stroke-width="1"/>
       </svg>
     </div>
   </div>
@@ -299,7 +299,7 @@
 <div class="page page--cream">
   <div class="toc">
     <p class="kicker">What&rsquo;s Inside</p>
-    <h2>Eight ideas that change<br><em>everything.</em></h2>
+    <h2>Eight ideas that change<br><em>everything</em></h2>
     <div class="toc-list">
       <div class="toc-item"><span class="toc-num">01</span><span><span class="toc-name">Start With Niat</span><span class="toc-desc" style="display:block;">Turn vague dreams into goals with a number and a date</span></span><span class="toc-page">04</span></div>
       <div class="toc-item"><span class="toc-num">02</span><span><span class="toc-name">The Leaks in Your Bucket</span><span class="toc-desc" style="display:block;">Five quiet mistakes draining Malaysian wallets</span></span><span class="toc-page">06</span></div>
@@ -308,7 +308,7 @@
       <div class="toc-item"><span class="toc-num">05</span><span><span class="toc-name">Invest the Smart Way</span><span class="toc-desc" style="display:block;">A tour of trusted instruments for every risk level</span></span><span class="toc-page">12</span></div>
       <div class="toc-item"><span class="toc-num">06</span><span><span class="toc-name">Make Debt Serve You</span><span class="toc-desc" style="display:block;">Good debt, bad debt, and escaping the minimum-payment trap</span></span><span class="toc-page">14</span></div>
       <div class="toc-item"><span class="toc-num">07</span><span><span class="toc-name">Protect What You Build</span><span class="toc-desc" style="display:block;">Insurance, takaful and your family&rsquo;s safety net</span></span><span class="toc-page">16</span></div>
-      <div class="toc-item"><span class="toc-num">08</span><span><span class="toc-name">Wealth With Barakah</span><span class="toc-desc" style="display:block;">Zakat, wasiat, hibah — planning beyond your lifetime</span></span><span class="toc-page">18</span></div>
+      <div class="toc-item"><span class="toc-num">08</span><span><span class="toc-name">Wealth With Barakah</span><span class="toc-desc" style="display:block;">Planning beyond your lifetime with zakat, wasiat, and hibah</span></span><span class="toc-page">18</span></div>
     </div>
     <div class="toc-extra">
       <div class="toc-chip"><span>Your 30-Day Action Plan</span><span class="toc-page">20</span></div>
@@ -322,9 +322,9 @@
   <div class="grain"></div>
   <div class="ch-open">
     <div class="ch-watermark">01</div>
-    <p class="kicker">Chapter One</p>
-    <h2 class="ch-title">Start with <em>niat.</em></h2>
-    <p class="ch-lead">Every great financial plan begins the same way every great deed begins — with intention. Not a vague wish to &ldquo;be more stable,&rdquo; but a clear picture of what you are building, for whom, and by when. In this chapter, we turn angan-angan into a plan.</p>
+    <p class="kicker">Chapter One: Start with niat (intention)</p>
+    <h2 class="ch-title">Start with niat <em>(intention)</em></h2>
+    <p class="ch-lead">Every great financial plan begins the same way every great deed begins: with intention. Not a vague wish to &ldquo;be more stable,&rdquo; but a clear picture of what you are building, for whom, and by when. In this chapter, we turn angan-angan mat jenin into a legit plan.</p>
     <p class="ch-quote">&ldquo;A goal without a number and a date is just a daydream with good lighting.&rdquo;</p>
     <div class="ch-points">
       <div class="ch-point"><b>You&rsquo;ll learn</b>The three questions that turn any dream into a target</div>
@@ -338,26 +338,26 @@
 <!-- ================= PAGE 5 — CH1 CONTENT ================= -->
 <div class="page page--cream">
   <div class="content">
-    <p class="kicker">Three Questions</p>
-    <h3>Berapa? Bila? <em>Bagaimana?</em></h3>
-    <p class="lead-in">Ask anyone what they want and you&rsquo;ll hear: a house, the kids&rsquo; education, haji with my parents, retire without burdening anyone. Beautiful goals — but unbuildable until you answer three questions: <b>How much?</b> <b>By when?</b> <b>How will I get there?</b></p>
-    <p>&ldquo;I want to buy a house&rdquo; becomes: <i>&ldquo;I need RM30,000 for a deposit on a RM300,000 home in Seremban, in 4 years. That&rsquo;s RM625 a month.&rdquo;</i> Suddenly it is not a dream. It is a standing instruction.</p>
+    <p class="kicker">THREE QUESTIONS</p>
+    <h3>When? How? <em>How much?</em></h3>
+    <p class="lead-in">Ask anyone what they want and you&rsquo;ll hear &ldquo;a house&rdquo;, &ldquo;the kids&rsquo; education&rdquo;, &ldquo;haji with my spouse&rdquo;, &ldquo;retire without burdening anyone&rdquo;. Beautiful goals — but unbuildable until you answer three questions: <b>How much?</b> <b>By when?</b> <b>How will I get there?</b></p>
+    <p>&ldquo;I want to buy a house&rdquo; is now<br><i>&ldquo;I need RM30,000 for a deposit on a RM300,000 home in Seremban, in 4 years. That&rsquo;s RM625 a month.&rdquo;</i> Suddenly, it is not a dream. It is a standing instruction.</p>
 
     <table class="tbl">
       <tr><th>Horizon</th><th>Typical Malaysian goals</th><th>Where the money should sit</th></tr>
-      <tr><td><b>Short</b><br><span class="small">under 3 years</span></td><td>Emergency fund, balik kampung &amp; raya, travel, umrah, wedding</td><td class="gold">Savings &amp; fixed deposits — boring is good here</td></tr>
-      <tr><td><b>Medium</b><br><span class="small">3–10 years</span></td><td>House deposit, car replacement, starting a business</td><td class="gold">Low-to-moderate risk: bond or sukuk funds, balanced unit trusts</td></tr>
-      <tr><td><b>Long</b><br><span class="small">10+ years</span></td><td>Children&rsquo;s education, haji, retirement</td><td class="gold">Growth assets: equity funds, EPF, gold</td></tr>
+      <tr><td><b>Short</b><br><span class="small">under 3 years</span></td><td>Emergency fund, travel, umrah, wedding, house renovation</td><td class="gold">Savings &amp; fixed deposits — boring is good here</td></tr>
+      <tr><td><b>Medium</b><br><span class="small">3–10 years</span></td><td>House deposit, car replacement, starting a business</td><td class="gold">Low-to-moderate risk: fixed-price investment units (e.g., ASB &amp; TH), balanced portfolio of unit trusts</td></tr>
+      <tr><td><b>Long</b><br><span class="small">10+ years</span></td><td>Children&rsquo;s education, haji, retirement</td><td class="gold">Growth assets: equity unit trust funds, stocks, EPF, gold</td></tr>
     </table>
 
     <div class="grid-2" style="margin-top:6mm;">
       <div class="stat"><div class="v">RM625</div><div class="l">a month for 4 years = a RM30,000 house deposit. Big goals are just small numbers repeated.</div></div>
-      <div class="stat"><div class="v">3</div><div class="l">goals maximum to start with. More than that and your money — and motivation — spreads too thin.</div></div>
+      <div class="stat"><div class="v">3</div><div class="l">goals maximum to start with. More than that and your money (and motivation) spreads too thin.</div></div>
     </div>
 
     <div class="tipbox">
       <b>Sofina&rsquo;s Tip</b>
-      <p>Write your top three goals where you will see them — your phone wallpaper, the fridge, your work desk. <em>A goal you see daily gets funded. A goal in a drawer gets forgotten.</em></p>
+      <p>Write your top three goals where you will see them. Your phone wallpaper, the fridge, your work desk, etc. <em>A goal you see daily gets funded. A goal in a drawer gets forgotten.</em></p>
     </div>
   </div>
   <div class="folio"><span>Chapter 01 &middot; Start With Niat</span><b>05</b></div>
@@ -368,8 +368,8 @@
   <div class="grain"></div>
   <div class="ch-open">
     <div class="ch-watermark">02</div>
-    <p class="kicker">Chapter Two</p>
-    <h2 class="ch-title">The leaks in <em>your bucket.</em></h2>
+    <p class="kicker">Chapter Two: The leaks in your bucket</p>
+    <h2 class="ch-title">The leaks in <em>your bucket</em></h2>
     <p class="ch-lead">Most Malaysians don&rsquo;t have an income problem. They have a leakage problem. Money flows in on gaji day and seeps out through five quiet holes — so quiet you barely notice until the month outlives the money. Let&rsquo;s find your leaks.</p>
     <p class="ch-quote">&ldquo;It&rsquo;s never the RM50,000 decisions that sink us. It&rsquo;s the RM15 ones, repeated daily, for ten years.&rdquo;</p>
     <div class="ch-points">
@@ -384,29 +384,29 @@
 <!-- ================= PAGE 7 — CH2 CONTENT ================= -->
 <div class="page page--cream">
   <div class="content">
-    <p class="kicker">Five Common Leaks</p>
+    <p class="kicker">FIVE COMMON LEAKS</p>
     <h3>Which of these is <em>yours?</em></h3>
 
     <div class="grid-2" style="margin-top:4mm;">
-      <div class="card"><span class="num">1</span><h4>No emergency fund</h4><p>Many Malaysian households would struggle to raise even RM1,000 in a crisis. Without a buffer, every surprise becomes debt — one gearbox away from a personal loan.</p></div>
-      <div class="card"><span class="num">2</span><h4>Lifestyle inflation</h4><p>Gaji naik RM500, lifestyle naik RM700. The raise that was supposed to free you quietly upgrades your phone, your car, your cafe habit — and your stress.</p></div>
+      <div class="card"><span class="num">1</span><h4>No emergency fund</h4><p>Many Malaysian households would struggle to raise even RM1,000 in a crisis. Without a buffer, every surprise becomes debt. Practically one broken gearbox away from a personal loan.</p></div>
+      <div class="card"><span class="num">2</span><h4>Lifestyle inflation</h4><p>Gaji naik RM500, lifestyle naik RM700. The raise that was supposed to free you quietly upgrades your phone, your car, your cafe habit. Eventually also raises your stress.</p></div>
       <div class="card"><span class="num">3</span><h4>Too much car</h4><p>The classic Malaysian trap. A simple guideline: keep your monthly car instalment under 15% of take-home pay. The bank approving you doesn&rsquo;t mean you can afford it.</p></div>
-      <div class="card"><span class="num">4</span><h4>Minimum-payment living</h4><p>Credit cards and buy-now-pay-later make everything feel affordable. Paying the minimum on RM5,000 can take more than a decade to clear. Affordable today, expensive forever.</p></div>
+      <div class="card"><span class="num">4</span><h4>Minimum-payment living</h4><p>Credit cards and buy-now-pay-later (Atome, SPayLater, etc) make everything feel affordable. Paying the minimum on RM5,000 can take more than a decade to clear. Affordable today, expensive forever.</p></div>
     </div>
 
     <div class="card" style="margin-top:5mm; border-left:2.5px solid var(--gold);">
       <span class="num">5</span><h4>Waiting to invest &ldquo;until I earn more&rdquo;</h4>
-      <p>The most expensive mistake of all — because the cost is invisible. Every year you wait, compounding works for someone else. Chapter 4 will show you exactly what waiting costs.</p>
+      <p>The most expensive mistake of all because the cost is invisible. Every year you wait, compounding works for someone else. Chapter 4 will show you exactly what waiting costs.</p>
     </div>
 
-    <h3 style="margin-top:7mm;">The teh tarik <em>arithmetic.</em></h3>
-    <p>This isn&rsquo;t about banning small joys. It&rsquo;s about choosing them consciously. Spend RM15 a day less on autopilot eating-out — cook twice a week, bring lunch sometimes — and redirect that RM450 a month into a diversified investment averaging 6% a year:</p>
+    <h3 style="margin-top:7mm;">The teh tarik <em>arithmetic</em></h3>
+    <p>This isn&rsquo;t about banning small joys. It&rsquo;s about choosing them consciously. Spend RM15 a day less on autopilot eating-out (e.g., cook twice a week, bring lunch sometimes, skip that artisan latte) and redirect that RM450 a month into a diversified investment averaging 6% a year:</p>
     <div class="grid-3" style="margin-top:4mm;">
       <div class="stat"><div class="v">RM74k</div><div class="l">after 10 years</div></div>
       <div class="stat"><div class="v">RM208k</div><div class="l">after 20 years</div></div>
       <div class="stat"><div class="v">RM452k</div><div class="l">after 30 years</div></div>
     </div>
-    <p class="small" style="margin-top:3mm;">Illustration: RM450/month at 6% p.a., compounded monthly. Returns are not guaranteed — but the habit is entirely in your hands.</p>
+    <p class="small" style="margin-top:3mm;">Illustration: RM450/month at 6% p.a., compounded monthly. Returns are not guaranteed, but the habit is entirely in your hands.</p>
   </div>
   <div class="folio"><span>Chapter 02 &middot; The Leaks in Your Bucket</span><b>07</b></div>
 </div>
@@ -416,10 +416,10 @@
   <div class="grain"></div>
   <div class="ch-open">
     <div class="ch-watermark">03</div>
-    <p class="kicker">Chapter Three</p>
-    <h2 class="ch-title">Master your <em>cash flow.</em></h2>
+    <p class="kicker">Chapter Three: Master your cash flow</p>
+    <h2 class="ch-title">Master your <em>cash flow</em></h2>
     <p class="ch-lead">Budgeting has a branding problem. It sounds like punishment — spreadsheets, guilt, no more nasi lemak. In reality, a budget is simply you telling your money where to go, instead of wondering where it went. One rule, three buckets, ten minutes a month.</p>
-    <p class="ch-quote">&ldquo;Pay yourself first. Not what&rsquo;s left after the month is done — because the month is never done.&rdquo;</p>
+    <p class="ch-quote">&ldquo;Pay yourself first. Not what&rsquo;s left after the month is done..... because the month is never done.&rdquo;</p>
     <div class="ch-points">
       <div class="ch-point"><b>You&rsquo;ll learn</b>The 50&middot;30&middot;20 rule, adapted for Malaysian life</div>
       <div class="ch-point"><b>You&rsquo;ll build</b>A gaji-day routine that runs on autopilot</div>
@@ -432,8 +432,8 @@
 <!-- ================= PAGE 9 — CH3 CONTENT ================= -->
 <div class="page page--cream">
   <div class="content">
-    <p class="kicker">The 50 &middot; 30 &middot; 20 Rule</p>
-    <h3>Three buckets, <em>zero guilt.</em></h3>
+    <p class="kicker">THE 50-30-20 RULE</p>
+    <h3>Three buckets, <em>zero guilt</em></h3>
 
     <div class="grid-2" style="margin-top:4mm; align-items:center;">
       <div class="figure" style="margin-top:0;">
@@ -450,8 +450,8 @@
         </svg>
       </div>
       <div>
-        <div class="stat" style="border-color:#0b1f1a;"><div class="v" style="color:#0b1f1a;">50% Needs</div><div class="l">Rent or home financing, groceries, transport, utilities, parents&rsquo; allowance — the non-negotiables.</div></div>
-        <div class="stat" style="margin-top:4mm;"><div class="v">30% Wants</div><div class="l">Makan-makan, travel, Netflix, that cafe. Guilt-free — because it&rsquo;s planned.</div></div>
+        <div class="stat" style="border-color:#0b1f1a;"><div class="v" style="color:#0b1f1a;">50% Needs</div><div class="l">Rent or home financing, groceries, transport, utilities, parents&rsquo; allowance. These are the non-negotiables.</div></div>
+        <div class="stat" style="margin-top:4mm;"><div class="v">30% Wants</div><div class="l">Makan-makan, online shopping, Netflix, that cafe. Guilt-free because it&rsquo;s planned.</div></div>
         <div class="stat" style="margin-top:4mm; border-color:#e0c98c;"><div class="v" style="color:#b8893a;">20% Future You</div><div class="l">Savings, investments, extra debt payments. This bucket gets paid <b>first</b>, on gaji day.</div></div>
       </div>
     </div>
@@ -461,12 +461,12 @@
       <tr><th>Bucket</th><th>Amount</th><th>Where it goes</th></tr>
       <tr><td><b>Needs</b></td><td class="gold">RM2,000</td><td>Rent RM1,100 &middot; food RM500 &middot; transport RM250 &middot; utilities RM150</td></tr>
       <tr><td><b>Wants</b></td><td class="gold">RM1,200</td><td>Eating out, family treats, subscriptions, small joys</td></tr>
-      <tr><td><b>Future You</b></td><td class="gold">RM800</td><td>RM400 emergency fund &middot; RM400 investments — auto-transferred the day after gaji</td></tr>
+      <tr><td><b>Future You</b></td><td class="gold">RM800</td><td>RM400 emergency fund + RM400 investments — auto-transferred the day after gaji</td></tr>
     </table>
 
     <div class="tipbox">
-      <b>The Seatbelt Rule</b>
-      <p>Before investing a single ringgit, build an emergency fund of <em>3–6 months of expenses</em> in a savings account you can reach in a day. It is not for raya. It is not for sales. It is your family&rsquo;s seatbelt.</p>
+      <b>THE SEATBELT RULE</b>
+      <p>Before investing a single RM, build an emergency fund of <em>3-6 months of expenses</em> in an account that you can reach within a day. It is not for raya. It is not for sales. It is your family&rsquo;s seatbelt.</p>
     </div>
   </div>
   <div class="folio"><span>Chapter 03 &middot; Master Your Cash Flow</span><b>09</b></div>
@@ -477,14 +477,14 @@
   <div class="grain"></div>
   <div class="ch-open">
     <div class="ch-watermark">04</div>
-    <p class="kicker">Chapter Four</p>
-    <h2 class="ch-title">The quiet miracle of <em>compounding.</em></h2>
-    <p class="ch-lead">There is a force in finance so patient and so powerful that it turns kopitiam money into a retirement fund — yet most people never feel it working, because its magic lives in the years they haven&rsquo;t reached yet. Meet compounding: profit earning profit, earning profit.</p>
-    <p class="ch-quote">&ldquo;The best time to start was ten years ago. The second-best time is before this chapter ends.&rdquo;</p>
+    <p class="kicker">Chapter Four: The quiet miracle of compounding</p>
+    <h2 class="ch-title">The quiet miracle of <em>compounding</em></h2>
+    <p class="ch-lead">Classic quote. There is a force in finance so patient and so powerful that it turns kopitiam money into a retirement fund. Yet, most people never feel it working, because its magic lives in the years they haven&rsquo;t reached yet. Meet compounding: profit earning profit, earning profit.</p>
+    <p class="ch-quote">&ldquo;The best time to start was ten years ago. The second-best time is now.&rdquo;</p>
     <div class="ch-points">
-      <div class="ch-point"><b>You&rsquo;ll meet</b>Aina and Farid — same salary, same fund, RM271,000 apart</div>
-      <div class="ch-point"><b>You&rsquo;ll learn</b>Why time matters more than timing — or talent</div>
-      <div class="ch-point"><b>You&rsquo;ll check</b>Whether your EPF is on track for the basic savings target</div>
+      <div class="ch-point"><b>You&rsquo;ll meet</b>Aina and Farid. Same salary, same fund, RM271,000 apart</div>
+      <div class="ch-point"><b>You&rsquo;ll learn</b>Why time matters more than timing or talent</div>
+      <div class="ch-point"><b>You&rsquo;ll check</b>Whether your EPF, PRS, and other retirement funds are on track for the basic savings target</div>
     </div>
   </div>
   <div class="folio"><span>Chapter 04 &middot; The Quiet Miracle</span><b>10</b></div>
@@ -493,8 +493,9 @@
 <!-- ================= PAGE 11 — CH4 CONTENT ================= -->
 <div class="page page--cream">
   <div class="content">
-    <p class="kicker">A Tale of Two Savers</p>
-    <h3>Aina starts at 25. Farid waits until 35. <em>Same RM500 a month.</em></h3>
+    <p class="kicker">A TALE OF TWO SAVERS</p>
+    <h3>Aina starts at 25. Farid waits until 35. <em>Same RM500 a month</em></h3>
+    <p class="small" style="margin-top:2mm;">(Graph Data Projection at age 55, assuming a diversified fund averaging 6% p.a.)</p>
 
     <div class="figure">
       <svg viewBox="0 0 360 150" xmlns="http://www.w3.org/2000/svg">
@@ -509,8 +510,16 @@
         <path d="M140 120 C210 117 260 108 300 94 C320 86 333 79 340 73" stroke="#0b1f1a" stroke-width="2" fill="none" stroke-linecap="round" stroke-dasharray="5 4"/>
         <circle cx="340" cy="18" r="3.5" fill="#b8893a"/>
         <circle cx="340" cy="73" r="3.5" fill="#0b1f1a"/>
-        <text x="250" y="26" font-family="Fraunces, Georgia, serif" font-size="13" fill="#b8893a">Aina &middot; RM502,000</text>
-        <text x="248" y="66" font-family="Fraunces, Georgia, serif" font-size="13" fill="#0b1f1a">Farid &middot; RM231,000</text>
+        <!-- Legend in top-right corner -->
+        <rect x="242" y="6" width="106" height="48" rx="2" fill="rgba(246,241,231,0.85)" stroke="rgba(201,161,74,0.2)" stroke-width="0.5"/>
+        <line x1="252" y1="20" x2="266" y2="20" stroke="#b8893a" stroke-width="2.6" stroke-linecap="round"/>
+        <circle cx="266" cy="20" r="2.5" fill="#b8893a"/>
+        <text x="272" y="17" font-family="Fraunces, Georgia, serif" font-size="10" fill="#b8893a" font-weight="500">Aina</text>
+        <text x="272" y="28" font-family="Instrument Sans, sans-serif" font-size="9" fill="#5b6b65" font-weight="600">RM502,000</text>
+        <line x1="252" y1="42" x2="266" y2="42" stroke="#0b1f1a" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 2"/>
+        <circle cx="266" cy="42" r="2.5" fill="#0b1f1a"/>
+        <text x="272" y="39" font-family="Fraunces, Georgia, serif" font-size="10" fill="#0b1f1a" font-weight="500">Farid</text>
+        <text x="272" y="50" font-family="Instrument Sans, sans-serif" font-size="9" fill="#5b6b65" font-weight="600">RM231,000</text>
         <text x="40" y="134" font-size="8" fill="#5b6b65">Age 25</text>
         <text x="133" y="134" font-size="8" fill="#5b6b65">35</text>
         <text x="232" y="134" font-size="8" fill="#5b6b65">45</text>
@@ -518,21 +527,20 @@
         <text x="36" y="14" font-size="8" fill="#5b6b65" text-anchor="end">RM500k</text>
         <text x="36" y="123" font-size="8" fill="#5b6b65" text-anchor="end">RM0</text>
       </svg>
-      <p class="figcap">RM500/month into the same diversified fund averaging 6% p.a. Farid&rsquo;s ten-year delay costs him RM271,000 — far more than the RM60,000 he &ldquo;saved&rdquo; by not contributing.</p>
+      <p class="figcap">Aina&rsquo;s Path (Starts at 25): Reaches RM502,000 by age 55. Farid&rsquo;s Path (Starts at 35): Reaches RM231,000 by age 55. Farid&rsquo;s ten-year delay costs him RM271,000. This is far more than the RM60,000 he &ldquo;saved&rdquo; by not contributing.</p>
     </div>
 
     <div class="grid-3" style="margin-top:5mm;">
       <div class="stat"><div class="v">RM82k</div><div class="l">RM500/month after 10 years</div></div>
-      <div class="stat"><div class="v">RM231k</div><div class="l">after 20 years — the curve bends</div></div>
-      <div class="stat"><div class="v">RM502k</div><div class="l">after 30 years — the curve takes off</div></div>
+      <div class="stat"><div class="v">RM231k</div><div class="l">After 20 years, the curve bends</div></div>
+      <div class="stat"><div class="v">RM502k</div><div class="l">After 30 years, the curve takes off</div></div>
     </div>
 
-    <p style="margin-top:5mm;">Notice the shape: the first decade looks boring. The last decade does the heavy lifting. This is why <b>time in the market beats timing the market</b> — and why the biggest investing risk for most Malaysians isn&rsquo;t losing money. It&rsquo;s starting late.</p>
-    <p>And if you prefer to invest Shariah-compliant, compounding works exactly the same way — profit from screened funds is your share of real business returns, and every instrument in this book has a halal equivalent.</p>
+    <p style="margin-top:5mm;">Notice the shape: the first decade looks boring. The last decade does the heavy lifting. This is why <b>time in the market beats timing the market</b>. The biggest investing risk for most Malaysians isn&rsquo;t losing money. It&rsquo;s starting late.</p>
 
     <div class="tipbox">
       <b>EPF Reality Check</b>
-      <p>EPF&rsquo;s guideline for basic savings is around <em>RM240,000 by age 55</em> — and many members fall short. Log in to your KWSP i-Akaun this week and see where you stand. If there&rsquo;s a gap, chapters 5 and your action plan will help you close it.</p>
+      <p>EPF&rsquo;s recent guideline for basic savings is around <em>RM240,000 by age 55</em> and many members fall short. Log in to your KWSP i-Akaun this week and see where you stand. If there&rsquo;s a gap, chapters 5 and your action plan will help you close it.</p>
     </div>
   </div>
   <div class="folio"><span>Chapter 04 &middot; The Quiet Miracle</span><b>11</b></div>
@@ -542,8 +550,8 @@
   <div class="grain"></div>
   <div class="ch-open">
     <div class="ch-watermark">05</div>
-    <p class="kicker">Chapter Five</p>
-    <h2 class="ch-title">Invest the <em>smart way.</em></h2>
+    <p class="kicker">Chapter Five: Invest the smart way</p>
+    <h2 class="ch-title">Invest the <em>smart way</em></h2>
     <p class="ch-lead">You do not need to be wealthy to start investing — you need to start investing to build wealth. Malaysia has one of the most accessible investment landscapes anywhere: regulated, diverse, and open from a few hundred ringgit a month. The problem isn&rsquo;t options. It&rsquo;s knowing where to start.</p>
     <p class="ch-quote">&ldquo;Never invest in something you cannot explain to your mother over dinner.&rdquo;</p>
     <div class="ch-points">
@@ -558,29 +566,29 @@
 <!-- ================= PAGE 13 — CH5 CONTENT ================= -->
 <div class="page page--cream">
   <div class="content">
-    <p class="kicker">Your Investing Toolbox</p>
-    <h3>Six places your money can <em>grow.</em></h3>
+    <p class="kicker">YOUR INVESTING TOOLBOX</p>
+    <h3>Six places your money can <em>grow</em></h3>
 
-    <div class="grid-2" style="margin-top:4mm;">
-      <div class="card"><h4>EPF</h4><p>Your foundation. Consistent long-term dividends, plus voluntary top-ups — especially powerful for gig workers via i-Saraan. Prefer Shariah-compliant? Opt in to Simpanan Shariah.</p></div>
-      <div class="card"><h4>Unit trusts &amp; ETFs</h4><p>Professionally managed funds — equity, bond or mixed. Own a slice of hundreds of businesses with a few hundred ringgit a month. Shariah-screened versions exist for every fund type.</p></div>
-      <div class="card"><h4>Fixed deposits &amp; bond funds</h4><p>The steady end of the ladder: lower returns, lower drama. Perfect for medium-term goals where you cannot afford a bad year. Islamic FDs and sukuk funds are the equivalents.</p></div>
-      <div class="card"><h4>ASB &amp; ASNB funds</h4><p>Widely held and historically steady, with low entry amounts. For Muslim investors: several state fatwa councils have ruled them permissible (harus) — check your state&rsquo;s ruling.</p></div>
-      <div class="card"><h4>Gold</h4><p>A time-tested store of value with deep cultural roots here. Buy physical or via reputable bank gold accounts — and treat it as protection, not a lottery ticket.</p></div>
-      <div class="card"><h4>Purpose-built savings</h4><p>Some goals have their own vehicles: SSPN for children&rsquo;s education (with tax relief), PRS for retirement, and Tabung Haji for haji — register early; that queue is measured in decades.</p></div>
+    <div class="grid-2" style="margin-top:3mm; gap:3mm;">
+      <div class="card" style="padding:3.5mm 4mm;"><h4 style="font-size:11pt; margin-bottom:1mm;">EPF</h4><p style="font-size:8.4pt; line-height:1.5;">Your foundation. Consistent long-term dividends, plus voluntary top-ups. Especially powerful for gig workers and self-employed via i-Saraan. Prefer Shariah-compliant? Opt in to Simpanan Shariah.</p></div>
+      <div class="card" style="padding:3.5mm 4mm;"><h4 style="font-size:11pt; margin-bottom:1mm;">ASB &amp; ASNB funds</h4><p style="font-size:8.4pt; line-height:1.5;">Widely held and historically steady, with low entry amounts. No fees. For Muslim investors: several state fatwa councils have ruled them permissible (harus).</p></div>
+      <div class="card" style="padding:3.5mm 4mm;"><h4 style="font-size:11pt; margin-bottom:1mm;">Purpose-built savings</h4><p style="font-size:8.4pt; line-height:1.5;">SSPN for children&rsquo;s education (with tax relief), PRS for retirement, and Tabung Haji for the pilgrimage.</p></div>
+      <div class="card" style="padding:3.5mm 4mm;"><h4 style="font-size:11pt; margin-bottom:1mm;">Gold</h4><p style="font-size:8.4pt; line-height:1.5;">A time-tested store of value. Buy physical or via reputable bank gold accounts. Treat it as protection, not a lottery ticket. Mind the spread.</p></div>
+      <div class="card" style="padding:3.5mm 4mm;"><h4 style="font-size:11pt; margin-bottom:1mm;">Unit trusts &amp; ETFs</h4><p style="font-size:8.4pt; line-height:1.5;">Professionally managed funds — equity, bond or mixed. Own a slice of hundreds of businesses with a few hundred ringgit a month. Shariah-screened versions exist. Small fee involved.</p></div>
+      <div class="card" style="padding:3.5mm 4mm;"><h4 style="font-size:11pt; margin-bottom:1mm;">Fixed deposits &amp; bond funds</h4><p style="font-size:8.4pt; line-height:1.5;">The steady end: lower returns, lower drama. Perfect for medium-term goals where you cannot afford a bad year. Islamic FDs and sukuk funds are the equivalents. Small fee involved.</p></div>
     </div>
 
-    <h3 style="margin-top:6mm;">The scam <em>smell test.</em></h3>
-    <p>Malaysians lose hundreds of millions of ringgit to investment scams every year — and the victims are often educated professionals. Three red flags, no exceptions:</p>
-    <ul class="checklist">
-      <li><b>&ldquo;Guaranteed&rdquo; high returns.</b> Anyone promising fixed 10% a month is not investing your money. They are recruiting your replacement.</li>
-      <li><b>Pressure to act now.</b> Real investments will still exist next week. Scams expire when you start thinking.</li>
-      <li><b>Not licensed.</b> Thirty seconds on the Securities Commission&rsquo;s public lists tells you if an operator is licensed — or already on the investor alert list.</li>
+    <h3 style="margin-top:3mm;">The scam <em>smell test</em></h3>
+    <p style="font-size:9.5pt; margin-top:1.5mm;">Malaysians lose hundreds of millions of ringgit to investment scams every year. Three red flags, no exceptions:</p>
+    <ul class="checklist" style="margin-top:1mm;">
+      <li style="padding:1.8mm 0; font-size:9pt;"><b>&ldquo;Guaranteed&rdquo; high returns:</b> Anyone promising fixed 10% a month is not investing your money. They are recruiting your replacement.</li>
+      <li style="padding:1.8mm 0; font-size:9pt;"><b>Pressure to act now:</b> Real investments will still exist next week. Scams expire when you start thinking.</li>
+      <li style="padding:1.8mm 0; font-size:9pt;"><b>Not licensed:</b> Thirty seconds on the Securities Commission&rsquo;s public lists tells you if an operator is licensed or on the investor alert list.</li>
     </ul>
 
-    <div class="tipbox">
-      <b>Sofina&rsquo;s Tip</b>
-      <p>Start simple: one diversified fund — conventional or Shariah-compliant, your choice — one fixed amount, every single month, rain or shine. <em>Consistency is a strategy. Excitement is a warning sign.</em></p>
+    <div class="tipbox" style="margin-top:3.5mm; padding:5mm 6mm;">
+      <b style="font-size:7.5pt; margin-bottom:1.5mm;">Sofina&rsquo;s Tip</b>
+      <p style="font-size:9.2pt; line-height:1.6;">Start simple: one diversified fund (conventional or Shariah-compliant, your choice), one fixed amount, every single month, rain or shine. <em>Consistency is a strategy. Excitement is a warning sign.</em></p>
     </div>
   </div>
   <div class="folio"><span>Chapter 05 &middot; Invest the Smart Way</span><b>13</b></div>
@@ -591,9 +599,9 @@
   <div class="grain"></div>
   <div class="ch-open">
     <div class="ch-watermark">06</div>
-    <p class="kicker">Chapter Six</p>
-    <h2 class="ch-title">Make debt <em>serve you.</em></h2>
-    <p class="ch-lead">Debt is a tool — and like any tool, it depends on the hand that holds it. A home financing that shelters your family is not the same as a personal loan for a wedding buffet upgrade. This chapter is about knowing the difference, and getting out of the wrong kind, fast.</p>
+    <p class="kicker">Chapter Six: Make debt serve you</p>
+    <h2 class="ch-title">Make debt <em>serve you</em></h2>
+    <p class="ch-lead">Debt is a tool. Like any tool, it depends on the hand that holds it. A home financing that shelters your family is not the same as a personal loan for a wedding buffet upgrade. This chapter is about knowing the difference, and getting out of the wrong kind, fast.</p>
     <p class="ch-quote">&ldquo;If you are paying instalments on things that lose value, you are renting your own lifestyle.&rdquo;</p>
     <div class="ch-points">
       <div class="ch-point"><b>You&rsquo;ll learn</b>Good debt vs bad debt — the Malaysian edition</div>
@@ -607,18 +615,18 @@
 <!-- ================= PAGE 15 — CH6 CONTENT ================= -->
 <div class="page page--cream">
   <div class="content">
-    <p class="kicker">Know Your Numbers</p>
-    <h3>Good debt builds. <em>Bad debt bleeds.</em></h3>
+    <p class="kicker">KNOW YOUR NUMBERS</p>
+    <h3>Good debt builds. <em>Bad debt bleeds</em></h3>
 
     <table class="tbl">
       <tr><th>Usually worth it</th><th>Usually a trap</th></tr>
       <tr><td><b>Home financing</b> — shelter plus a long-term asset</td><td><b>Credit card balances</b> — paying the minimum on RM5,000 can take over a decade to clear</td></tr>
-      <tr><td><b>Education</b> — PTPTN that genuinely raises your earning power (then repay it — it&rsquo;s an amanah)</td><td><b>Personal loans for lifestyle</b> — weddings, gadgets, holidays that outlive the photos but not the instalments</td></tr>
+      <tr><td><b>Education</b> — PTPTN that genuinely raises your earning power (then repay it - it's an amanah)</td><td><b>Personal loans for lifestyle</b> — weddings, gadgets, overseas holidays that outlive the photos but not the instalments</td></tr>
       <tr><td><b>Business financing</b> — debt that buys assets which earn more than they cost</td><td><b>Excessive car financing</b> — nine years of payments on an asset losing value daily</td></tr>
     </table>
 
-    <p style="margin-top:4mm;">One number tells you if debt is squeezing you: your <b>debt service ratio (DSR)</b> — total monthly debt payments divided by net income. Keep it under <b>30–35%</b>. Banks may approve you far beyond that; banks also aren&rsquo;t the ones eating Maggi at month-end.</p>
-    <p>And whichever you choose — conventional loans or Islamic financing like Murabahah and Tawarruq — remember: financing is still financing. The structure changes the contract, not the instalment leaving your gaji. Borrow with purpose, and sparingly.</p>
+    <p style="margin-top:4mm;">There is one number that tells you if debt is squeezing you: your <b>debt service ratio (DSR)</b>, which is total monthly debt payments divided by net income. Keep this under <b>30-35%</b>. Banks may approve you far beyond that, but banks aren't the ones eating Maggi at month-end.</p>
+    <p>And whichever you choose, conventional loans or Islamic financing (i.e., Murabahah or Tawarruq), remember: financing is still financing. The structure changes the contract (like ayam sembelih or ayam katok), not the instalment leaving your gaji. Borrow with purpose, and sparingly.</p>
 
     <h3 style="margin-top:6mm;">Two escape routes</h3>
     <div class="grid-2" style="margin-top:3mm;">
@@ -633,7 +641,7 @@
     </div>
 
     <div class="tipbox">
-      <b>The Iron Rule of Cards</b>
+      <b>THE IRON RULE OF CARDS</b>
       <p>A credit card is a payment tool, not a borrowing tool. <em>If you cannot pay it in full this month, you could not afford it last month.</em> Points and cashback never outrun finance charges.</p>
     </div>
   </div>
@@ -645,14 +653,14 @@
   <div class="grain"></div>
   <div class="ch-open">
     <div class="ch-watermark">07</div>
-    <p class="kicker">Chapter Seven</p>
-    <h2 class="ch-title">Protect what <em>you build.</em></h2>
-    <p class="ch-lead">You can save brilliantly and invest wisely — and one hospital bill can undo a decade of discipline. Protection is the unglamorous chapter everyone skips, and the one your family will thank you for most. This is not pessimism. It is preparation: tying your camel first, as the old wisdom goes.</p>
+    <p class="kicker">Chapter Seven: Protect what you build</p>
+    <h2 class="ch-title">Protect what <em>you build</em></h2>
+    <p class="ch-lead">You can save brilliantly and invest wisely, then one hospital bill can undo a decade of discipline if not protected properly. Protection is the unglamorous chapter everyone skips, and the one your family will thank you the most. This is not pessimism. It is preparation: tying your camel first, as the hadith goes.</p>
     <p class="ch-quote">&ldquo;Protection is a thousand families agreeing: if calamity visits one of us, it meets all of us.&rdquo;</p>
     <div class="ch-points">
-      <div class="ch-point"><b>You&rsquo;ll learn</b>How insurance and takaful work — and how they differ</div>
+      <div class="ch-point"><b>You&rsquo;ll learn</b>How insurance and takaful work, and how they differ</div>
       <div class="ch-point"><b>You&rsquo;ll order</b>Your protection priorities: what to get first, second, third</div>
-      <div class="ch-point"><b>You&rsquo;ll avoid</b>Being over-insured on the wrong things, naked on the right ones</div>
+      <div class="ch-point"><b>You&rsquo;ll avoid</b>Being over-insured on the wrong things, but naked on the right ones</div>
     </div>
   </div>
   <div class="folio"><span>Chapter 07 &middot; Protect What You Build</span><b>16</b></div>
@@ -661,22 +669,22 @@
 <!-- ================= PAGE 17 — CH7 CONTENT ================= -->
 <div class="page page--cream">
   <div class="content">
-    <p class="kicker">Your Safety Net, In Order</p>
-    <h3>First the seatbelt, then the airbags, <em>then the journey.</em></h3>
+    <p class="kicker">YOUR SAFETY NET, IN ORDER</p>
+    <h3>First the seatbelt, then the airbags, <em>then the journey</em></h3>
 
     <table class="tbl">
       <tr><th>Priority</th><th>Protection</th><th>Why it comes in this order</th></tr>
-      <tr><td class="gold"><b>1</b></td><td><b>Emergency fund</b></td><td>3–6 months of expenses. Your first responder for small shocks — no contract, no claim forms.</td></tr>
+      <tr><td class="gold"><b>1</b></td><td><b>Emergency fund</b></td><td>3-6 months of expenses. Your first responder for small shocks. No contract, no claim forms, instant cash.</td></tr>
       <tr><td class="gold"><b>2</b></td><td><b>Medical card (insurance or takaful)</b></td><td>Private healthcare costs keep climbing. One ICU week can exceed a year&rsquo;s salary. This is non-negotiable, even for singles.</td></tr>
-      <tr><td class="gold"><b>3</b></td><td><b>Life insurance / family takaful</b></td><td>Only if someone depends on your income. Rule of thumb: cover about 10&times; your annual income, so your family has a decade to find their feet.</td></tr>
-      <tr><td class="gold"><b>4</b></td><td><b>Critical illness rider</b></td><td>Replaces income while you fight and recover — the medical card pays the hospital; this pays your household.</td></tr>
+      <tr><td class="gold"><b>3</b></td><td><b>Life insurance / family takaful</b></td><td>Only if someone depends on your income. Rule of thumb: cover about 10x your annual income, so your family has a decade to find their feet.</td></tr>
+      <tr><td class="gold"><b>4</b></td><td><b>Critical illness rider</b></td><td>Replaces income while you fight and recover. The medical card pays the hospital; this pays other costs to your household.</td></tr>
     </table>
 
-    <p style="margin-top:5mm;">Prefer the takaful route? It differs from conventional insurance in structure: participants contribute to a shared pool (tabarru&rsquo;) under a contract of mutual assistance, the operator earns a transparent fee, and surpluses may be shared back. Either way, what matters most is that your family is covered.</p>
+    <p style="margin-top:5mm;">The takaful route differs from conventional insurance in structure. In conventional insurance, you&rsquo;re buying protection from the insurance company. When you&rsquo;re in need, they pay you. Whereas in takaful, participants contribute to a shared pool (tabarru&rsquo;) under a contract of mutual assistance (yes, you get pahala everytime you pay your takaful). The takaful operator earns a transparent fee, and surpluses may be shared back. Either you choose a conventional or a takaful plan, what matters most is that your family is covered.</p>
 
     <div class="grid-2" style="margin-top:5mm;">
-      <div class="stat"><div class="v">10&times;</div><div class="l">annual income — a sensible family coverage target when others rely on your gaji.</div></div>
-      <div class="stat"><div class="v">2 checks</div><div class="l">Employer coverage isn&rsquo;t portable — it retires when you resign. And update your nomination after every nikah, birth or divorce.</div></div>
+      <div class="stat"><div class="v">10&times;</div><div class="l">annual income: a sensible family coverage target when others rely on your gaji.</div></div>
+      <div class="stat"><div class="v">2 checks</div><div class="l">1. Employer&rsquo;s medical coverage. This is good but it retires when you resign. Personal coverage remains.<br>2. Update your nomination after every life event: nikah, birth or divorce.</div></div>
     </div>
 
     <div class="tipbox">
@@ -692,10 +700,10 @@
   <div class="grain"></div>
   <div class="ch-open">
     <div class="ch-watermark">08</div>
-    <p class="kicker">Chapter Eight</p>
-    <h2 class="ch-title">Wealth with <em>barakah.</em></h2>
+    <p class="kicker">Chapter Eight: Wealth with barakah (blessings)</p>
+    <h2 class="ch-title">Wealth with barakah <em>(blessings)</em></h2>
     <p class="ch-lead">A financial plan that ends at your own retirement is only half a plan. The full picture asks harder, more beautiful questions: Is my wealth clean? Does it flow to others? And when I return to Allah, will it reach the people I love — smoothly, fairly, without family conflict?</p>
-    <p class="ch-quote">&ldquo;Wealth is not diminished by charity — and families are not protected by silence. Write things down.&rdquo;</p>
+    <p class="ch-quote">&ldquo;Wealth is not diminished by charity, and families are not protected by inactivity. Write things down.&rdquo;</p>
     <div class="ch-points">
       <div class="ch-point"><b>You&rsquo;ll learn</b>Zakat as purification — and how simple it is to calculate</div>
       <div class="ch-point"><b>You&rsquo;ll understand</b>Faraid, wasiat and hibah — and why nomination &ne; inheritance</div>
@@ -708,29 +716,29 @@
 <!-- ================= PAGE 19 — CH8 CONTENT ================= -->
 <div class="page page--cream">
   <div class="content">
-    <p class="kicker">Clean, Flowing, Prepared</p>
-    <h3>The three duties of <em>lasting wealth.</em></h3>
+    <p class="kicker">CLEAN, FLOWING, PREPARED</p>
+    <h3>The three duties of <em>lasting wealth</em></h3>
 
-    <p class="lead-in">Zakat first. If your savings and investments have sat above the nisab for a full year (haul), 2.5% belongs to the asnaf — it was never yours. Far from shrinking your wealth, zakat purifies it; in Malaysia it is also tax-deductible. Pay it through your state zakat body, then add sedekah on top: given quietly, it is the most reliable &ldquo;investment&rdquo; you will ever make.</p>
+    <p class="lead-in">Zakat first. If your savings and investments have sat above the nisab for a full year (haul), 2.5% belongs to the asnaf. That part of your wealth was never yours to begin with. Far from shrinking your wealth, zakat purifies it. Bonus in Malaysia, it is also tax-deductible. Pay it through your state zakat body, then add sedekah on top: given quietly, it is the most reliable &ldquo;investment&rdquo; you will ever make.</p>
 
-    <h3 style="margin-top:6mm;">Estate planning, <em>demystified.</em></h3>
+    <h3 style="margin-top:6mm;">Estate planning, <em>demystified</em></h3>
     <div class="grid-3" style="margin-top:3mm;">
-      <div class="card"><h4>Faraid</h4><p>The default. Islamic law fixes how a Muslim&rsquo;s estate is shared among heirs. Fair — but without preparation, distribution can take years while assets sit frozen.</p></div>
-      <div class="card"><h4>Wasiat</h4><p>Your written will. As a Muslim you may direct up to one-third of your estate — to non-heirs, charity, or causes — and appoint a trusted executor (wasi) to manage everything.</p></div>
-      <div class="card"><h4>Hibah</h4><p>A gift made during your lifetime, taking effect outside faraid. Powerful for ensuring a specific person — a spouse, a special-needs child — is provided for directly.</p></div>
+      <div class="card"><h4>Faraid</h4><p>The default. Islamic law fixes how a Muslim&rsquo;s estate is shared among heirs. Fair, but without preparation, distribution can take years while assets sit frozen unadministered.</p></div>
+      <div class="card"><h4>Wasiat</h4><p>Your written will. As a Muslim, you may direct up to one-third of your estate to non-heirs (e.g., uncles or aunties, adopted children, godparents), charity, or causes. Most importantly, it lets you appoint a trusted executor (wasi) to manage everything and reduce the time your assets are frozen.</p></div>
+      <div class="card"><h4>Hibah</h4><p>A gift made during your lifetime, taking effect outside faraid. Powerful for ensuring a specific person. e.g., a spouse, a special-needs child, is provided for directly.</p></div>
     </div>
 
-    <p style="margin-top:5mm;"><b>One detail that surprises almost everyone:</b> for Muslims, your EPF and takaful nominee is generally an administrator (wasi), not an automatic owner — they receive the money to distribute according to faraid. Naming a nominee still matters enormously: it keeps funds from being frozen. But it is the beginning of estate planning, not the end.</p>
+    <p style="margin-top:5mm;"><b>One detail that surprises almost everyone:</b> for Muslims, your EPF and takaful nominee is generally an administrator (wasi), not an automatic owner. They receive the money to distribute according to faraid. Naming a nominee still matters enormously: it keeps funds from being frozen. But it is the beginning of estate planning, not the end. Ensure your nomination is beneficiary/hibah if you intend to give assets directly, where possible.</p>
 
     <ul class="checklist" style="margin-top:4mm;">
-      <li><b>Check your nominations</b> — EPF, takaful, Tabung Haji — especially after marriage, children or divorce.</li>
-      <li><b>Write a wasiat</b> with a reputable provider — it costs less than a smartphone and saves your family years.</li>
-      <li><b>Talk to your family.</b> Tell them what exists and where. Grief is heavy enough without a treasure hunt.</li>
+      <li><b>Check your nominations:</b> EPF, takaful, Tabung Haji — especially after marriage, children or divorce.</li>
+      <li><b>Write a wasiat</b> with a reputable provider (an estate lawyer or a trustee) — it costs less than a smartphone and saves your family years.</li>
+      <li><b>Talk to your family:</b> Tell them what exists and where. Grief is heavy enough without a treasure hunt.</li>
     </ul>
 
     <div class="tipbox">
       <b>Sofina&rsquo;s Tip</b>
-      <p>Do the haji math early, too. Register with Tabung Haji now — <em>the queue is long, but so is a life of intention.</em> Planning for ibadah is financial planning at its most meaningful.</p>
+      <p>Do the haji math early, too. Register with Tabung Haji now. <em>The queue is long, but so is a life of intention.</em> Planning for ibadah is financial planning at its most meaningful.</p>
     </div>
   </div>
   <div class="folio"><span>Chapter 08 &middot; Wealth With Barakah</span><b>19</b></div>
@@ -738,29 +746,29 @@
 <!-- ================= PAGE 20 — ACTION PLAN WEEKS 1-2 ================= -->
 <div class="page page--cream">
   <div class="content">
-    <p class="kicker">Your 30-Day Action Plan</p>
-    <h3>Knowledge becomes wealth only when <em>practised.</em></h3>
-    <p>Eight chapters is a lot of ideas. Here they are again — as four weeks of small, concrete moves. None takes more than an evening. Tick them off as you go; by day 30 you will have done more than most people do in a decade of &ldquo;planning to plan.&rdquo;</p>
+    <p class="kicker">YOUR 30-DAY ACTION PLAN</p>
+    <h3>Knowledge becomes wealth only when <em>practised</em></h3>
+    <p>Eight chapters is a lot of ideas. Here they are again as four weeks of small, concrete moves. None takes more than an evening. Tick them off as you go; by day 30 you will have done more than most people do in a decade of &ldquo;planning to plan.&rdquo;</p>
 
-    <h3 style="margin-top:6mm;">Week 1 — <em>Know your numbers</em></h3>
+    <h3 style="margin-top:6mm;">Week 1 - <em>Know your numbers</em></h3>
     <ul class="checklist">
-      <li><b>List everything you own and owe.</b> Savings, EPF, ASB, gold, debts. One page. This is your starting line — no judgment, just truth.</li>
-      <li><b>Track every ringgit for 7 days.</b> Phone notes will do. You cannot fix leaks you cannot see.</li>
+      <li><b>List everything you own and owe.</b> Savings, EPF, ASB, gold, debts. One page. This is your starting line. No judgment, just truth.</li>
+      <li><b>Track every ringgit for 7 days.</b> You don&rsquo;t need a fancy tracker app. Phone notes will do. You cannot fix leaks you cannot see.</li>
       <li><b>Calculate your DSR.</b> Monthly debt payments &divide; net income. Above 35%? Debt becomes your first priority.</li>
       <li><b>Log in to KWSP i-Akaun.</b> Compare your balance against the basic savings guide for your age.</li>
     </ul>
 
-    <h3 style="margin-top:6mm;">Week 2 — <em>Plug the leaks</em></h3>
+    <h3 style="margin-top:6mm;">Week 2 - <em>Plug the leaks</em></h3>
     <ul class="checklist">
       <li><b>Cancel two subscriptions</b> you haven&rsquo;t used in 30 days. Redirect the money to Future You.</li>
-      <li><b>Set your 50&middot;30&middot;20 split.</b> Adjust the ratios to your reality — the order of priority is what matters.</li>
+      <li><b>Set your 50&middot;30&middot;20 split.</b> Adjust the ratios to your reality. The order of priority is what matters.</li>
       <li><b>Automate it.</b> Standing instruction the day after gaji: one transfer to savings, one to investment. Decide once, benefit monthly.</li>
-      <li><b>Write your top 3 goals</b> — each with a number and a date. Put them where you&rsquo;ll see them daily.</li>
+      <li><b>Write your top 3 goals.</b> Each with a number and a date. Put them where you&rsquo;ll see them daily.</li>
     </ul>
 
     <div class="tipbox">
       <b>Momentum Rule</b>
-      <p>If a step feels too big, shrink it until it feels almost silly — <em>RM50 a month is infinitely more than RM0.</em> You can raise the amount later; you cannot raise a habit you never started.</p>
+      <p>If a step feels too big, shrink it until it feels almost silly, e.g., <em>RM50 a month is infinitely more than RM0.</em> You can raise the amount later, but you cannot raise a habit you never started.</p>
     </div>
   </div>
   <div class="folio"><span>Your 30-Day Action Plan</span><b>20</b></div>
@@ -769,21 +777,21 @@
 <!-- ================= PAGE 21 — ACTION PLAN WEEKS 3-4 ================= -->
 <div class="page page--cream">
   <div class="content">
-    <p class="kicker">Your 30-Day Action Plan &middot; Continued</p>
-    <h3>Week 3 — <em>Build your defences</em></h3>
+    <p class="kicker">YOUR 30-DAY ACTION PLAN CONTINUED</p>
+    <h3>Week 3 - <em>Build your defences</em></h3>
     <ul class="checklist">
-      <li><b>Open a dedicated emergency fund account.</b> Separate from daily spending — out of sight, out of Shopee.</li>
-      <li><b>Seed it</b> with whatever you can today, even RM100. Target: 3–6 months of expenses, built monthly.</li>
+      <li><b>Open a dedicated emergency fund account.</b> Separate it from daily spending. Out of sight, out of Shopee.</li>
+      <li><b>Seed it</b> with whatever you can today, even if it&rsquo;s RM100. Target: 3-6 months of expenses, built monthly.</li>
       <li><b>Get a medical card quote</b> from two insurers or takaful operators. Compare annual limits and panel hospitals near you.</li>
-      <li><b>Check every nomination</b> — EPF, insurance, takaful, Tabung Haji. Five minutes that saves your family months.</li>
+      <li><b>Check every nomination.</b> EPF, insurance, takaful, Tabung Haji. Five minutes that saves your family months.</li>
     </ul>
 
-    <h3 style="margin-top:6mm;">Week 4 — <em>Start growing</em></h3>
+    <h3 style="margin-top:6mm;">Week 4 - <em>Start growing</em></h3>
     <ul class="checklist">
       <li><b>Choose one investment</b> from Chapter 5 that matches your nearest long-term goal. One is enough to start.</li>
-      <li><b>Verify before you invest.</b> Thirty seconds on the Securities Commission&rsquo;s licensed list — make it a lifelong reflex.</li>
+      <li><b>Verify before you invest.</b> Thirty seconds check of any investment opportunity on the Securities Commission&rsquo;s licensed list. Make it a lifelong reflex.</li>
       <li><b>Set the monthly auto-debit.</b> Same date every month. Boring, automatic, unstoppable.</li>
-      <li><b>Book a conversation with a licensed financial planner</b> — bring your Week 1 numbers and your three goals.</li>
+      <li><b>Book a conversation with a licensed financial planner.</b> Bring your Week 1 numbers and your three goals.</li>
     </ul>
 
     <div class="grid-3" style="margin-top:6mm;">
@@ -794,7 +802,7 @@
 
     <div class="tipbox">
       <b>Day 31</b>
-      <p>Repeat nothing. Maintain everything. <em>The plan now runs itself</em> — your only job is to protect the standing instructions from your own moods, raya sales, and well-meaning group chats.</p>
+      <p>Repeat nothing. Maintain everything. <em>The plan now runs itself.</em> Your only job is to protect the standing instructions from your own moods, the monthly sales, and well-meaning group chats.</p>
     </div>
   </div>
   <div class="folio"><span>Your 30-Day Action Plan</span><b>21</b></div>
@@ -803,30 +811,30 @@
 <!-- ================= PAGE 22 — TEN RULES ================= -->
 <div class="page page--cream">
   <div class="content">
-    <p class="kicker">Keep This Page</p>
-    <h3>Ten rules for <em>the road.</em></h3>
+    <p class="kicker">KEEP THIS PAGE</p>
+    <h3>Ten rules for <em>the road</em></h3>
     <p>Tear this page out (digitally speaking). When money decisions get noisy, come back here.</p>
     <table class="tbl" style="margin-top:5mm;">
-      <tr><td class="gold" style="width:10mm;"><b>01</b></td><td><b>Pay yourself first.</b> Future You is a bill, due on gaji day.</td></tr>
-      <tr><td class="gold"><b>02</b></td><td><b>Spend less than you earn</b> — not sometimes, structurally.</td></tr>
-      <tr><td class="gold"><b>03</b></td><td><b>The emergency fund comes before every investment.</b> Seatbelt first.</td></tr>
-      <tr><td class="gold"><b>04</b></td><td><b>Time beats timing.</b> Start small, start now, never interrupt compounding unnecessarily.</td></tr>
+      <tr><td class="gold" style="width:10mm;"><b>01</b></td><td><b>Pay yourself first</b> — Future You is a bill, due on gaji day.</td></tr>
+      <tr><td class="gold"><b>02</b></td><td><b>Spend less than you earn</b> — Not just sometimes. Structurally, habitually.</td></tr>
+      <tr><td class="gold"><b>03</b></td><td><b>The emergency fund comes before every investment</b> — Seatbelt first.</td></tr>
+      <tr><td class="gold"><b>04</b></td><td><b>Time beats timing</b> — Start small, start now, never interrupt compounding unnecessarily.</td></tr>
       <tr><td class="gold"><b>05</b></td><td><b>Never invest in what you can&rsquo;t explain</b> to your mother over dinner.</td></tr>
-      <tr><td class="gold"><b>06</b></td><td><b>Guaranteed high returns are guaranteed losses.</b> Walk away — quickly.</td></tr>
-      <tr><td class="gold"><b>07</b></td><td><b>If you can&rsquo;t pay the card in full, you can&rsquo;t afford the purchase.</b></td></tr>
-      <tr><td class="gold"><b>08</b></td><td><b>Protect before you grow.</b> A medical card outranks a portfolio.</td></tr>
-      <tr><td class="gold"><b>09</b></td><td><b>Align your money with your values.</b> A plan you believe in is a plan you keep.</td></tr>
+      <tr><td class="gold"><b>06</b></td><td><b>Guaranteed high returns are guaranteed losses</b> — Walk away quickly.</td></tr>
+      <tr><td class="gold"><b>07</b></td><td><b>If you can&rsquo;t pay the card in full, you can&rsquo;t afford the purchase</b></td></tr>
+      <tr><td class="gold"><b>08</b></td><td><b>Protect before you grow</b> — A medical card outranks a portfolio.</td></tr>
+      <tr><td class="gold"><b>09</b></td><td><b>Align your money with your values</b> — A plan you believe in is a plan you keep.</td></tr>
       <tr><td class="gold"><b>10</b></td><td><b>Write things down</b> — goals, budgets, wasiat. Families are protected by paper, not intentions.</td></tr>
     </table>
     <div class="letter-arcs" style="margin-top:auto;">
       <svg viewBox="0 0 200 36" fill="none" xmlns="http://www.w3.org/2000/svg">
         <clipPath id="lh2"><rect x="0" y="0" width="200" height="30"/></clipPath>
         <g clip-path="url(#lh2)">
-          <path d="M60 30 A40 40 0 0 1 140 30" stroke="#c9a14a" stroke-opacity=".5" stroke-width="1"/>
-          <path d="M76 30 A24 24 0 0 1 124 30" stroke="#c9a14a" stroke-opacity=".75" stroke-width="1.2"/>
-          <path d="M89 30 A11 11 0 0 1 111 30 Z" fill="#c9a14a" fill-opacity=".85"/>
+          <path d="M71 30 A29 29 0 0 1 129 30" stroke="#c9a14a" stroke-opacity=".5" stroke-width="1"/>
+          <path d="M82.5 30 A17.5 17.5 0 0 1 117.5 30" stroke="#c9a14a" stroke-opacity=".75" stroke-width="1.2"/>
+          <path d="M92 30 A8 8 0 0 1 108 30 Z" fill="#c9a14a" fill-opacity=".85"/>
         </g>
-        <line x1="30" y1="30" x2="170" y2="30" stroke="#c9a14a" stroke-opacity=".55" stroke-width="1"/>
+        <line x1="50" y1="30" x2="150" y2="30" stroke="#c9a14a" stroke-opacity=".55" stroke-width="1"/>
       </svg>
     </div>
   </div>
@@ -837,11 +845,11 @@
 <div class="page page--dark">
   <div class="grain"></div>
   <div class="ch-open">
-    <p class="kicker">About the Author</p>
+    <p class="kicker">ABOUT THE AUTHOR</p>
     <h2 class="ch-title">Dr. Sofina Johari</h2>
-    <p class="ch-lead">Sofina is a licensed financial planner and member of the Malaysian Financial Planning Council (MFPC). She helps Malaysian families plan their money with clarity and confidence — from first gaji to legacy — across both conventional and Shariah-compliant planning, so your plan fits your life and your values.</p>
-    <p class="ch-lead" style="margin-top:5mm;">She believes financial planning should feel less like a lecture and more like a conversation over teh tarik: honest, practical, and always on your side of the table.</p>
-    <div class="ch-quote" style="margin-top:auto;">Ready for a plan that fits your life and your values?<br>Let&rsquo;s talk — visit the website to book a session.</div>
+    <p class="ch-lead">Sofina is a licensed financial planner with UOB Kay Hian and a member of the Malaysian Financial Planning Council (MFPC). She helps Malaysian families plan their money with clarity and confidence, from first gaji to legacy. Her solutions span across both conventional and Shariah-compliant planning, so recommendations fit your life and your values.</p>
+    <p class="ch-lead" style="margin-top:5mm;">She believes financial planning should feel less like a lecture and more like a conversation over coffee: candid, honest, practical, and always on your side of the table.</p>
+    <div class="ch-quote" style="margin-top:auto;">Ready for a plan that fits your life and your values?<br>Let&rsquo;s talk. Visit the website to book a session.</div>
     <div class="ch-points">
       <div class="ch-point"><b>Work with Sofina</b>One-to-one financial planning, goal mapping and portfolio reviews</div>
       <div class="ch-point"><b>Speaking</b>Workshops on money, family and the future for teams and communities</div>
@@ -874,7 +882,7 @@
         <line x1="2" y1="112" x2="198" y2="112" stroke="#c9a14a" stroke-opacity=".6" stroke-width="1"/>
       </svg>
     </div>
-    <p style="font-family: var(--serif); font-style: italic; font-size: 19pt; line-height: 1.55; color: var(--gold-soft); max-width: 120mm; margin-top: 12mm;">&ldquo;The best time to plant a tree was twenty years ago.<br>The second-best time is today.&rdquo;</p>
+    <p style="font-family: var(--serif); font-style: italic; font-size: 16pt; line-height: 1.55; color: var(--gold-soft); max-width: 100%; margin-top: 12mm;">&ldquo;The best time to plant a tree was twenty years ago. The second-best time is today.&rdquo;</p>
     <p style="margin-top: 10mm; font-size: 9pt; letter-spacing: .3em; text-transform: uppercase; color: rgba(184,196,190,.7); font-weight: 600;">Dr. Sofina Johari &middot; Licensed Financial Planner</p>
   </div>
 </div>

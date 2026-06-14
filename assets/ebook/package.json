@@ -1,0 +1,10 @@
+{
+  "name": "ebook",
+  "private": true,
+  "scripts": {
+    "generate-pdf": "node generate-pdf.js"
+  },
+  "dependencies": {
+    "playwright": "^1.60.0"
+  }
+}
