@@ -2,10 +2,25 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+<title>Financial Planning Made Simple — Dr. Sofina Johari</title>
 <style>
+  /* Self-hosted STATIC font instances. Variable fonts force Chromium's
+     Skia/PDF backend to embed every glyph as a Type3 path procedure,
+     which bloats the file and makes PDF readers very slow. Static
+     instances embed as properly subsetted TrueType, keeping the PDF
+     small, fast and with selectable text. */
+  @font-face { font-family:'Fraunces'; font-style:normal; font-weight:300; font-display:block; src:url('../fonts/Fraunces-300.ttf') format('truetype'); }
+  @font-face { font-family:'Fraunces'; font-style:normal; font-weight:400; font-display:block; src:url('../fonts/Fraunces-400.ttf') format('truetype'); }
+  @font-face { font-family:'Fraunces'; font-style:normal; font-weight:450; font-display:block; src:url('../fonts/Fraunces-450.ttf') format('truetype'); }
+  @font-face { font-family:'Fraunces'; font-style:normal; font-weight:500; font-display:block; src:url('../fonts/Fraunces-500.ttf') format('truetype'); }
+  @font-face { font-family:'Fraunces'; font-style:normal; font-weight:600; font-display:block; src:url('../fonts/Fraunces-600.ttf') format('truetype'); }
+  @font-face { font-family:'Fraunces'; font-style:italic; font-weight:400; font-display:block; src:url('../fonts/Fraunces-Italic-400.ttf') format('truetype'); }
+  @font-face { font-family:'Fraunces'; font-style:italic; font-weight:450; font-display:block; src:url('../fonts/Fraunces-Italic-450.ttf') format('truetype'); }
+  @font-face { font-family:'Fraunces'; font-style:italic; font-weight:500; font-display:block; src:url('../fonts/Fraunces-Italic-500.ttf') format('truetype'); }
+  @font-face { font-family:'Instrument Sans'; font-style:normal; font-weight:400; font-display:block; src:url('../fonts/InstrumentSans-400.ttf') format('truetype'); }
+  @font-face { font-family:'Instrument Sans'; font-style:normal; font-weight:600; font-display:block; src:url('../fonts/InstrumentSans-600.ttf') format('truetype'); }
+  @font-face { font-family:'Instrument Sans'; font-style:normal; font-weight:700; font-display:block; src:url('../fonts/InstrumentSans-700.ttf') format('truetype'); }
+  @font-face { font-family:'Instrument Sans'; font-style:italic; font-weight:400; font-display:block; src:url('../fonts/InstrumentSans-Italic-400.ttf') format('truetype'); }
   @page { size: 210mm 297mm; margin: 0; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   :root {
@@ -39,12 +54,11 @@
     color: #f2ece0;
   }
   .page--cream { background: var(--cream); }
-  .grain {
-    position: absolute; inset: 0; opacity: .5; pointer-events: none;
-    background-image:
-      repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.035) 3px, rgba(0,0,0,0.035) 6px),
-      repeating-linear-gradient(90deg, transparent, transparent 4px, rgba(255,255,255,0.014) 4px, rgba(255,255,255,0.014) 8px);
-  }
+  /* The grain divs are kept for markup stability but render nothing.
+     Full-page repeating-linear-gradients were exported by Skia as tiled
+     PDF patterns that made dark pages slow to paint in PDF readers, for
+     a texture so faint it was imperceptible in print. */
+  .grain { display: none; }
   /* folio */
   .folio {
     position: absolute; bottom: 9mm; left: 20mm; right: 20mm;
@@ -150,7 +164,7 @@
   .ch-points { margin-top: 5mm; display: flex; gap: 5mm; }
   .ch-point {
     flex: 1; border: 1px solid rgba(201,161,74,.3); border-radius: 2.5mm; padding: 4.5mm 5mm;
-    font-size: 8.6pt; line-height: 1.5; color: rgba(224,201,140,.85); text-align: justify;
+    font-size: 8.6pt; line-height: 1.5; color: rgba(224,201,140,.85); text-align: left;
   }
   .ch-point b { display: block; font-size: 7pt; letter-spacing: .22em; text-transform: uppercase; color: var(--gold-soft); margin-bottom: 1.6mm; }
 
@@ -173,12 +187,12 @@
     padding: 5mm 5.5mm; box-shadow: 0 1mm 3mm rgba(11,31,26,.05);
   }
   .card h4 { font-family: var(--serif); font-size: 12pt; margin-bottom: 1.6mm; }
-  .card p { font-size: 8.8pt; line-height: 1.6; margin: 0; text-align: justify; }
+  .card p { font-size: 8.8pt; line-height: 1.6; margin: 0; text-align: left; }
   .card .num { font-family: var(--serif); font-size: 16pt; color: var(--gold); }
 
   .stat { border-left: 2px solid var(--gold); padding-left: 5mm; }
   .stat .v { font-family: var(--serif); font-size: 24pt; color: var(--gold-deep); line-height: 1.1; }
-  .stat .l { font-size: 8pt; color: var(--muted); margin-top: 1mm; line-height: 1.5; text-align: justify; }
+  .stat .l { font-size: 8pt; color: var(--muted); margin-top: 1mm; line-height: 1.5; text-align: left; }
 
   .tipbox {
     background: var(--ink); color: var(--cream); border-radius: 3mm;
@@ -198,19 +212,25 @@
   .tbl .gold { color: var(--gold-deep); font-weight: 600; }
 
   .checklist { margin-top: 3mm; }
+  /* Block list items with an absolutely-positioned checkbox. (A previous
+     display:flex turned the bold lead-in and the description into separate
+     flex items, breaking each line into two ragged justified columns.) */
   .checklist li {
-    list-style: none; display: flex; gap: 3.5mm; align-items: flex-start;
-    font-size: 9.4pt; line-height: 1.55; padding: 2.4mm 0; border-bottom: 1px dashed rgba(11,31,26,.12); text-align: justify;
+    list-style: none; position: relative; padding: 2.4mm 0 2.4mm 7mm;
+    font-size: 9.4pt; line-height: 1.55; border-bottom: 1px dashed rgba(11,31,26,.12); text-align: left;
   }
   .checklist li::before {
-    content: ""; width: 3.6mm; height: 3.6mm; border: 1.4px solid var(--gold); border-radius: 1mm;
-    flex-shrink: 0; margin-top: .8mm;
+    content: ""; position: absolute; left: 0; top: 3.2mm;
+    width: 3.6mm; height: 3.6mm; border: 1.4px solid var(--gold); border-radius: 1mm;
   }
   .checklist b { font-weight: 600; }
 
   .figure { margin-top: 5mm; }
   .figure svg { width: 100%; display: block; }
-  .figcap { font-size: 7.6pt; color: var(--muted); margin-top: 2mm; letter-spacing: .04em; text-align: justify; }
+  .figcap { font-size: 7.6pt; color: var(--muted); margin-top: 2mm; letter-spacing: .04em; text-align: left; }
+  /* Inline icon used in place of symbol-font dingbats (snowflake / triangle)
+     so glyphs never fall back to a system font in the PDF. */
+  .ic { display: inline-block; width: 3.5mm; height: 3.5mm; vertical-align: -0.5mm; margin-right: 1.2mm; }
 </style>
 </head>
 <body>
@@ -258,7 +278,7 @@
           <circle cx="50" cy="50" r="49" fill="#0a1c16" stroke="rgba(201,161,74,.45)" stroke-width="1"/>
           <circle cx="50" cy="50" r="27" fill="none" stroke="rgba(201,161,74,.3)" stroke-width=".8"/>
           <text font-family="Instrument Sans, sans-serif" font-size="9.2" font-weight="700" letter-spacing="2.2" fill="#e0c98c">
-            <textPath href="#badgeOrbit">FREE EBOOK&#160;&#160;&#9670;&#160;&#160;24 PAGES&#160;&#160;&#9670;&#160;&#160;8 CHAPTERS&#160;&#160;&#9670;&#160;&#160;</textPath>
+            <textPath href="#badgeOrbit">FREE EBOOK&#160;&#160;&#8226;&#160;&#160;24 PAGES&#160;&#160;&#8226;&#160;&#160;8 CHAPTERS&#160;&#160;&#8226;&#160;&#160;</textPath>
           </text>
           <path d="M50 36 L50 61 M50 61 L42 53 M50 61 L58 53" stroke="#e0c98c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="rotate(180 50 48.5)"/>
         </svg>
@@ -631,11 +651,11 @@
     <h3 style="margin-top:6mm;">Two escape routes</h3>
     <div class="grid-2" style="margin-top:3mm;">
       <div class="card">
-        <h4>&#10052; Snowball — for motivation</h4>
+        <h4><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#9a7427" stroke-width="1.7" stroke-linecap="round"><path d="M12 2.5v19M3.8 7.25l16.4 9.5M20.2 7.25 3.8 16.75"/></svg>Snowball — for motivation</h4>
         <p>List debts smallest to largest. Attack the smallest first while paying minimums on the rest. Each cleared debt is a win that keeps you going. Best if you&rsquo;ve struggled to stay consistent.</p>
       </div>
       <div class="card">
-        <h4>&#9650; Avalanche — for mathematics</h4>
+        <h4><svg class="ic" viewBox="0 0 24 24"><path d="M12 4 20.5 19.5h-17z" fill="#9a7427"/></svg>Avalanche — for mathematics</h4>
         <p>Attack the highest-rate debt first (almost always the credit card). Saves the most money overall. Best if you are disciplined and just want the cheapest way out.</p>
       </div>
     </div>
@@ -706,7 +726,7 @@
     <p class="ch-quote">&ldquo;Wealth is not diminished by charity, and families are not protected by inactivity. Write things down.&rdquo;</p>
     <div class="ch-points">
       <div class="ch-point"><b>You&rsquo;ll learn</b>Zakat as purification — and how simple it is to calculate</div>
-      <div class="ch-point"><b>You&rsquo;ll understand</b>Faraid, wasiat and hibah — and why nomination &ne; inheritance</div>
+      <div class="ch-point"><b>You&rsquo;ll understand</b>Faraid, wasiat and hibah — and why nomination <span style="font-family:var(--serif);">&ne;</span> inheritance</div>
       <div class="ch-point"><b>You&rsquo;ll start</b>The conversation most families postpone forever</div>
     </div>
   </div>
