@@ -1,12 +1,12 @@
 (function () {
   "use strict";
 
-  /* ---- Fill these in from your Google Form (see setup instructions) ---- */
-  var FORM_ID     = "YOUR_FORM_ID_HERE";   // long string after /e/ in the form URL
-  var ENTRY_NAME  = "entry.XXXXXXXXX";     // entry ID for Name field
-  var ENTRY_EMAIL = "entry.YYYYYYYYY";     // entry ID for Email field
-  var ENTRY_PHONE = "entry.ZZZZZZZZZ";     // entry ID for Phone Number field
-  /* ---------------------------------------------------------------------- */
+  /* ---- Google Form configuration ---- */
+  var FORM_ID     = "1FAIpQLScE7yiwLk5nNSxqvytCxggyw7pMHWEj-8k6rSBrucSdxtMtxQ";
+  var ENTRY_NAME  = "entry.720379909";
+  var ENTRY_EMAIL = "entry.1361257471";
+  var ENTRY_PHONE = "entry.533067778";
+  /* -------------------------------------- */
 
   var PDF_URL      = "assets/ebook/financial-planning-sofina-johari.pdf";
   var PDF_FILENAME = "financial-planning-sofina-johari.pdf";
