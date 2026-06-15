@@ -297,11 +297,12 @@ ul { list-style: none; }
   white-space: nowrap;
 }
 .marquee__group span {
-  font-size: 0.85rem; font-weight: 500;
-  letter-spacing: 0.14em; text-transform: uppercase;
+  font-size: 0.9rem; font-weight: 500;
+  letter-spacing: 0.12em; text-transform: uppercase;
   color: var(--text-on-dark-muted);
+  line-height: 1.4;
 }
-.marquee__group i { color: var(--gold); font-style: normal; font-size: 0.8rem; }
+.marquee__group i { color: var(--gold); font-style: normal; font-size: 0.85rem; }
 
 /* ---------- Section shared ---------- */
 .section-eyebrow {
