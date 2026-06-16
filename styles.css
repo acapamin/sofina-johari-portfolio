@@ -2582,16 +2582,23 @@ ul { list-style: none; }
 
 .contact-modal__scale {
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  flex-direction: column;
+  gap: 0.8rem;
   padding: 0.75rem 0;
+}
+
+.contact-modal__scale-labels {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 4px;
+  margin-bottom: -0.8rem;
 }
 
 .contact-modal__scale-label {
   font-size: 0.8rem;
   color: var(--text-muted);
   flex-shrink: 0;
-  min-width: 65px;
+  min-width: auto;
 }
 
 .contact-modal__slider {

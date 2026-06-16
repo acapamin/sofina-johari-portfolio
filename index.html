@@ -935,9 +935,11 @@
         <div class="contact-modal__field">
           <label class="contact-modal__label">On a scale of 1-10, how urgent is it for you to have a financial roadmap? <span aria-label="required">*</span></label>
           <div class="contact-modal__scale">
-            <span class="contact-modal__scale-label">Not urgent</span>
+            <div class="contact-modal__scale-labels">
+              <span class="contact-modal__scale-label">Not urgent</span>
+              <span class="contact-modal__scale-label">Extremely urgent</span>
+            </div>
             <input type="range" id="contactUrgency" name="contactUrgency" min="1" max="10" value="5" required class="contact-modal__slider" />
-            <span class="contact-modal__scale-label">Extremely urgent</span>
           </div>
           <p class="contact-modal__scale-value">Selected: <span id="contactUrgencyValue">5</span>/10</p>
         </div>
