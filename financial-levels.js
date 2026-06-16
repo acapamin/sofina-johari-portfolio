@@ -142,10 +142,10 @@
     name: "Cashflow",
     title: "World 1-1 · The Coin Pipes",
     inputs: [
-      { key: "income", group: "INFLOW · The Coin Pool", label: "Monthly Take-Home Pay", min: 1000, max: 20000, step: 100, value: 5000, fmt: "money" },
-      { key: "fixed", group: "OUTFLOW · The Drain Pipes & Blocks", label: "Fixed Commitments", sub: "(Rent, Insurance, Utilities, Bills)", min: 0, max: 20000, step: 100, value: 1500, fmt: "money" },
-      { key: "debt", label: "Debt Repayments", sub: "(Car/Housing Loans, Credit Cards, PTPTN)", min: 0, max: 20000, step: 100, value: 800, fmt: "money" },
-      { key: "other", label: "Other Spending", sub: "(Food, Lifestyle, Entertainment, Shopping)", min: 0, max: 20000, step: 100, value: 1500, fmt: "money" }
+      { key: "income", group: "INFLOW · The Coin Pool", label: "Monthly Take-Home Pay", min: 1000, max: 20000, step: 100, value: 5000, fmt: "money", base: true },
+      { key: "fixed", group: "OUTFLOW · The Drain Pipes & Blocks", label: "Fixed Commitments", sub: "(Rent, Insurance, Utilities, Bills)", min: 0, max: 20000, step: 100, value: 1500, fmt: "money", scaleWith: "income", maxFactor: 1.2 },
+      { key: "debt", label: "Debt Repayments", sub: "(Car/Housing Loans, Credit Cards, PTPTN)", min: 0, max: 20000, step: 100, value: 800, fmt: "money", scaleWith: "income", maxFactor: 1.2 },
+      { key: "other", label: "Other Spending", sub: "(Food, Lifestyle, Entertainment, Shopping)", min: 0, max: 20000, step: 100, value: 1500, fmt: "money", scaleWith: "income", maxFactor: 1.2 }
     ],
     compute: function (v) {
       // --- real-time cashflow maths -------------------------------------
@@ -696,9 +696,50 @@
   function buildControls(def) {
     controlsEl.innerHTML = "";
     // a level that tags its inputs with `group` renders section headers
-    // and switches the panel to a single, fully-visible stacked column
+    // and switches to the compact two-column Cashflow layout
     var hasGroups = def.inputs.some(function (inp) { return inp.group; });
     controlsEl.classList.toggle("journey__controls--grouped", hasGroups);
+
+    var controls = {};                 // key -> { inp, range, output }
+    var baseKey = null;                // the inflow slider others scale against
+    def.inputs.forEach(function (inp) { if (inp.base) baseKey = inp.key; });
+    function baseVal() {
+      return baseKey && controls[baseKey] ? parseFloat(controls[baseKey].range.value) : 0;
+    }
+    // an outflow's ceiling tracks the inflow (1.2× so a deficit is reachable)
+    function dynMax(inp) {
+      var raw = baseVal() * (inp.maxFactor || 1);
+      return Math.max(inp.min + inp.step, Math.round(raw / inp.step) * inp.step);
+    }
+    // value readout — outflows also show their share of take-home pay
+    function renderOut(inp, range, output) {
+      var v = parseFloat(range.value);
+      if (inp.scaleWith) {
+        var income = baseVal();
+        var p = income > 0 ? Math.round((v / income) * 100) : 0;
+        var tone = p > 100 ? " journey__pct--over" : (p > 50 ? " journey__pct--heavy" : "");
+        output.innerHTML = money(v) + ' <span class="journey__pct' + tone + '">(' + p + "%)</span>";
+      } else {
+        output.textContent = fmtVal(inp, v);
+      }
+    }
+    // when the inflow moves, rescale every dependent slider's ceiling and
+    // re-clamp any outflow that now exceeds it
+    function refreshDynamic() {
+      def.inputs.forEach(function (inp) {
+        if (!inp.scaleWith) return;
+        var c = controls[inp.key];
+        var m = dynMax(inp);
+        c.range.max = m;
+        if (parseFloat(c.range.value) > m) {
+          c.range.value = m;
+          engine.setInput(inp.key, m);
+        }
+        setFill(c.range);
+        renderOut(inp, c.range, c.output);
+      });
+    }
+
     var lastGroup = null;
     def.inputs.forEach(function (inp) {
       if (inp.group && inp.group !== lastGroup) {
@@ -708,8 +749,11 @@
         head.textContent = inp.group;
         controlsEl.appendChild(head);
       }
+      var split = hasGroups && inp.type !== "toggle";
       var row = document.createElement("div");
-      row.className = "journey__control" + (inp.type === "toggle" ? " journey__control--toggle" : "");
+      row.className = "journey__control"
+        + (inp.type === "toggle" ? " journey__control--toggle" : "")
+        + (split ? " journey__control--split" : "");
       if (inp.type === "toggle") {
         row.innerHTML =
           '<label class="journey__toggle">' +
@@ -720,26 +764,43 @@
         row.querySelector("input").addEventListener("change", function () {
           engine.setInput(inp.key, this.checked ? 1 : 0);
         });
+        controlsEl.appendChild(row);
+        return;
+      }
+
+      var id = "jin-" + inp.key;
+      var subHtml = inp.sub ? '<span class="journey__control-sub">' + inp.sub + "</span>" : "";
+      var theMax = inp.scaleWith ? dynMax(inp) : inp.max;
+      var rangeHtml = '<input class="journey__range" type="range" id="' + id + '" min="'
+        + inp.min + '" max="' + theMax + '" step="' + inp.step + '" value="' + inp.value + '" />';
+
+      if (split) {
+        row.innerHTML =
+          '<div class="journey__c-info">' +
+          '<label class="journey__control-label" for="' + id + '">' + inp.label + subHtml + "</label>" +
+          "</div>" +
+          '<div class="journey__c-ctrl">' +
+          "<output></output>" + rangeHtml +
+          "</div>";
       } else {
-        var id = "jin-" + inp.key;
-        var subHtml = inp.sub ? '<span class="journey__control-sub">' + inp.sub + "</span>" : "";
         row.innerHTML =
           '<div class="journey__control-head">' +
           '<label class="journey__control-label" for="' + id + '">' + inp.label + subHtml + "</label>" +
-          "<output>" + fmtVal(inp, inp.value) + "</output>" +
-          "</div>" +
-          '<input class="journey__range" type="range" id="' + id + '" min="' + inp.min +
-          '" max="' + inp.max + '" step="' + inp.step + '" value="' + inp.value + '" />';
-        var range = row.querySelector("input");
-        var output = row.querySelector("output");
-        setFill(range);
-        range.addEventListener("input", function () {
-          var v = parseFloat(this.value);
-          output.textContent = fmtVal(inp, v);
-          setFill(this);
-          engine.setInput(inp.key, v);
-        });
+          "<output></output>" +
+          "</div>" + rangeHtml;
       }
+
+      var range = row.querySelector("input");
+      var output = row.querySelector("output");
+      controls[inp.key] = { inp: inp, range: range, output: output };
+      setFill(range);
+      renderOut(inp, range, output);
+      range.addEventListener("input", function () {
+        setFill(this);
+        engine.setInput(inp.key, parseFloat(this.value));
+        renderOut(inp, this, output);
+        if (inp.base) refreshDynamic();   // inflow moved → rescale outflows + %
+      });
       controlsEl.appendChild(row);
     });
   }
