@@ -275,57 +275,89 @@
      ============================================================ */
 
   /* shared global money state — World 1-1 and World 1-2 read & write the
-     SAME income, and World 1-2 borrows World 1-1's debt figure as the
-     "clear my liabilities" target for people with no dependants. The DOM
-     wiring keeps GLOBAL in sync with whichever income/debt slider is on
-     screen, so moving one moves the other. */
+     SAME income, so moving the slider in one world moves it in the other.
+     (World 1-2 now models liabilities explicitly via its own mortgage /
+     non-mortgage sliders, so it no longer borrows World 1-1's debt figure.) */
   var GLOBAL = { income: 5000, debt: 800 };
-  var insurancePhase = 0;                 // 0 = Life shield · 1 = Health barrier
+  var insurancePhase = 0;                 // 0 = Brick Shield form · 1 = Force Field form
 
   var shieldRef = { ratio: 1, x: 0 };
+  var FULL_MED = 1000000;                  // RM 1M annual limit = a maxed force field
 
-  // rule-of-thumb life-cover target (see PHASE 1 spec)
-  function lifeTarget(income, deps, debt) {
-    if (deps <= 0) return debt;               // 0 dependants → just clear the debts
-    if (deps === 1) return income * 12 * 7;   // 7 years of income replacement
-    return income * 12 * 10;                  // 2+ dependants → 10 years
-  }
-
-  /* PHASE 1 graphic: the brick wall, lit blocks = life cover / target */
-  function drawBrickShield(g, groundY) {
+  /* Unified Capy scene — BOTH defences are drawn on the same canvas at all
+     times, regardless of which input form (phase) is on screen below:
+       • the brick wall in front of Capy  = Life cover / Phase-1 target
+       • the force-field dome around Capy = Medical-card limit / RM 1M
+     Toggling phases only swaps the form UI underneath, never this graphic. */
+  function drawCapyDefenses(g, groundY) {
     var ctx = g.ctx, w = g.w, h = g.h;
-    var ratio = clamp(g.m.ratio, 0, 1.2);
-    var mx = w * 0.3;
+    var lifeRatio = clamp(g.m.ratio, 0, 1.2);
+    var fieldRatio = clamp(g.m.forcefield, 0, 1.2);
+    var noCard = !g.values.medlimit;          // RM 0 limit = no medical card at all
 
+    var capH = Math.min(h * 0.26, 40);
+    var capX = Math.round(w * 0.4);
+    var cy = Math.round(groundY - capH * 0.55);
+
+    // ---- FORCE FIELD: pixel dome around Capy (drawn first, behind Capy) ----
+    var R = Math.min(w * 0.24, 28);
+    var segs = 22;
+    var litF = Math.round(clamp(fieldRatio, 0, 1) * segs);
+    var lowF = fieldRatio < 0.5;
+    var flickF = (lowF || noCard) && !g.reduced ? (((g.t * 8) | 0) % 2 === 0) : true;
+    var ffColor = noCard ? RED : fieldRatio >= 1 ? TEAL : fieldRatio >= 0.5 ? GOLD : "#d99a4a";
+    for (var i = 0; i < segs; i++) {
+      var ang = (i / segs) * Math.PI * 2 - Math.PI / 2;
+      var px = capX + Math.cos(ang) * R;
+      var py = cy + Math.sin(ang) * R * 0.95;
+      if (!noCard && i < litF && flickF) {
+        ctx.fillStyle = ffColor;
+        ctx.fillRect(Math.round(px - 1), Math.round(py - 1), 2, 2);
+      } else {
+        ctx.fillStyle = "rgba(159,216,196,0.16)";
+        ctx.fillRect(Math.round(px), Math.round(py), 1, 1);
+      }
+    }
+    if (!noCard && fieldRatio >= 1 && !g.reduced && Math.random() < 0.12) {
+      var sa = Math.random() * Math.PI * 2;
+      g.particles.spawn({
+        x: capX + Math.cos(sa) * R, y: cy + Math.sin(sa) * R * 0.95,
+        vx: 0, vy: -6, size: 1, life: 0.7, color: GOLD_LIGHT, alpha: 0.9
+      });
+    }
+
+    brickGround(g, groundY);
+    mascot.draw(ctx, capX, groundY, capH, { gaze: 0.6 });
+
+    // ---- BRICK SHIELD: vertical wall in front of Capy (lit = life cover) ----
     var bsz = 8;
-    var wallX = Math.round(w * 0.58);
+    var wallX = Math.round(w * 0.66);
     var rows = 5, cols = 2;
-    var lit = Math.round(clamp(ratio, 0, 1) * rows * cols);
-    shieldRef.ratio = ratio;
+    var lit = Math.round(clamp(lifeRatio, 0, 1) * rows * cols);
+    shieldRef.ratio = lifeRatio;
     shieldRef.x = wallX;
-
-    var flicker = ratio < 0.45 && !g.reduced ? (((g.t * 9) | 0) % 3 !== 0) : true;
+    var flicker = lifeRatio < 0.45 && !g.reduced ? (((g.t * 9) | 0) % 3 !== 0) : true;
     var idx = 0;
     for (var r = 0; r < rows; r++) {
       for (var c = 0; c < cols; c++) {
-        var x = wallX + c * bsz;
-        var y = groundY - (r + 1) * bsz;
+        var bx = wallX + c * bsz;
+        var by = groundY - (r + 1) * bsz;
         if (idx < lit && flicker) {
           ctx.fillStyle = GOLD;
-          ctx.fillRect(x, y, bsz, bsz);
+          ctx.fillRect(bx, by, bsz, bsz);
           ctx.fillStyle = GOLD_LIGHT;
-          ctx.fillRect(x + 1, y + 1, 2, 1);
+          ctx.fillRect(bx + 1, by + 1, 2, 1);
           ctx.fillStyle = GOLD_DARK;
-          ctx.fillRect(x, y + bsz - 1, bsz, 1);
-          ctx.fillRect(x + bsz - 1, y, 1, bsz);
+          ctx.fillRect(bx, by + bsz - 1, bsz, 1);
+          ctx.fillRect(bx + bsz - 1, by, 1, bsz);
         } else {
           ctx.strokeStyle = "rgba(231,192,105,0.25)";
-          ctx.strokeRect(x + 0.5, y + 0.5, bsz - 1, bsz - 1);
+          ctx.strokeRect(bx + 0.5, by + 0.5, bsz - 1, bsz - 1);
         }
         idx++;
       }
     }
-    if (ratio >= 1 && !g.reduced && Math.random() < 0.1) {
+    if (lifeRatio >= 1 && !g.reduced && Math.random() < 0.1) {
       g.particles.spawn({
         x: wallX + Math.random() * bsz * 2, y: groundY - Math.random() * bsz * rows,
         vx: 0, vy: -8, size: 1, life: 0.8, color: GOLD_LIGHT, alpha: 0.9
@@ -345,10 +377,7 @@
           if (Math.random() < Math.min(1, shieldRef.ratio)) {
             p.vx = 40 + Math.random() * 25;   // bounced off the wall
             p.vy = -30 - Math.random() * 20;
-            p.g = 100;
-            p.color = GOLD_LIGHT;
-            p.size = 2;
-            p.life = p.age + 0.6;
+            p.g = 100; p.color = GOLD_LIGHT; p.size = 2; p.life = p.age + 0.6;
           } else {
             p.color = RED;                     // slipped through the gap
             p.life = p.age + 0.7;
@@ -357,55 +386,9 @@
       });
     }
 
-    brickGround(g, groundY);
-    mascot.draw(ctx, mx, groundY, Math.min(h * 0.26, 40), { gaze: 0.7 });
-  }
-
-  /* PHASE 2 graphic: Capy's energy barrier (CI runway) + medical-card status.
-     No card → flashing "CRITICAL ITEM MISSING!" overlay and a dropped barrier;
-     CI below target → the barrier stays low and flickers. */
-  function drawHealthBarrier(g, groundY) {
-    var ctx = g.ctx, w = g.w, h = g.h;
-    var ciRatio = clamp(g.m.ciRatio, 0, 1.2);
-    var hasCard = !!g.values.medical;
-    var capH = Math.min(h * 0.26, 40);
-    var cx = Math.round(w * 0.5);
-    var cy = Math.round(groundY - capH * 0.55);
-
-    // energy bubble around Capy — segments light up with the CI runway
-    var R = Math.min(w * 0.3, 34);
-    var segs = 20;
-    var strong = hasCard ? clamp(ciRatio, 0, 1) : 0;
-    var lit = Math.round(strong * segs);
-    var low = strong < 0.5;
-    var flick = (low || !hasCard) && !g.reduced ? (((g.t * 8) | 0) % 2 === 0) : true;
-    var barColor = !hasCard ? RED : ciRatio >= 1 ? TEAL : ciRatio >= 0.5 ? GOLD : "#d99a4a";
-    for (var i = 0; i < segs; i++) {
-      var ang = (i / segs) * Math.PI * 2 - Math.PI / 2;
-      var px = cx + Math.cos(ang) * R;
-      var py = cy + Math.sin(ang) * R * 0.92;
-      if (i < lit && flick) {
-        ctx.fillStyle = barColor;
-        ctx.fillRect(Math.round(px - 1), Math.round(py - 1), 2, 2);
-      } else {
-        ctx.fillStyle = "rgba(159,216,196,0.16)";
-        ctx.fillRect(Math.round(px), Math.round(py), 1, 1);
-      }
-    }
-    if (hasCard && ciRatio >= 1 && !g.reduced && Math.random() < 0.12) {
-      var sa = Math.random() * Math.PI * 2;
-      g.particles.spawn({
-        x: cx + Math.cos(sa) * R, y: cy + Math.sin(sa) * R * 0.92,
-        vx: 0, vy: -6, size: 1, life: 0.7, color: GOLD_LIGHT, alpha: 0.9
-      });
-    }
-
-    brickGround(g, groundY);
-    mascot.draw(ctx, cx, groundY, capH, { gaze: 0.2 });
-
-    if (hasCard) {
-      // tidy gold medical card with a green cross = bills covered
-      var kx = Math.round(w * 0.12), ky = 12;
+    // ---- medical-card status: gold card when insured, flashing alert at RM 0 ----
+    if (!noCard) {
+      var kx = Math.round(w * 0.1), ky = 12;
       ctx.fillStyle = GOLD;
       ctx.fillRect(kx, ky, 16, 11);
       ctx.fillStyle = GOLD_DARK;
@@ -414,18 +397,17 @@
       ctx.fillRect(kx + 6, ky + 2, 4, 7);
       ctx.fillRect(kx + 3, ky + 4, 10, 3);
     } else {
-      // flashing pixel alert when the medical card is missing
       var blink = g.reduced || (((g.t * 3) | 0) % 2 === 0);
       if (blink) {
-        var bw = Math.min(w - 10, 128), bh = 22;
-        var bxx = Math.round(w / 2 - bw / 2), byy = Math.round(h * 0.14);
+        var aw = Math.min(w - 10, 128), ah = 22;
+        var axx = Math.round(w / 2 - aw / 2), ayy = Math.round(h * 0.12);
         ctx.fillStyle = "rgba(217,106,74,0.94)";
-        ctx.fillRect(bxx, byy, bw, bh);
+        ctx.fillRect(axx, ayy, aw, ah);
         ctx.fillStyle = "#2a0d08";
-        ctx.fillRect(bxx, byy, bw, 1); ctx.fillRect(bxx, byy + bh - 1, bw, 1);
-        ctx.fillRect(bxx, byy, 1, bh); ctx.fillRect(bxx + bw - 1, byy, 1, bh);
-        ptext(g, "CRITICAL ITEM", w / 2, byy + 9, "#fff3e6", "center");
-        ptext(g, "MISSING!", w / 2, byy + 18, "#fff3e6", "center");
+        ctx.fillRect(axx, ayy, aw, 1); ctx.fillRect(axx, ayy + ah - 1, aw, 1);
+        ctx.fillRect(axx, ayy, 1, ah); ctx.fillRect(axx + aw - 1, ayy, 1, ah);
+        ptext(g, "CRITICAL RISK", w / 2, ayy + 9, "#fff3e6", "center");
+        ptext(g, "NO MED CARD", w / 2, ayy + 18, "#fff3e6", "center");
       }
     }
   }
@@ -433,108 +415,132 @@
   engine.registerLevel("insurance", {
     name: "Protection",
     title: "World 1-2 · The Brick Shield",
-    // two progressive input views, toggled by one retro pixel button
+    // two progressive input forms, toggled by one retro pixel button. The
+    // canvas always shows both defences; only the form + title swap.
     phases: [
-      { cta: "Check Health Protection &nbsp;&rarr;" },
-      { cta: "&larr;&nbsp; Back to Life Cover" }
+      { title: "The Brick Shield", cta: "Check Health Protection &nbsp;&rarr;" },
+      { title: "The Force Field", cta: "&larr;&nbsp; Back to Life Cover" }
     ],
     inputs: [
-      { key: "income", group: "PHASE 1 · LIFE SHIELD", phase: 0, label: "Monthly income", sub: "(Synced with World 1-1)", min: 1000, max: 30000, step: 100, value: 5000, fmt: "money" },
-      { key: "deps", group: "PHASE 1 · LIFE SHIELD", phase: 0, label: "Dependants", sub: "(People relying on your income)", min: 0, max: 3, step: 1, value: 2, fmt: "deps" },
-      { key: "cover", group: "PHASE 1 · LIFE SHIELD", phase: 0, label: "Existing life / takaful cover", min: 0, max: 2000000, step: 10000, value: 100000, fmt: "money" },
-      { key: "ci", group: "PHASE 2 · HEALTH BARRIER", phase: 1, label: "Critical illness cover", sub: "(Lump sum paid on diagnosis)", min: 0, max: 1000000, step: 10000, value: 50000, fmt: "money" },
-      { key: "medical", group: "PHASE 2 · HEALTH BARRIER", phase: 1, label: "Medical card active", type: "toggle", value: 0 }
+      { key: "income", group: "PHASE 1 · THE BRICK SHIELD", phase: 0, label: "Monthly income", sub: "(Synced with World 1-1)", min: 1000, max: 30000, step: 100, value: 5000, fmt: "money" },
+      { key: "mortgage", group: "PHASE 1 · THE BRICK SHIELD", phase: 0, label: "Outstanding mortgage debt", min: 0, max: 1500000, step: 10000, value: 300000, fmt: "money" },
+      { key: "mrta", group: "PHASE 1 · THE BRICK SHIELD", phase: 0, label: "My property loan is covered by MRTA / MRTT / MLTA / MLTT", type: "toggle", value: 0 },
+      { key: "nonmortgage", group: "PHASE 1 · THE BRICK SHIELD", phase: 0, label: "Outstanding non-mortgage debt", sub: "(Car loans, cards, PTPTN, personal)", min: 0, max: 500000, step: 5000, value: 50000, fmt: "money" },
+      { key: "deps", group: "PHASE 1 · THE BRICK SHIELD", phase: 0, label: "Dependants", sub: "(People relying on your income)", min: 0, max: 3, step: 1, value: 2, fmt: "deps" },
+      { key: "cover", group: "PHASE 1 · THE BRICK SHIELD", phase: 0, label: "Existing life / takaful cover", min: 0, max: 2000000, step: 10000, value: 100000, fmt: "money" },
+      { key: "medlimit", group: "PHASE 2 · THE FORCE FIELD", phase: 1, label: "Annual medical card limit", sub: "(RM 0 = no medical card)", min: 0, max: 2000000, step: 100000, value: 500000, fmt: "money" },
+      { key: "ciactive", group: "PHASE 2 · THE FORCE FIELD", phase: 1, label: "Critical illness policy active", type: "toggle", value: 0 }
     ],
     compute: function (v) {
       var income = v.income;
-      var debt = GLOBAL.debt;             // pulled straight from World 1-1
       var deps = Math.round(v.deps);
       var phase = v.phase ? 1 : 0;
+      var depWord = deps >= 3 ? "3+" : String(deps);
 
-      // ---- PHASE 1 · Life / Takaful (the brick shield) ----
-      var target = lifeTarget(income, deps, debt);
+      // ---- PHASE 1 · liabilities + income replacement (the brick shield) ----
+      var mrta = v.mrta ? 1 : 0;
+      var adjustedMortgage = mrta ? 0 : v.mortgage;              // MRTA settles the mortgage
+      var totalLiabilities = adjustedMortgage + v.nonmortgage;
+      var incomeReplace = deps <= 0 ? 0 : deps === 1 ? income * 12 * 7 : income * 12 * 10;
+      var target = incomeReplace + totalLiabilities;
       var cover = v.cover;
       var lifeRatio = target > 0 ? cover / target : 1;
       var gap = Math.max(0, target - cover);
 
-      // ---- PHASE 2 · Medical & Critical Illness (energy barrier) ----
-      var ciTarget = income * 12 * 3;     // 3-year income runway to recover
-      var ci = v.ci;
-      var ciRatio = ciTarget > 0 ? ci / ciTarget : 1;
-      var ciGap = Math.max(0, ciTarget - ci);
-      var hasCard = v.medical ? 1 : 0;
-      var depWord = deps >= 3 ? "3+" : String(deps);
+      // ---- PHASE 2 · medical card limit (the force field) ----
+      var medlimit = v.medlimit;
+      var ciActive = v.ciactive ? 1 : 0;
+      var fieldRatio = clamp(medlimit / FULL_MED, 0, 1);         // full dome at RM 1M
 
       var mood, say, coach, headline, stat, power;
 
       if (phase === 0) {
+        // plain-language justification of the (large) target number
+        var why = "Target: " + money(target) + ". Why? ";
+        if (deps === 0) {
+          why += "With no dependants, the goal is simply to clear your "
+            + money(totalLiabilities) + " in active liabilities so no debt is passed on.";
+        } else {
+          why += "With " + depWord + (deps === 1 ? " dependant" : " dependants")
+            + ", your family needs " + (deps === 1 ? "7" : "10")
+            + " years of your income replaced to sustain their lives if you vanish, plus your "
+            + money(totalLiabilities) + " in active liabilities.";
+        }
+        if (mrta) why += " Your mortgage is excluded because your MRTA / MLTA handles it!";
+
         if (lifeRatio >= 1) {
           mood = "joyful";
           say = "Full wall! Bring it on!";
           headline = "Brick Shield complete — " + money(cover) + " of a " + money(target) + " target.";
-          coach = "Your Brick Shield is solid! Your " + money(cover) + " policy completely covers "
-            + "your " + money(target) + " target. Your family's financial future is fully bulletproofed.";
+          coach = why + " Your " + money(cover) + " cover clears this in full — your family is bulletproofed.";
         } else {
           mood = lifeRatio >= 0.75 ? "stable" : lifeRatio >= 0.45 ? "risk-averse" : "concerned";
           say = lifeRatio >= 0.75 ? "A few thin spots up top."
             : lifeRatio >= 0.45 ? "My wall is flickering..." : "The wall is barely holding!";
           headline = "Protection gap: " + money(gap) + " of a " + money(target) + " target.";
-          var basis = deps === 0
-            ? "With no dependants, your target wall is the " + money(target) + " of debt you'd leave behind"
-            : "With " + depWord + (deps === 1 ? " dependant" : " dependants") + ", your target wall is " + money(target);
-          coach = basis + ". Right now, your " + money(gap) + " gap leaves "
-            + (deps === 0 ? "your estate" : "them") + " exposed to falling debris. "
-            + "Closing this gap is usually the cheapest financial problem to solve.";
+          coach = why + " Your " + money(cover) + " cover leaves a " + money(gap)
+            + " gap — usually the cheapest financial problem to solve.";
         }
         stat = "SHIELD " + clamp(Math.round(lifeRatio * 100), 0, 120) + "%";
         power = { pct: clamp(lifeRatio * 100, 0, 100), tone: lifeRatio >= 1 ? "green" : lifeRatio < 0.45 ? "red" : "gold" };
       } else {
-        if (!hasCard) {
-          mood = "concerned";
-          say = "No medical shield?!";
-          headline = "Critical item missing — no medical card active.";
-          coach = "Warning! Living without a Medical Card means an unexpected medical bill could "
-            + "completely shatter your Cashflow coins from World 1-1. Secure a medical shield first!";
-          stat = "CARD: NONE";
+        var medComment;
+        if (medlimit === 0) {
+          mood = "concerned"; say = "No medical shield?!"; stat = "MED: NONE";
           power = { pct: 6, tone: "red" };
-        } else if (ciRatio >= 1) {
-          mood = "joyful";
-          say = "Energy barrier maxed!";
-          headline = "Medical card active + " + money(ci) + " critical-illness runway.";
-          coach = "Medical card secured, and your critical-illness fund clears the " + money(ciTarget)
-            + " target — a full 3-year income runway so your Capy can rest and recover. Health shield complete.";
-          stat = "HEALTH 100%";
-          power = { pct: 100, tone: "green" };
+          headline = "Critical risk — no medical card active.";
+          medComment = "CRITICAL RISK: No Medical Shield! A common misconception is that "
+            + "Malaysian public healthcare is 100% free. While heavily subsidised, advanced "
+            + "treatments, specialised implants, specific cancer drugs, and long-term care still "
+            + "incur massive out-of-pocket expenses. Without a medical card, a single major health "
+            + "emergency can completely wipe out your World 1-1 Cashflow coins.";
+        } else if (medlimit < 200000) {
+          mood = "risk-averse"; say = "Weak barrier, watch out."; stat = "MED " + rmShort(medlimit);
+          power = { pct: clamp(fieldRatio * 100, 6, 100), tone: "red" };
+          headline = "Weak barrier — limit under RM 200k.";
+          medComment = "WEAK BARRIER: Your annual limit is under RM 200k. While this handles basic "
+            + "ward stays, complex surgical procedures, intensive care (ICU), or multi-month cancer "
+            + "therapies at private hospitals in Malaysia can easily breach this ceiling in a single "
+            + "admission, leaving you to fund the rest.";
+        } else if (medlimit < FULL_MED) {
+          mood = "stable"; say = "Modest shield holding."; stat = "MED " + rmShort(medlimit);
+          power = { pct: clamp(fieldRatio * 100, 0, 100), tone: "gold" };
+          headline = "Modest shield — " + money(medlimit) + " annual limit.";
+          medComment = "MODEST SHIELD: An annual limit between RM 200k and RM 999k covers standard "
+            + "private hospital treatments well. However, to fully secure your Capy against medical "
+            + "inflation and long-term critical illness treatments without out-of-pocket panics, "
+            + "upgrading to a modern RM 1 Million+ limit is recommended.";
         } else {
-          mood = ciRatio >= 0.5 ? "stable" : "risk-averse";
-          say = ciRatio >= 0.5 ? "Barrier holding, but thin." : "Barrier's running low...";
-          headline = "Critical-illness gap: " + money(ciGap) + " of a " + money(ciTarget) + " runway.";
-          coach = "Your medical bills are covered, but your Critical Illness fund has a gap of "
-            + money(ciGap) + ". You need a 3-year income runway (" + money(ciTarget)
-            + ") so your Capy can rest and recover if a major illness hits.";
-          stat = "HEALTH " + clamp(Math.round(ciRatio * 100), 0, 120) + "%";
-          power = { pct: clamp(ciRatio * 100, 0, 100), tone: ciRatio < 0.45 ? "red" : "gold" };
+          mood = "joyful"; say = "Force field maxed!"; stat = "MED MAX";
+          power = { pct: 100, tone: "green" };
+          headline = "Force field maxed — " + money(medlimit) + " annual limit.";
+          medComment = "ENERGY BARRIER MAXED! An annual limit of RM 1 Million+ completely secures "
+            + "your health barrier. This comfortably covers critical long-term treatments, specialised "
+            + "robotic surgeries, and private room stays at top-tier Malaysian private hospitals "
+            + "without any lifetime caps.";
         }
+        coach = medComment + " Critical Illness Status: " + (ciActive ? "Active" : "Inactive")
+          + ". (A basic CI policy ensures you get a lump sum cash payout to handle everyday living "
+          + "bills if you need to take months off work to recover.)";
       }
 
       return {
         mood: mood,
-        score: clamp(Math.round((phase === 0 ? lifeRatio : ciRatio) * 100), 0, 100),
+        score: clamp(Math.round((phase === 0 ? lifeRatio : fieldRatio) * 100), 0, 100),
         stat: stat,
         headline: headline,
         coach: coach,
         say: say,
         power: power,
-        metrics: { ratio: clamp(lifeRatio, 0, 1.2), ciRatio: clamp(ciRatio, 0, 1.2), card: hasCard }
+        metrics: { ratio: clamp(lifeRatio, 0, 1.2), forcefield: fieldRatio }
       };
     },
     scene: {
       draw: function (g) {
         var groundY = g.h - 14;
         stars(g, 12, g.h * 0.35);
-        // the active phase decides which protection graphic Capy is wearing
-        if (g.values.phase) drawHealthBarrier(g, groundY);
-        else drawBrickShield(g, groundY);
+        // both defences, always — the form below decides nothing here
+        drawCapyDefenses(g, groundY);
       }
     }
   });
@@ -980,8 +986,9 @@
       toggle.innerHTML = def.phases[curPhase].cta;
       toggle.addEventListener("click", function () {
         insurancePhase = nextPhase;
-        engine.setInput("phase", nextPhase);   // repaint scene + swap commentary
-        buildControls(def);                      // swap the visible input panel
+        engine.setInput("phase", nextPhase);   // swap commentary / power readout
+        if (def.phases[nextPhase].title) titleEl.textContent = def.phases[nextPhase].title;
+        buildControls(def);                      // swap only the form UI (canvas persists)
       });
       controlsEl.appendChild(toggle);
     }
@@ -992,8 +999,12 @@
     var i = engine.order.indexOf(e.id);
     tagEl.textContent = "World 1-" + (i + 1);
     titleEl.textContent = e.def.title.split("·")[1].trim();
-    // phased levels always open on PHASE 1
-    if (e.def.phases) { insurancePhase = 0; engine.values.phase = 0; }
+    // phased levels always open on PHASE 1 (with its own panel title)
+    if (e.def.phases) {
+      insurancePhase = 0;
+      engine.values.phase = 0;
+      if (e.def.phases[0].title) titleEl.textContent = e.def.phases[0].title;
+    }
     buildControls(e.def);
     for (var id in chips) chips[id].classList.toggle("is-active", id === e.id);
     if (vibeBoxEl) vibeBoxEl.classList.remove("is-green", "is-red");

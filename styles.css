@@ -883,11 +883,21 @@ ul { list-style: none; }
 }
 .journey__group-head:not(:first-child) { margin-top: 0.2rem; }
 
-/* phased levels (Protection): the visible input view is short, and one retro
-   pixel button toggles Life ⇄ Health so the panel never needs scrolling */
-.journey__controls--phased { grid-template-columns: 1fr; gap: 0.5rem; }
+/* phased levels (Protection): the visible input view is kept short, and one
+   retro pixel button toggles Brick Shield ⇄ Force Field. Rows use tight
+   spacing so each phase fits one mobile screen without page scrolling. */
+.journey__controls--phased { grid-template-columns: 1fr; gap: 0.4rem; }
+.journey__controls--phased .journey__control--split { gap: 0.05rem 0.7rem; }
+.journey__controls--phased .journey__control--toggle { margin: 0.05rem 0; }
+.journey__controls--phased .journey__control-sub { font-size: 0.62rem; margin-top: 0.02rem; }
+.journey__controls--phased .journey__group-head { padding-bottom: 0.25rem; }
+.journey__controls--phased .journey__toggle { gap: 0.55rem; }
+.journey__controls--phased .journey__toggle .journey__control-label {
+  font-size: 0.74rem;
+  line-height: 1.25;
+}
 .journey__phase-toggle {
-  margin-top: 0.5rem;
+  margin-top: 0.4rem;
   width: 100%;
   display: inline-flex;
   align-items: center;
