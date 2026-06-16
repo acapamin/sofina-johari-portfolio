@@ -88,10 +88,10 @@
 
     var name      = document.getElementById("ebookName").value.trim();
     var email     = document.getElementById("ebookEmail").value.trim();
-    var phone     = document.getElementById("ebookPhone").value.trim();
-    var subscribe = document.getElementById("ebookSubscribe").checked;
+    var whatsapp  = document.getElementById("ebookWhatsapp").value.trim();
+    var subscribe = document.querySelector("input[name='ebookSubscribe']:checked")?.value || "";
 
-    if (!name || !email || !phone) {
+    if (!name || !email || !whatsapp) {
       showError("Please fill in all three fields.");
       return;
     }
@@ -99,7 +99,7 @@
     submitBtn.disabled = true;
     submitBtn.textContent = "Sending…";
 
-    submitToGoogleForms(name, email, phone, subscribe)
+    submitToGoogleForms(name, email, whatsapp, subscribe)
       .then(function () {
         triggerDownload();
         form.setAttribute("hidden", "");
