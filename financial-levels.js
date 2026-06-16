@@ -142,44 +142,73 @@
     name: "Cashflow",
     title: "World 1-1 · The Coin Pipes",
     inputs: [
-      { key: "income", label: "Monthly take-home", min: 1000, max: 30000, step: 100, value: 5000, fmt: "money" },
-      { key: "spend", label: "Monthly spending", min: 500, max: 30000, step: 100, value: 4000, fmt: "money" }
+      { key: "income", group: "INFLOW · The Coin Pool", label: "Monthly Take-Home Pay", min: 1000, max: 20000, step: 100, value: 5000, fmt: "money", base: true },
+      { key: "fixed", group: "OUTFLOW · The Drain Pipes & Blocks", label: "Fixed Commitments", sub: "(Rent, Insurance, Utilities, Bills)", min: 0, max: 20000, step: 100, value: 1500, fmt: "money", scaleWith: "income", maxFactor: 1.2 },
+      { key: "debt", label: "Debt Repayments", sub: "(Car/Housing Loans, Credit Cards, PTPTN)", min: 0, max: 20000, step: 100, value: 800, fmt: "money", scaleWith: "income", maxFactor: 1.2 },
+      { key: "other", label: "Other Spending", sub: "(Food, Lifestyle, Entertainment, Shopping)", min: 0, max: 20000, step: 100, value: 1500, fmt: "money", scaleWith: "income", maxFactor: 1.2 }
     ],
     compute: function (v) {
-      var savings = v.income - v.spend;
-      var rate = v.income > 0 ? savings / v.income : 0;
-      var mood = rate >= 0.28 ? "joyful"
-        : rate >= 0.15 ? "growth"
-        : rate >= 0.05 ? "stable"
-        : rate >= 0 ? "cautious"
-        : "concerned";
-      var say = {
-        joyful: "Coin shower! Top score!",
-        growth: "Level up! We're growing!",
-        stable: "Steady lah, steady.",
-        cautious: "Hmm... coins feel light.",
-        concerned: "The pipe eats everything!"
-      }[mood];
-      var coach = {
-        joyful: "Capy is thrilled — saving 28%+ of income is elite territory. The next question is whether that money is working as hard as you do.",
-        growth: "A 15–28% savings rate compounds beautifully over a decade. Keep this up and the next levels get much easier.",
-        stable: "You're saving something every month — that habit matters more than the amount. A small trim to spending lifts Capy's whole mood.",
-        cautious: "It's tight. Under 5% saved means one surprise bill wipes out the month. Try nudging spending down and watch the gold coins appear.",
-        concerned: "Spending exceeds income, so the gap is quietly filling up on credit. This is exactly the conversation a planner untangles — no judgement."
-      }[mood];
+      // --- real-time cashflow maths -------------------------------------
+      var totalExpenses = v.fixed + v.debt + v.other;
+      var surplus = v.income - totalExpenses;
+      var surplusPct = v.income > 0 ? (surplus / v.income) * 100 : 0;
+      var dti = v.income > 0 ? (v.debt / v.income) * 100 : 0;
+      var rate = v.income > 0 ? surplus / v.income : 0;
+      var pctR = Math.round(surplusPct);
+      var dtiR = Math.round(dti);
+
+      // --- dynamic Capy commentary matrix (priority order) --------------
+      var mood, say, coach, headline;
+      if (dti > 35) {
+        mood = "concerned";
+        say = "Debt pipes are draining us!";
+        coach = "Your Debt-to-Income ratio is sitting at " + dtiR + "%. Those debt drain "
+          + "pipes are taking a massive bite out of your coins. Focus on a debt-busting "
+          + "strategy first to free up your cashflow power-up!";
+        headline = "Debt eats " + dtiR + "% of your take-home pay.";
+      } else if (surplus < 0) {
+        mood = "concerned";
+        say = "The pipe eats everything!";
+        coach = "Warning: Outflow exceeds inflow! Your capy is running on a deficit of "
+          + money(Math.abs(surplus)) + " this month. You're dipping into reserves or "
+          + "relying on credit cards. Time to slide back on 'Other Spending' to find a "
+          + "sustainable balance.";
+        headline = "You overspend by " + money(Math.abs(surplus)) + " every month.";
+      } else if (surplusPct >= 20) {
+        mood = "joyful";
+        say = "LEVEL UP! WE'RE GROWING!";
+        coach = "You have a healthy surplus of " + pctR + "% (" + money(surplus) + ") "
+          + "remaining this month! This is a textbook gold standard. Your capy is in a "
+          + "prime position to route these extra coins into the Protection or Future "
+          + "Funds tabs above!";
+        headline = "You bank " + money(surplus) + " a month — a " + pctR + "% surplus.";
+      } else {
+        mood = "stable";
+        say = "Steady lah — mind the gap.";
+        coach = "You have a positive surplus of " + pctR + "% (" + money(surplus) + "), "
+          + "but room for error is tight. A small unexpected expense could stall your "
+          + "capy. Look closely at your 'Other Spending' slider to see where you can trim "
+          + "some fat.";
+        headline = "A slim " + pctR + "% surplus (" + money(surplus) + ") this month.";
+      }
+
+      // --- POWER bar: tied directly to surplus percentage ---------------
+      // 0% or negative → empty + red; 20%+ → full + green glow.
+      var powerPct = clamp((surplusPct / 20) * 100, 0, 100);
+      var tone = surplus <= 0 ? "red" : surplusPct >= 20 ? "green" : "gold";
+
       return {
         mood: mood,
-        score: clamp(Math.round((rate / 0.3) * 100), 0, 100),
-        stat: rmShort(v.income) + "/MO",
-        headline: savings >= 0
-          ? "You bank " + money(savings) + " a month — a " + Math.round(rate * 100) + "% savings rate."
-          : "You overspend by " + money(-savings) + " every month.",
+        score: Math.round(powerPct),
+        stat: (surplus >= 0 ? "+" : "−") + rmShort(Math.abs(surplus)),
+        headline: headline,
         coach: coach,
         say: say,
+        power: { pct: powerPct, tone: tone },
         metrics: {
           rate: clamp(rate, -0.5, 0.6),
-          savings: Math.max(0, savings),
-          spendShare: clamp(v.spend / v.income, 0, 1.5)
+          savings: Math.max(0, surplus),
+          spendShare: clamp(v.income > 0 ? totalExpenses / v.income : 1.5, 0, 1.5)
         }
       };
     },
@@ -196,6 +225,7 @@
 
         var rate = clamp(g.m.rate, 0, 0.6);
         var spendShare = clamp(g.m.spendShare, 0, 1.5);
+        var totalSpend = (g.values.fixed || 0) + (g.values.debt || 0) + (g.values.other || 0);
         var spendCx = w * 0.32, saveCx = w * 0.68;
 
         // spending pipe (money down the drain); labels hug the left
@@ -203,7 +233,7 @@
         var pw = 18, pipeTop = groundY - 26;
         pipe(g, spendCx, pipeTop, pw, groundY, "#2e7d4f", "#1b4a2f", "#5cb87a");
         ptext(g, "SPEND", 3, pipeTop - 12, TEAL, "left");
-        ptext(g, rmShort(g.values.spend), 3, pipeTop - 2, TEAL, "left");
+        ptext(g, rmShort(totalSpend), 3, pipeTop - 2, TEAL, "left");
 
         // savings vault filling with coin rows; labels hug the right edge
         var vw = 34, vh = 28;
@@ -628,6 +658,7 @@
   var statEl = document.getElementById("journeyStat");
   var vibeEl = document.getElementById("journeyVibe");
   var vibePctEl = document.getElementById("journeyVibePct");
+  var vibeBoxEl = document.querySelector(".journey__vibe");
 
   var progress = {};
   var chips = {};
@@ -664,9 +695,65 @@
 
   function buildControls(def) {
     controlsEl.innerHTML = "";
+    // a level that tags its inputs with `group` renders section headers
+    // and switches to the compact two-column Cashflow layout
+    var hasGroups = def.inputs.some(function (inp) { return inp.group; });
+    controlsEl.classList.toggle("journey__controls--grouped", hasGroups);
+
+    var controls = {};                 // key -> { inp, range, output }
+    var baseKey = null;                // the inflow slider others scale against
+    def.inputs.forEach(function (inp) { if (inp.base) baseKey = inp.key; });
+    function baseVal() {
+      return baseKey && controls[baseKey] ? parseFloat(controls[baseKey].range.value) : 0;
+    }
+    // an outflow's ceiling tracks the inflow (1.2× so a deficit is reachable)
+    function dynMax(inp) {
+      var raw = baseVal() * (inp.maxFactor || 1);
+      return Math.max(inp.min + inp.step, Math.round(raw / inp.step) * inp.step);
+    }
+    // value readout — outflows also show their share of take-home pay
+    function renderOut(inp, range, output) {
+      var v = parseFloat(range.value);
+      if (inp.scaleWith) {
+        var income = baseVal();
+        var p = income > 0 ? Math.round((v / income) * 100) : 0;
+        var tone = p > 100 ? " journey__pct--over" : (p > 50 ? " journey__pct--heavy" : "");
+        output.innerHTML = money(v) + ' <span class="journey__pct' + tone + '">(' + p + "%)</span>";
+      } else {
+        output.textContent = fmtVal(inp, v);
+      }
+    }
+    // when the inflow moves, rescale every dependent slider's ceiling and
+    // re-clamp any outflow that now exceeds it
+    function refreshDynamic() {
+      def.inputs.forEach(function (inp) {
+        if (!inp.scaleWith) return;
+        var c = controls[inp.key];
+        var m = dynMax(inp);
+        c.range.max = m;
+        if (parseFloat(c.range.value) > m) {
+          c.range.value = m;
+          engine.setInput(inp.key, m);
+        }
+        setFill(c.range);
+        renderOut(inp, c.range, c.output);
+      });
+    }
+
+    var lastGroup = null;
     def.inputs.forEach(function (inp) {
+      if (inp.group && inp.group !== lastGroup) {
+        lastGroup = inp.group;
+        var head = document.createElement("p");
+        head.className = "journey__group-head";
+        head.textContent = inp.group;
+        controlsEl.appendChild(head);
+      }
+      var split = hasGroups && inp.type !== "toggle";
       var row = document.createElement("div");
-      row.className = "journey__control" + (inp.type === "toggle" ? " journey__control--toggle" : "");
+      row.className = "journey__control"
+        + (inp.type === "toggle" ? " journey__control--toggle" : "")
+        + (split ? " journey__control--split" : "");
       if (inp.type === "toggle") {
         row.innerHTML =
           '<label class="journey__toggle">' +
@@ -677,25 +764,43 @@
         row.querySelector("input").addEventListener("change", function () {
           engine.setInput(inp.key, this.checked ? 1 : 0);
         });
+        controlsEl.appendChild(row);
+        return;
+      }
+
+      var id = "jin-" + inp.key;
+      var subHtml = inp.sub ? '<span class="journey__control-sub">' + inp.sub + "</span>" : "";
+      var theMax = inp.scaleWith ? dynMax(inp) : inp.max;
+      var rangeHtml = '<input class="journey__range" type="range" id="' + id + '" min="'
+        + inp.min + '" max="' + theMax + '" step="' + inp.step + '" value="' + inp.value + '" />';
+
+      if (split) {
+        row.innerHTML =
+          '<div class="journey__c-info">' +
+          '<label class="journey__control-label" for="' + id + '">' + inp.label + subHtml + "</label>" +
+          "</div>" +
+          '<div class="journey__c-ctrl">' +
+          "<output></output>" + rangeHtml +
+          "</div>";
       } else {
-        var id = "jin-" + inp.key;
         row.innerHTML =
           '<div class="journey__control-head">' +
-          '<label class="journey__control-label" for="' + id + '">' + inp.label + "</label>" +
-          "<output>" + fmtVal(inp, inp.value) + "</output>" +
-          "</div>" +
-          '<input class="journey__range" type="range" id="' + id + '" min="' + inp.min +
-          '" max="' + inp.max + '" step="' + inp.step + '" value="' + inp.value + '" />';
-        var range = row.querySelector("input");
-        var output = row.querySelector("output");
-        setFill(range);
-        range.addEventListener("input", function () {
-          var v = parseFloat(this.value);
-          output.textContent = fmtVal(inp, v);
-          setFill(this);
-          engine.setInput(inp.key, v);
-        });
+          '<label class="journey__control-label" for="' + id + '">' + inp.label + subHtml + "</label>" +
+          "<output></output>" +
+          "</div>" + rangeHtml;
       }
+
+      var range = row.querySelector("input");
+      var output = row.querySelector("output");
+      controls[inp.key] = { inp: inp, range: range, output: output };
+      setFill(range);
+      renderOut(inp, range, output);
+      range.addEventListener("input", function () {
+        setFill(this);
+        engine.setInput(inp.key, parseFloat(this.value));
+        renderOut(inp, this, output);
+        if (inp.base) refreshDynamic();   // inflow moved → rescale outflows + %
+      });
       controlsEl.appendChild(row);
     });
   }
@@ -707,6 +812,7 @@
     titleEl.textContent = e.def.title.split("·")[1].trim();
     buildControls(e.def);
     for (var id in chips) chips[id].classList.toggle("is-active", id === e.id);
+    if (vibeBoxEl) vibeBoxEl.classList.remove("is-green", "is-red");
     lastSay = "";
   });
 
@@ -723,15 +829,29 @@
       bubbleEl.classList.add("is-pop");
     }
     progress[engine.levelId] = s.score || 0;
-    // power = average score across the levels played so far, so a
-    // maxed first level reads 100%, not 25%
-    var total = 0, visited = 0;
-    engine.order.forEach(function (id) {
-      if (progress[id] != null) { visited++; total += progress[id]; }
-    });
-    var pct = visited ? Math.round(total / visited) : 0;
-    vibeEl.style.width = pct + "%";
-    vibePctEl.textContent = pct + "%";
+
+    if (s.power) {
+      // a level can drive the POWER bar directly (Cashflow ties it to
+      // the surplus %): empty/red at a deficit, full + green glow at 20%+
+      var pp = clamp(Math.round(s.power.pct), 0, 100);
+      vibeEl.style.width = pp + "%";
+      vibePctEl.textContent = pp + "%";
+      if (vibeBoxEl) {
+        vibeBoxEl.classList.toggle("is-green", s.power.tone === "green");
+        vibeBoxEl.classList.toggle("is-red", s.power.tone === "red");
+      }
+    } else {
+      // power = average score across the levels played so far, so a
+      // maxed first level reads 100%, not 25%
+      if (vibeBoxEl) vibeBoxEl.classList.remove("is-green", "is-red");
+      var total = 0, visited = 0;
+      engine.order.forEach(function (id) {
+        if (progress[id] != null) { visited++; total += progress[id]; }
+      });
+      var pct = visited ? Math.round(total / visited) : 0;
+      vibeEl.style.width = pct + "%";
+      vibePctEl.textContent = pct + "%";
+    }
     engine.order.forEach(function (id) {
       chips[id].classList.toggle("is-done", (progress[id] || 0) >= 60);
     });
