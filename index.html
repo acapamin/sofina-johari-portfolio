@@ -657,18 +657,10 @@
       <div class="container cta__inner">
         <p class="section-eyebrow section-eyebrow--center section-eyebrow--light reveal">Let's Talk</p>
         <h2 class="cta__title reveal">Your future won't<br/><em>plan itself.</em></h2>
-        <p class="cta__sub reveal">A first conversation costs nothing — and might change everything. Fill in the form below and Sofina will be in touch.</p>
+        <p class="cta__sub reveal">A first conversation costs nothing — and might change everything.</p>
 
-        <div class="cta__form-wrap reveal">
-          <iframe
-            src="https://forms.cloud.microsoft/r/9dk5QB1JtX?embed=true"
-            title="Contact Sofina Johari"
-            frameborder="0"
-            marginwidth="0"
-            marginheight="0"
-            allowfullscreen
-            loading="lazy"
-          ></iframe>
+        <div class="cta__cta-buttons reveal">
+          <button type="button" class="btn btn--gold" id="contactTrigger">Book a Consultation</button>
         </div>
 
         <div class="cta__wa reveal">
@@ -752,9 +744,18 @@
                  placeholder="you@example.com" autocomplete="email" required />
         </div>
         <div class="ebook-modal__field">
-          <label class="ebook-modal__label" for="ebookPhone">Phone Number</label>
-          <input class="ebook-modal__input" type="tel" id="ebookPhone"
+          <label class="ebook-modal__label" for="ebookWhatsapp">Whatsapp Number</label>
+          <input class="ebook-modal__input" type="tel" id="ebookWhatsapp"
                  placeholder="+60 12 345 6789" autocomplete="tel" required />
+        </div>
+        <div class="ebook-modal__field">
+          <label class="ebook-modal__label">Subscribe to broadcast on whatsapp</label>
+          <div class="ebook-modal__radio-group">
+            <label class="ebook-modal__radio">
+              <input type="radio" name="ebookSubscribe" value="Yes, subscribe to broadcast on whatsapp" />
+              <span>Yes, subscribe to broadcast on whatsapp</span>
+            </label>
+          </div>
         </div>
         <button type="submit" class="btn btn--gold ebook-modal__submit"
                 id="ebookModalSubmit">Download now</button>
@@ -762,6 +763,226 @@
       </form>
       <div class="ebook-modal__thanks" id="ebookModalThanks" hidden>
         <p class="ebook-modal__thanks-msg">Thank you! Your download has started.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ CONTACT MODAL ============ -->
+  <div class="contact-modal" id="contactModal" role="dialog" aria-modal="true" aria-labelledby="contactModalTitle" hidden>
+    <div class="contact-modal__backdrop" id="contactModalBackdrop"></div>
+    <div class="contact-modal__panel">
+      <button class="contact-modal__close" id="contactModalClose" type="button" aria-label="Close">×</button>
+      <p class="contact-modal__eyebrow">Website Application</p>
+      <h2 class="contact-modal__title" id="contactModalTitle">Let's kickstart your audit</h2>
+      <p class="contact-modal__sub">These 10 questions help me understand your situation so we spend our time on high-level strategy, not fact-finding.</p>
+      <form class="contact-modal__form" id="contactForm" novalidate>
+        <!-- Q1: Name -->
+        <div class="contact-modal__field">
+          <label class="contact-modal__label" for="contactName">Name <span aria-label="required">*</span></label>
+          <input class="contact-modal__input" type="text" id="contactName"
+                 placeholder="Your full name" autocomplete="name" required />
+        </div>
+
+        <!-- Q2: Whatsapp Number -->
+        <div class="contact-modal__field">
+          <label class="contact-modal__label" for="contactWhatsapp">Whatsapp Number <span aria-label="required">*</span></label>
+          <input class="contact-modal__input" type="tel" id="contactWhatsapp"
+                 placeholder="+60 12 345 6789" autocomplete="tel" required />
+        </div>
+
+        <!-- Q3: Primary Financial Goal -->
+        <div class="contact-modal__field">
+          <label class="contact-modal__label">What is your primary financial goal or concern right now? <span aria-label="required">*</span></label>
+          <p class="contact-modal__field-hint">Select all that applies</p>
+          <div class="contact-modal__checkboxes">
+            <label class="contact-modal__checkbox">
+              <input type="checkbox" name="contactGoals" value="Legacy Planning (Wasiat / Hibah / Frozen Assets)" />
+              <span>Legacy Planning (Wasiat / Hibah / Frozen Assets)</span>
+            </label>
+            <label class="contact-modal__checkbox">
+              <input type="checkbox" name="contactGoals" value="Investment Optimisation (Growth / Diversification)" />
+              <span>Investment Optimisation (Growth / Diversification)</span>
+            </label>
+            <label class="contact-modal__checkbox">
+              <input type="checkbox" name="contactGoals" value="Cash Flow Management & Tax Efficiency" />
+              <span>Cash Flow Management & Tax Efficiency</span>
+            </label>
+            <label class="contact-modal__checkbox">
+              <input type="checkbox" name="contactGoals" value="Child Education & Protection Planning" />
+              <span>Child Education & Protection Planning</span>
+            </label>
+            <label class="contact-modal__checkbox">
+              <input type="checkbox" name="contactGoals" value="Other" id="contactGoalsOther" />
+              <span>Other:</span>
+            </label>
+            <input type="text" id="contactGoalsOtherText" class="contact-modal__input contact-modal__input--small" placeholder="Please specify" style="margin-left: 32px; margin-top: -0.5rem;" />
+          </div>
+        </div>
+
+        <!-- Q4: Family Status -->
+        <div class="contact-modal__field">
+          <label class="contact-modal__label">What is your current family status? <span aria-label="required">*</span></label>
+          <p class="contact-modal__field-hint">Please select at most 2 options</p>
+          <div class="contact-modal__checkboxes">
+            <label class="contact-modal__checkbox">
+              <input type="checkbox" name="contactFamily" value="Single" />
+              <span>Single</span>
+            </label>
+            <label class="contact-modal__checkbox">
+              <input type="checkbox" name="contactFamily" value="Married (Single Income)" />
+              <span>Married (Single Income)</span>
+            </label>
+            <label class="contact-modal__checkbox">
+              <input type="checkbox" name="contactFamily" value="Married (Dual Income)" />
+              <span>Married (Dual Income)</span>
+            </label>
+            <label class="contact-modal__checkbox">
+              <input type="checkbox" name="contactFamily" value="Divorced" />
+              <span>Divorced</span>
+            </label>
+            <label class="contact-modal__checkbox">
+              <input type="checkbox" name="contactFamily" value="Widowed" />
+              <span>Widowed</span>
+            </label>
+            <label class="contact-modal__checkbox">
+              <input type="checkbox" name="contactFamily" value="Parent (with minor children)" />
+              <span>Parent (with minor children)</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Q5: Income -->
+        <div class="contact-modal__field">
+          <label class="contact-modal__label">Estimated Monthly Household Income <span aria-label="required">*</span></label>
+          <div class="contact-modal__radios">
+            <label class="contact-modal__radio">
+              <input type="radio" name="contactIncome" value="Below RM10,000" required />
+              <span>Below RM10,000</span>
+            </label>
+            <label class="contact-modal__radio">
+              <input type="radio" name="contactIncome" value="RM10,000 – RM15,000" />
+              <span>RM10,000 – RM15,000</span>
+            </label>
+            <label class="contact-modal__radio">
+              <input type="radio" name="contactIncome" value="RM15,000 – RM25,000" />
+              <span>RM15,000 – RM25,000</span>
+            </label>
+            <label class="contact-modal__radio">
+              <input type="radio" name="contactIncome" value="RM25,000 – RM50,000" />
+              <span>RM25,000 – RM50,000</span>
+            </label>
+            <label class="contact-modal__radio">
+              <input type="radio" name="contactIncome" value="Above RM50,000" />
+              <span>Above RM50,000</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Q6: Active Investments -->
+        <div class="contact-modal__field">
+          <label class="contact-modal__label">Do you currently have active investments (ASB, Unit Trust, Stocks, Crypto, etc.)? <span aria-label="required">*</span></label>
+          <div class="contact-modal__radios">
+            <label class="contact-modal__radio">
+              <input type="radio" name="contactInvestments" value="Yes, just ASB and/or TH" required />
+              <span>Yes, just ASB and/or TH</span>
+            </label>
+            <label class="contact-modal__radio">
+              <input type="radio" name="contactInvestments" value="Yes, beyond ASB and/or TH" />
+              <span>Yes, beyond ASB and/or TH</span>
+            </label>
+            <label class="contact-modal__radio">
+              <input type="radio" name="contactInvestments" value="No" />
+              <span>No</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Q7: Takaful Policies -->
+        <div class="contact-modal__field">
+          <label class="contact-modal__label">Do you currently have active Takaful policies (Medical, Life, Critical Illness, Hibah Takaful)? <span aria-label="required">*</span></label>
+          <div class="contact-modal__radios">
+            <label class="contact-modal__radio">
+              <input type="radio" name="contactTakaful" value="Yes" required />
+              <span>Yes</span>
+            </label>
+            <label class="contact-modal__radio">
+              <input type="radio" name="contactTakaful" value="No" />
+              <span>No</span>
+            </label>
+            <label class="contact-modal__radio">
+              <input type="radio" name="contactTakaful" value="Maybe" />
+              <span>Maybe</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Q8: Coverage Confidence -->
+        <div class="contact-modal__field">
+          <label class="contact-modal__label">Are you confident that your current setup covers your family's needs if you were no longer around? <span aria-label="required">*</span></label>
+          <div class="contact-modal__radios">
+            <label class="contact-modal__radio">
+              <input type="radio" name="contactCoverage" value="Yes" required />
+              <span>Yes</span>
+            </label>
+            <label class="contact-modal__radio">
+              <input type="radio" name="contactCoverage" value="No" />
+              <span>No</span>
+            </label>
+            <label class="contact-modal__radio">
+              <input type="radio" name="contactCoverage" value="Maybe" />
+              <span>Maybe</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Q9: Urgency Scale -->
+        <div class="contact-modal__field">
+          <label class="contact-modal__label" for="contactUrgency">On a scale of 1-10, how urgent is it for you to have a financial roadmap? <span aria-label="required">*</span></label>
+          <select id="contactUrgency" name="contactUrgency" required class="contact-modal__select">
+            <option value="">Select urgency level</option>
+            <option value="1">1 - Not urgent at all</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5 - Somewhat urgent</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10 - Extremely urgent</option>
+          </select>
+        </div>
+
+        <!-- Q10: Ready for Session -->
+        <div class="contact-modal__field">
+          <label class="contact-modal__label">If we're a fit, are you ready for a 1-hour virtual alignment session to explore how we can optimise your wealth? <span aria-label="required">*</span></label>
+          <div class="contact-modal__radios">
+            <label class="contact-modal__radio">
+              <input type="radio" name="contactSession" value="Yes" required />
+              <span>Yes</span>
+            </label>
+            <label class="contact-modal__radio">
+              <input type="radio" name="contactSession" value="No" />
+              <span>No</span>
+            </label>
+            <label class="contact-modal__radio">
+              <input type="radio" name="contactSession" value="See how first" />
+              <span>See how first</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Q11: Additional Notes -->
+        <div class="contact-modal__field">
+          <label class="contact-modal__label" for="contactNotes">Anything else you want me to know?</label>
+          <textarea class="contact-modal__textarea" id="contactNotes" placeholder="What's bothering your mind" rows="3"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn--gold contact-modal__submit" id="contactSubmit">Book a Free Consultation</button>
+        <p class="contact-modal__error" id="contactError" role="alert" hidden></p>
+      </form>
+      <div class="contact-modal__thanks" id="contactThanks" hidden>
+        <p class="contact-modal__thanks-msg">Thank you! Sofina will be in touch within 24 hours.</p>
       </div>
     </div>
   </div>
@@ -776,5 +997,6 @@
   <script src="main.js"></script>
   <script src="chat.js"></script>
   <script src="ebook-gate.js"></script>
+  <script src="contact-form.js"></script>
 </body>
 </html>

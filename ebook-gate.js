@@ -2,10 +2,11 @@
   "use strict";
 
   /* ---- Google Form configuration ---- */
-  var FORM_ID     = "1FAIpQLScE7yiwLk5nNSxqvytCxggyw7pMHWEj-8k6rSBrucSdxtMtxQ";
-  var ENTRY_NAME  = "entry.720379909";
-  var ENTRY_EMAIL = "entry.1361257471";
-  var ENTRY_PHONE = "entry.533067778";
+  var FORM_ID     = "1FAIpQLSdndj7iJ9gYYzYi4qv_tFy7LtqCPICpTmDAcXtC3BbSuAza4w";
+  var ENTRY_NAME  = "entry.1541466959";
+  var ENTRY_EMAIL = "entry.1327142487";
+  var ENTRY_PHONE = "entry.1243312249";
+  var ENTRY_SUBSCRIBE = "entry.1235783281";
   /* -------------------------------------- */
 
   var PDF_URL      = "assets/ebook/financial-planning-sofina-johari.pdf";
@@ -58,13 +59,16 @@
     setTimeout(function () { document.body.removeChild(a); }, 1000);
   }
 
-  function submitToGoogleForms(name, email, phone) {
+  function submitToGoogleForms(name, email, phone, subscribe) {
     var endpoint =
       "https://docs.google.com/forms/d/e/" + FORM_ID + "/formResponse";
     var body = new URLSearchParams();
     body.append(ENTRY_NAME, name);
     body.append(ENTRY_EMAIL, email);
     body.append(ENTRY_PHONE, phone);
+    if (subscribe) {
+      body.append(ENTRY_SUBSCRIBE, "Yes, subscribe to broadcast on whatsapp");
+    }
     /*
       mode: 'no-cors' sends the request and returns an opaque response —
       we can't read the response body, but the data reaches Google Forms.
@@ -82,11 +86,12 @@
     e.preventDefault();
     hideError();
 
-    var name  = document.getElementById("ebookName").value.trim();
-    var email = document.getElementById("ebookEmail").value.trim();
-    var phone = document.getElementById("ebookPhone").value.trim();
+    var name      = document.getElementById("ebookName").value.trim();
+    var email     = document.getElementById("ebookEmail").value.trim();
+    var whatsapp  = document.getElementById("ebookWhatsapp").value.trim();
+    var subscribe = document.querySelector("input[name='ebookSubscribe']:checked")?.value || "";
 
-    if (!name || !email || !phone) {
+    if (!name || !email || !whatsapp) {
       showError("Please fill in all three fields.");
       return;
     }
@@ -94,7 +99,7 @@
     submitBtn.disabled = true;
     submitBtn.textContent = "Sending…";
 
-    submitToGoogleForms(name, email, phone)
+    submitToGoogleForms(name, email, whatsapp, subscribe)
       .then(function () {
         triggerDownload();
         form.setAttribute("hidden", "");
