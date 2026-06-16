@@ -26,21 +26,12 @@
   var errorEl = document.getElementById("contactError");
   var thanksEl = document.getElementById("contactThanks");
   var triggerBtn = document.getElementById("contactTrigger");
-  var urgencySlider = document.getElementById("contactUrgency");
-  var urgencyValue = document.getElementById("contactUrgencyValue");
   var goalsOtherCheckbox = document.getElementById("contactGoalsOther");
   var goalsOtherText = document.getElementById("contactGoalsOtherText");
 
   if (!modal || !form) {
     console.warn("Contact form elements not found");
     return;
-  }
-
-  // Update urgency value display
-  if (urgencySlider) {
-    urgencySlider.addEventListener("input", function() {
-      urgencyValue.textContent = this.value;
-    });
   }
 
   // Toggle "Other" text input visibility
@@ -66,8 +57,6 @@
     form.removeAttribute("hidden");
     submitBtn.disabled = false;
     submitBtn.textContent = "Book a Free Consultation";
-    if (urgencySlider) urgencySlider.value = 5;
-    if (urgencyValue) urgencyValue.textContent = "5";
     if (goalsOtherText) goalsOtherText.style.display = "none";
   }
 
@@ -101,7 +90,7 @@
     var investments = document.querySelector("input[name='contactInvestments']:checked")?.value || "";
     var takaful = document.querySelector("input[name='contactTakaful']:checked")?.value || "";
     var coverage = document.querySelector("input[name='contactCoverage']:checked")?.value || "";
-    var urgency = document.getElementById("contactUrgency").value || "5";
+    var urgency = document.getElementById("contactUrgency").value || "";
     var session = document.querySelector("input[name='contactSession']:checked")?.value || "";
     var notes = document.getElementById("contactNotes").value.trim();
 
@@ -147,6 +136,9 @@
     }
     if (!data.session) {
       return "Please answer the session readiness question.";
+    }
+    if (!data.urgency) {
+      return "Please select your urgency level.";
     }
     return null;
   }

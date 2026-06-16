@@ -657,11 +657,14 @@
       <div class="container cta__inner">
         <p class="section-eyebrow section-eyebrow--center section-eyebrow--light reveal">Let's Talk</p>
         <h2 class="cta__title reveal">Your future won't<br/><em>plan itself.</em></h2>
-        <p class="cta__sub reveal">A first conversation costs nothing — and might change everything. Book a free consultation and let's get started.</p>
+        <p class="cta__sub reveal">A first conversation costs nothing — and might change everything.</p>
 
         <div class="cta__cta-buttons reveal">
           <button type="button" class="btn btn--gold" id="contactTrigger">Book a Consultation</button>
-          <a class="btn btn--ghost-light" href="https://wa.me/60386856299" target="_blank" rel="noopener">Or message on WhatsApp</a>
+        </div>
+
+        <div class="cta__wa reveal">
+          <a class="cta__wa-link" href="https://wa.me/60386856299" target="_blank" rel="noopener">Message on WhatsApp</a>
         </div>
 
         <div class="cta__socials reveal">
@@ -933,15 +936,20 @@
 
         <!-- Q9: Urgency Scale -->
         <div class="contact-modal__field">
-          <label class="contact-modal__label">On a scale of 1-10, how urgent is it for you to have a financial roadmap? <span aria-label="required">*</span></label>
-          <div class="contact-modal__scale">
-            <div class="contact-modal__scale-labels">
-              <span class="contact-modal__scale-label">Not urgent</span>
-              <span class="contact-modal__scale-label">Extremely urgent</span>
-            </div>
-            <input type="range" id="contactUrgency" name="contactUrgency" min="1" max="10" value="5" required class="contact-modal__slider" />
-          </div>
-          <p class="contact-modal__scale-value">Selected: <span id="contactUrgencyValue">5</span>/10</p>
+          <label class="contact-modal__label" for="contactUrgency">On a scale of 1-10, how urgent is it for you to have a financial roadmap? <span aria-label="required">*</span></label>
+          <select id="contactUrgency" name="contactUrgency" required class="contact-modal__select">
+            <option value="">Select urgency level</option>
+            <option value="1">1 - Not urgent at all</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5 - Somewhat urgent</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10 - Extremely urgent</option>
+          </select>
         </div>
 
         <!-- Q10: Ready for Session -->
