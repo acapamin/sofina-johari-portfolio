@@ -1433,21 +1433,17 @@ ul { list-style: none; }
 .cta__cta-buttons .btn { min-width: 240px; }
 
 .cta__wa {
-  margin-top: 1.2rem;
-  text-align: center;
+  margin-top: 1.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
-.cta__wa-link {
-  font-size: 0.95rem;
+.cta__wa-label {
+  font-size: 0.9rem;
   color: var(--text-on-dark-muted);
-  text-decoration: none;
-  border-bottom: 1px solid var(--text-on-dark-muted);
-  transition: color 0.25s, border-color 0.25s;
-}
-
-.cta__wa-link:hover {
-  color: var(--gold-soft);
-  border-color: var(--gold-soft);
 }
 .cta__socials {
   margin-top: 3.2rem;
