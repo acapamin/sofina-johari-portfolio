@@ -274,120 +274,267 @@
      WORLD 1-2 — Protection: the brick shield
      ============================================================ */
 
+  /* shared global money state — World 1-1 and World 1-2 read & write the
+     SAME income, and World 1-2 borrows World 1-1's debt figure as the
+     "clear my liabilities" target for people with no dependants. The DOM
+     wiring keeps GLOBAL in sync with whichever income/debt slider is on
+     screen, so moving one moves the other. */
+  var GLOBAL = { income: 5000, debt: 800 };
+  var insurancePhase = 0;                 // 0 = Life shield · 1 = Health barrier
+
   var shieldRef = { ratio: 1, x: 0 };
+
+  // rule-of-thumb life-cover target (see PHASE 1 spec)
+  function lifeTarget(income, deps, debt) {
+    if (deps <= 0) return debt;               // 0 dependants → just clear the debts
+    if (deps === 1) return income * 12 * 7;   // 7 years of income replacement
+    return income * 12 * 10;                  // 2+ dependants → 10 years
+  }
+
+  /* PHASE 1 graphic: the brick wall, lit blocks = life cover / target */
+  function drawBrickShield(g, groundY) {
+    var ctx = g.ctx, w = g.w, h = g.h;
+    var ratio = clamp(g.m.ratio, 0, 1.2);
+    var mx = w * 0.3;
+
+    var bsz = 8;
+    var wallX = Math.round(w * 0.58);
+    var rows = 5, cols = 2;
+    var lit = Math.round(clamp(ratio, 0, 1) * rows * cols);
+    shieldRef.ratio = ratio;
+    shieldRef.x = wallX;
+
+    var flicker = ratio < 0.45 && !g.reduced ? (((g.t * 9) | 0) % 3 !== 0) : true;
+    var idx = 0;
+    for (var r = 0; r < rows; r++) {
+      for (var c = 0; c < cols; c++) {
+        var x = wallX + c * bsz;
+        var y = groundY - (r + 1) * bsz;
+        if (idx < lit && flicker) {
+          ctx.fillStyle = GOLD;
+          ctx.fillRect(x, y, bsz, bsz);
+          ctx.fillStyle = GOLD_LIGHT;
+          ctx.fillRect(x + 1, y + 1, 2, 1);
+          ctx.fillStyle = GOLD_DARK;
+          ctx.fillRect(x, y + bsz - 1, bsz, 1);
+          ctx.fillRect(x + bsz - 1, y, 1, bsz);
+        } else {
+          ctx.strokeStyle = "rgba(231,192,105,0.25)";
+          ctx.strokeRect(x + 0.5, y + 0.5, bsz - 1, bsz - 1);
+        }
+        idx++;
+      }
+    }
+    if (ratio >= 1 && !g.reduced && Math.random() < 0.1) {
+      g.particles.spawn({
+        x: wallX + Math.random() * bsz * 2, y: groundY - Math.random() * bsz * rows,
+        vx: 0, vy: -8, size: 1, life: 0.8, color: GOLD_LIGHT, alpha: 0.9
+      });
+    }
+
+    // incoming "life happens" hazards bounce off a strong wall, slip a weak one
+    if (!g.reduced && g.dt && Math.random() < 0.06) {
+      g.particles.spawn({
+        x: w + 6,
+        y: h * 0.25 + Math.random() * (groundY - h * 0.32),
+        vx: -(28 + Math.random() * 22), vy: 0,
+        size: 3, life: 10, color: "rgba(242,236,224,0.6)", alpha: 0.9,
+        update: function (p) {
+          if (p.resolved || p.x > shieldRef.x + bsz * 2 + 2) return;
+          p.resolved = true;
+          if (Math.random() < Math.min(1, shieldRef.ratio)) {
+            p.vx = 40 + Math.random() * 25;   // bounced off the wall
+            p.vy = -30 - Math.random() * 20;
+            p.g = 100;
+            p.color = GOLD_LIGHT;
+            p.size = 2;
+            p.life = p.age + 0.6;
+          } else {
+            p.color = RED;                     // slipped through the gap
+            p.life = p.age + 0.7;
+          }
+        }
+      });
+    }
+
+    brickGround(g, groundY);
+    mascot.draw(ctx, mx, groundY, Math.min(h * 0.26, 40), { gaze: 0.7 });
+  }
+
+  /* PHASE 2 graphic: Capy's energy barrier (CI runway) + medical-card status.
+     No card → flashing "CRITICAL ITEM MISSING!" overlay and a dropped barrier;
+     CI below target → the barrier stays low and flickers. */
+  function drawHealthBarrier(g, groundY) {
+    var ctx = g.ctx, w = g.w, h = g.h;
+    var ciRatio = clamp(g.m.ciRatio, 0, 1.2);
+    var hasCard = !!g.values.medical;
+    var capH = Math.min(h * 0.26, 40);
+    var cx = Math.round(w * 0.5);
+    var cy = Math.round(groundY - capH * 0.55);
+
+    // energy bubble around Capy — segments light up with the CI runway
+    var R = Math.min(w * 0.3, 34);
+    var segs = 20;
+    var strong = hasCard ? clamp(ciRatio, 0, 1) : 0;
+    var lit = Math.round(strong * segs);
+    var low = strong < 0.5;
+    var flick = (low || !hasCard) && !g.reduced ? (((g.t * 8) | 0) % 2 === 0) : true;
+    var barColor = !hasCard ? RED : ciRatio >= 1 ? TEAL : ciRatio >= 0.5 ? GOLD : "#d99a4a";
+    for (var i = 0; i < segs; i++) {
+      var ang = (i / segs) * Math.PI * 2 - Math.PI / 2;
+      var px = cx + Math.cos(ang) * R;
+      var py = cy + Math.sin(ang) * R * 0.92;
+      if (i < lit && flick) {
+        ctx.fillStyle = barColor;
+        ctx.fillRect(Math.round(px - 1), Math.round(py - 1), 2, 2);
+      } else {
+        ctx.fillStyle = "rgba(159,216,196,0.16)";
+        ctx.fillRect(Math.round(px), Math.round(py), 1, 1);
+      }
+    }
+    if (hasCard && ciRatio >= 1 && !g.reduced && Math.random() < 0.12) {
+      var sa = Math.random() * Math.PI * 2;
+      g.particles.spawn({
+        x: cx + Math.cos(sa) * R, y: cy + Math.sin(sa) * R * 0.92,
+        vx: 0, vy: -6, size: 1, life: 0.7, color: GOLD_LIGHT, alpha: 0.9
+      });
+    }
+
+    brickGround(g, groundY);
+    mascot.draw(ctx, cx, groundY, capH, { gaze: 0.2 });
+
+    if (hasCard) {
+      // tidy gold medical card with a green cross = bills covered
+      var kx = Math.round(w * 0.12), ky = 12;
+      ctx.fillStyle = GOLD;
+      ctx.fillRect(kx, ky, 16, 11);
+      ctx.fillStyle = GOLD_DARK;
+      ctx.fillRect(kx, ky, 16, 1); ctx.fillRect(kx, ky + 10, 16, 1);
+      ctx.fillStyle = "#2e7d4f";
+      ctx.fillRect(kx + 6, ky + 2, 4, 7);
+      ctx.fillRect(kx + 3, ky + 4, 10, 3);
+    } else {
+      // flashing pixel alert when the medical card is missing
+      var blink = g.reduced || (((g.t * 3) | 0) % 2 === 0);
+      if (blink) {
+        var bw = Math.min(w - 10, 128), bh = 22;
+        var bxx = Math.round(w / 2 - bw / 2), byy = Math.round(h * 0.14);
+        ctx.fillStyle = "rgba(217,106,74,0.94)";
+        ctx.fillRect(bxx, byy, bw, bh);
+        ctx.fillStyle = "#2a0d08";
+        ctx.fillRect(bxx, byy, bw, 1); ctx.fillRect(bxx, byy + bh - 1, bw, 1);
+        ctx.fillRect(bxx, byy, 1, bh); ctx.fillRect(bxx + bw - 1, byy, 1, bh);
+        ptext(g, "CRITICAL ITEM", w / 2, byy + 9, "#fff3e6", "center");
+        ptext(g, "MISSING!", w / 2, byy + 18, "#fff3e6", "center");
+      }
+    }
+  }
 
   engine.registerLevel("insurance", {
     name: "Protection",
     title: "World 1-2 · The Brick Shield",
+    // two progressive input views, toggled by one retro pixel button
+    phases: [
+      { cta: "Check Health Protection &nbsp;&rarr;" },
+      { cta: "&larr;&nbsp; Back to Life Cover" }
+    ],
     inputs: [
-      { key: "income", label: "Monthly income", min: 1000, max: 30000, step: 100, value: 5000, fmt: "money" },
-      { key: "cover", label: "Life / takaful cover", min: 0, max: 2000000, step: 10000, value: 100000, fmt: "money" },
-      { key: "deps", label: "Dependants", min: 0, max: 6, step: 1, value: 2, fmt: "people" }
+      { key: "income", group: "PHASE 1 · LIFE SHIELD", phase: 0, label: "Monthly income", sub: "(Synced with World 1-1)", min: 1000, max: 30000, step: 100, value: 5000, fmt: "money" },
+      { key: "deps", group: "PHASE 1 · LIFE SHIELD", phase: 0, label: "Dependants", sub: "(People relying on your income)", min: 0, max: 3, step: 1, value: 2, fmt: "deps" },
+      { key: "cover", group: "PHASE 1 · LIFE SHIELD", phase: 0, label: "Existing life / takaful cover", min: 0, max: 2000000, step: 10000, value: 100000, fmt: "money" },
+      { key: "ci", group: "PHASE 2 · HEALTH BARRIER", phase: 1, label: "Critical illness cover", sub: "(Lump sum paid on diagnosis)", min: 0, max: 1000000, step: 10000, value: 50000, fmt: "money" },
+      { key: "medical", group: "PHASE 2 · HEALTH BARRIER", phase: 1, label: "Medical card active", type: "toggle", value: 0 }
     ],
     compute: function (v) {
-      // simple heuristic: ~10× annual income + a cushion per dependant
-      var need = v.income * 12 * 10 + v.deps * 60000;
-      var ratio = need > 0 ? v.cover / need : 1;
-      var gap = Math.max(0, need - v.cover);
-      var mood = ratio >= 1 ? "joyful"
-        : ratio >= 0.75 ? "stable"
-        : ratio >= 0.45 ? "risk-averse"
-        : "concerned";
-      var say = {
-        joyful: "Full wall! Bring it on!",
-        stable: "Decent armour. Few thin spots.",
-        cautious: "My wall is flickering...",
-        concerned: "The wall is barely holding!"
-      }[mood === "risk-averse" ? "cautious" : mood];
-      var coach = {
-        joyful: "Cover meets the safety target, so a worst day wouldn't become a financial one too. Worth reviewing whenever income or family grows.",
-        stable: "You're mostly protected — the remaining gap is the deductible life would charge your family. Often cheap to close with term cover.",
-        "risk-averse": "Capy is being careful: under half the target means your dependants would feel a real shortfall. Comparing 8+ providers usually finds an affordable fix.",
-        concerned: "A thin wall with people relying on you is the riskiest spot on this whole quest. The good news: protection is usually the cheapest problem to solve."
-      }[mood];
+      var income = v.income;
+      var debt = GLOBAL.debt;             // pulled straight from World 1-1
+      var deps = Math.round(v.deps);
+      var phase = v.phase ? 1 : 0;
+
+      // ---- PHASE 1 · Life / Takaful (the brick shield) ----
+      var target = lifeTarget(income, deps, debt);
+      var cover = v.cover;
+      var lifeRatio = target > 0 ? cover / target : 1;
+      var gap = Math.max(0, target - cover);
+
+      // ---- PHASE 2 · Medical & Critical Illness (energy barrier) ----
+      var ciTarget = income * 12 * 3;     // 3-year income runway to recover
+      var ci = v.ci;
+      var ciRatio = ciTarget > 0 ? ci / ciTarget : 1;
+      var ciGap = Math.max(0, ciTarget - ci);
+      var hasCard = v.medical ? 1 : 0;
+      var depWord = deps >= 3 ? "3+" : String(deps);
+
+      var mood, say, coach, headline, stat, power;
+
+      if (phase === 0) {
+        if (lifeRatio >= 1) {
+          mood = "joyful";
+          say = "Full wall! Bring it on!";
+          headline = "Brick Shield complete — " + money(cover) + " of a " + money(target) + " target.";
+          coach = "Your Brick Shield is solid! Your " + money(cover) + " policy completely covers "
+            + "your " + money(target) + " target. Your family's financial future is fully bulletproofed.";
+        } else {
+          mood = lifeRatio >= 0.75 ? "stable" : lifeRatio >= 0.45 ? "risk-averse" : "concerned";
+          say = lifeRatio >= 0.75 ? "A few thin spots up top."
+            : lifeRatio >= 0.45 ? "My wall is flickering..." : "The wall is barely holding!";
+          headline = "Protection gap: " + money(gap) + " of a " + money(target) + " target.";
+          var basis = deps === 0
+            ? "With no dependants, your target wall is the " + money(target) + " of debt you'd leave behind"
+            : "With " + depWord + (deps === 1 ? " dependant" : " dependants") + ", your target wall is " + money(target);
+          coach = basis + ". Right now, your " + money(gap) + " gap leaves "
+            + (deps === 0 ? "your estate" : "them") + " exposed to falling debris. "
+            + "Closing this gap is usually the cheapest financial problem to solve.";
+        }
+        stat = "SHIELD " + clamp(Math.round(lifeRatio * 100), 0, 120) + "%";
+        power = { pct: clamp(lifeRatio * 100, 0, 100), tone: lifeRatio >= 1 ? "green" : lifeRatio < 0.45 ? "red" : "gold" };
+      } else {
+        if (!hasCard) {
+          mood = "concerned";
+          say = "No medical shield?!";
+          headline = "Critical item missing — no medical card active.";
+          coach = "Warning! Living without a Medical Card means an unexpected medical bill could "
+            + "completely shatter your Cashflow coins from World 1-1. Secure a medical shield first!";
+          stat = "CARD: NONE";
+          power = { pct: 6, tone: "red" };
+        } else if (ciRatio >= 1) {
+          mood = "joyful";
+          say = "Energy barrier maxed!";
+          headline = "Medical card active + " + money(ci) + " critical-illness runway.";
+          coach = "Medical card secured, and your critical-illness fund clears the " + money(ciTarget)
+            + " target — a full 3-year income runway so your Capy can rest and recover. Health shield complete.";
+          stat = "HEALTH 100%";
+          power = { pct: 100, tone: "green" };
+        } else {
+          mood = ciRatio >= 0.5 ? "stable" : "risk-averse";
+          say = ciRatio >= 0.5 ? "Barrier holding, but thin." : "Barrier's running low...";
+          headline = "Critical-illness gap: " + money(ciGap) + " of a " + money(ciTarget) + " runway.";
+          coach = "Your medical bills are covered, but your Critical Illness fund has a gap of "
+            + money(ciGap) + ". You need a 3-year income runway (" + money(ciTarget)
+            + ") so your Capy can rest and recover if a major illness hits.";
+          stat = "HEALTH " + clamp(Math.round(ciRatio * 100), 0, 120) + "%";
+          power = { pct: clamp(ciRatio * 100, 0, 100), tone: ciRatio < 0.45 ? "red" : "gold" };
+        }
+      }
+
       return {
         mood: mood,
-        score: clamp(Math.round(ratio * 100), 0, 100),
-        stat: "SHIELD " + clamp(Math.round(ratio * 100), 0, 120) + "%",
-        headline: ratio >= 1
-          ? "Fully shielded — cover is " + Math.round(ratio * 100) + "% of the " + money(need) + " safety target."
-          : "Protection gap: " + money(gap) + " of a " + money(need) + " target.",
+        score: clamp(Math.round((phase === 0 ? lifeRatio : ciRatio) * 100), 0, 100),
+        stat: stat,
+        headline: headline,
         coach: coach,
         say: say,
-        metrics: { ratio: clamp(ratio, 0, 1.2) }
+        power: power,
+        metrics: { ratio: clamp(lifeRatio, 0, 1.2), ciRatio: clamp(ciRatio, 0, 1.2), card: hasCard }
       };
     },
     scene: {
       draw: function (g) {
-        var ctx = g.ctx, w = g.w, h = g.h;
-        var groundY = h - 14;
-        var ratio = clamp(g.m.ratio, 0, 1.2);
-        var mx = w * 0.3;
-        stars(g, 12, h * 0.35);
-
-        // wall of shield blocks: 2 cols × 5 rows, lit count = coverage
-        var bsz = 8;
-        var wallX = Math.round(w * 0.58);
-        var rows = 5, cols = 2;
-        var lit = Math.round(clamp(ratio, 0, 1) * rows * cols);
-        shieldRef.ratio = ratio;
-        shieldRef.x = wallX;
-
-        var flicker = ratio < 0.45 && !g.reduced ? (((g.t * 9) | 0) % 3 !== 0) : true;
-        var idx = 0;
-        for (var r = 0; r < rows; r++) {
-          for (var c = 0; c < cols; c++) {
-            var x = wallX + c * bsz;
-            var y = groundY - (r + 1) * bsz;
-            if (idx < lit && flicker) {
-              ctx.fillStyle = GOLD;
-              ctx.fillRect(x, y, bsz, bsz);
-              ctx.fillStyle = GOLD_LIGHT;
-              ctx.fillRect(x + 1, y + 1, 2, 1);
-              ctx.fillStyle = GOLD_DARK;
-              ctx.fillRect(x, y + bsz - 1, bsz, 1);
-              ctx.fillRect(x + bsz - 1, y, 1, bsz);
-            } else {
-              ctx.strokeStyle = "rgba(231,192,105,0.25)";
-              ctx.strokeRect(x + 0.5, y + 0.5, bsz - 1, bsz - 1);
-            }
-            idx++;
-          }
-        }
-        if (ratio >= 1 && !g.reduced && Math.random() < 0.1) {
-          g.particles.spawn({
-            x: wallX + Math.random() * bsz * 2, y: groundY - Math.random() * bsz * rows,
-            vx: 0, vy: -8, size: 1, life: 0.8, color: GOLD_LIGHT, alpha: 0.9
-          });
-        }
-
-        // incoming "life happens" hazards
-        if (!g.reduced && g.dt && Math.random() < 0.06) {
-          g.particles.spawn({
-            x: w + 6,
-            y: h * 0.25 + Math.random() * (groundY - h * 0.32),
-            vx: -(28 + Math.random() * 22), vy: 0,
-            size: 3, life: 10, color: "rgba(242,236,224,0.6)", alpha: 0.9,
-            update: function (p) {
-              if (p.resolved || p.x > shieldRef.x + bsz * 2 + 2) return;
-              p.resolved = true;
-              if (Math.random() < Math.min(1, shieldRef.ratio)) {
-                p.vx = 40 + Math.random() * 25;   // bounced off the wall
-                p.vy = -30 - Math.random() * 20;
-                p.g = 100;
-                p.color = GOLD_LIGHT;
-                p.size = 2;
-                p.life = p.age + 0.6;
-              } else {
-                p.color = RED;                     // slipped through the gap
-                p.life = p.age + 0.7;
-              }
-            }
-          });
-        }
-
-        brickGround(g, groundY);
-        mascot.draw(ctx, mx, groundY, Math.min(h * 0.26, 40), { gaze: 0.7 });
+        var groundY = g.h - 14;
+        stars(g, 12, g.h * 0.35);
+        // the active phase decides which protection graphic Capy is wearing
+        if (g.values.phase) drawHealthBarrier(g, groundY);
+        else drawBrickShield(g, groundY);
       }
     }
   });
@@ -683,6 +830,7 @@
       case "money": return money(v);
       case "percent": return Math.round(v) + "%";
       case "age": return "Age " + v;
+      case "deps": return v >= 3 ? "3+ people" : v + (v === 1 ? " person" : " people");
       case "people": return v + (v === 1 ? " person" : " people");
       default: return String(v);
     }
@@ -698,7 +846,12 @@
     // a level that tags its inputs with `group` renders section headers
     // and switches to the compact two-column Cashflow layout
     var hasGroups = def.inputs.some(function (inp) { return inp.group; });
+    // levels that declare `phases` show one progressive input view at a time,
+    // toggled by a single retro pixel button (keeps the panel short → no scroll)
+    var hasPhases = !!def.phases;
+    var curPhase = hasPhases ? insurancePhase : null;
     controlsEl.classList.toggle("journey__controls--grouped", hasGroups);
+    controlsEl.classList.toggle("journey__controls--phased", hasPhases);
 
     var controls = {};                 // key -> { inp, range, output }
     var baseKey = null;                // the inflow slider others scale against
@@ -742,6 +895,7 @@
 
     var lastGroup = null;
     def.inputs.forEach(function (inp) {
+      if (hasPhases && inp.phase !== curPhase) return;   // hide the other phase
       if (inp.group && inp.group !== lastGroup) {
         lastGroup = inp.group;
         var head = document.createElement("p");
@@ -755,9 +909,10 @@
         + (inp.type === "toggle" ? " journey__control--toggle" : "")
         + (split ? " journey__control--split" : "");
       if (inp.type === "toggle") {
+        var toggleOn = engine.values[inp.key] != null ? engine.values[inp.key] : inp.value;
         row.innerHTML =
           '<label class="journey__toggle">' +
-          '<input type="checkbox"' + (inp.value ? " checked" : "") + " />" +
+          '<input type="checkbox"' + (toggleOn ? " checked" : "") + " />" +
           '<span class="journey__toggle-track" aria-hidden="true"></span>' +
           '<span class="journey__control-label">' + inp.label + "</span>" +
           "</label>";
@@ -771,8 +926,18 @@
       var id = "jin-" + inp.key;
       var subHtml = inp.sub ? '<span class="journey__control-sub">' + inp.sub + "</span>" : "";
       var theMax = inp.scaleWith ? dynMax(inp) : inp.max;
+      // income & debt are shared world state — seed the slider from GLOBAL so
+      // a value set in World 1-1 shows up here (and vice-versa). Every other
+      // slider seeds from the live engine value, so a phase toggle (which
+      // rebuilds this panel) never loses what the user has already dialled in.
+      var globalKey = inp.key === "income" || inp.key === "debt";
+      var current = engine.values[inp.key];
+      var theValue = globalKey
+        ? clamp(GLOBAL[inp.key], inp.min, theMax)
+        : clamp(current != null ? current : inp.value, inp.min, theMax);
+      if (globalKey) engine.setInput(inp.key, theValue);
       var rangeHtml = '<input class="journey__range" type="range" id="' + id + '" min="'
-        + inp.min + '" max="' + theMax + '" step="' + inp.step + '" value="' + inp.value + '" />';
+        + inp.min + '" max="' + theMax + '" step="' + inp.step + '" value="' + theValue + '" />';
 
       if (split) {
         row.innerHTML =
@@ -797,12 +962,29 @@
       renderOut(inp, range, output);
       range.addEventListener("input", function () {
         setFill(this);
-        engine.setInput(inp.key, parseFloat(this.value));
+        var val = parseFloat(this.value);
+        engine.setInput(inp.key, val);
+        if (globalKey) GLOBAL[inp.key] = val;   // write back to the shared world state
         renderOut(inp, this, output);
         if (inp.base) refreshDynamic();   // inflow moved → rescale outflows + %
       });
       controlsEl.appendChild(row);
     });
+
+    // progressive phase toggle — one pixel button swaps Life ⇄ Health views
+    if (hasPhases) {
+      var nextPhase = curPhase === 0 ? 1 : 0;
+      var toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = "journey__phase-toggle";
+      toggle.innerHTML = def.phases[curPhase].cta;
+      toggle.addEventListener("click", function () {
+        insurancePhase = nextPhase;
+        engine.setInput("phase", nextPhase);   // repaint scene + swap commentary
+        buildControls(def);                      // swap the visible input panel
+      });
+      controlsEl.appendChild(toggle);
+    }
   }
 
   var lastSay = "";
@@ -810,6 +992,8 @@
     var i = engine.order.indexOf(e.id);
     tagEl.textContent = "World 1-" + (i + 1);
     titleEl.textContent = e.def.title.split("·")[1].trim();
+    // phased levels always open on PHASE 1
+    if (e.def.phases) { insurancePhase = 0; engine.values.phase = 0; }
     buildControls(e.def);
     for (var id in chips) chips[id].classList.toggle("is-active", id === e.id);
     if (vibeBoxEl) vibeBoxEl.classList.remove("is-green", "is-red");

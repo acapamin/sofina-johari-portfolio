@@ -882,6 +882,35 @@ ul { list-style: none; }
   border-bottom: 2px solid var(--border);
 }
 .journey__group-head:not(:first-child) { margin-top: 0.2rem; }
+
+/* phased levels (Protection): the visible input view is short, and one retro
+   pixel button toggles Life ⇄ Health so the panel never needs scrolling */
+.journey__controls--phased { grid-template-columns: 1fr; gap: 0.5rem; }
+.journey__phase-toggle {
+  margin-top: 0.5rem;
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.7rem 0.9rem;
+  border: 2px solid var(--ink);
+  border-radius: 0;
+  background: var(--ink);
+  color: var(--gold-soft);
+  box-shadow: 3px 3px 0 rgba(11, 31, 26, 0.3);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  font-family: var(--font-pixel);
+  font-size: 0.55rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  transition: transform 0.15s steps(2), box-shadow 0.15s, background-color 0.2s;
+}
+.journey__phase-toggle:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 rgba(11, 31, 26, 0.3); }
+.journey__phase-toggle:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 rgba(11, 31, 26, 0.3); }
+.journey__phase-toggle:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .journey__control-sub {
   display: block;
   font-weight: 400;
