@@ -705,7 +705,7 @@ ul { list-style: none; }
 .journey__board {
   display: grid;
   grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-  gap: 1.25rem;
+  gap: 1rem;
   align-items: stretch;
 }
 .journey__stage {
@@ -845,12 +845,12 @@ ul { list-style: none; }
 .journey__panel {
   display: flex;
   flex-direction: column;
-  gap: 1.1rem;
+  gap: 0.9rem;
   background: #fffdf8;
   border: 3px solid var(--ink);
   border-radius: 0;
   box-shadow: 8px 8px 0 rgba(11, 31, 26, 0.15);
-  padding: 1.6rem 1.5rem;
+  padding: 1.3rem 1.25rem;
 }
 .journey__panel-eyebrow {
   font-family: var(--font-pixel);
@@ -882,6 +882,65 @@ ul { list-style: none; }
   border-bottom: 2px solid var(--border);
 }
 .journey__group-head:not(:first-child) { margin-top: 0.2rem; }
+
+/* phased levels (Protection): the visible input view is kept short, and one
+   retro pixel button toggles Brick Shield ⇄ Force Field. Rows use tight
+   spacing so each phase fits one mobile screen without page scrolling. */
+.journey__controls--phased { grid-template-columns: 1fr; gap: 0.3rem; }
+.journey__controls--phased .journey__control--split { gap: 0 0.7rem; }
+.journey__controls--phased .journey__control--split .journey__c-ctrl { gap: 0.05rem; }
+.journey__controls--phased .journey__c-ctrl .journey__range { height: 16px; }
+.journey__controls--phased .journey__c-ctrl output { font-size: 0.74rem; }
+.journey__controls--phased .journey__control--toggle { margin: 0; }
+.journey__controls--phased .journey__control-sub { font-size: 0.58rem; line-height: 1.1; margin-top: 0; }
+.journey__controls--phased .journey__group-head { padding-bottom: 0.2rem; }
+.journey__controls--phased .journey__toggle { gap: 0.5rem; }
+.journey__controls--phased .journey__toggle-track { width: 36px; height: 20px; }
+.journey__controls--phased .journey__toggle .journey__control-label {
+  font-size: 0.72rem;
+  line-height: 1.2;
+}
+.journey__phase-toggle {
+  margin-top: 0.3rem;
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.7rem 0.9rem;
+  border: 2px solid var(--ink);
+  border-radius: 0;
+  background: var(--ink);
+  color: var(--gold-soft);
+  box-shadow: 3px 3px 0 rgba(11, 31, 26, 0.3);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  font-family: var(--font-pixel);
+  font-size: 0.55rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  transition: transform 0.15s steps(2), box-shadow 0.15s, background-color 0.2s;
+}
+.journey__phase-toggle:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 rgba(11, 31, 26, 0.3); }
+.journey__phase-toggle:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 rgba(11, 31, 26, 0.3); }
+.journey__phase-toggle:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+
+/* micro-stash: a labelled "Current Stash" header with three compact sliders
+   side-by-side on one row, so existing assets cost almost no vertical space */
+.journey__stash { grid-column: 1 / -1; }
+.journey__stash-head { margin-bottom: 0.3rem; }
+.journey__stash-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.6rem; }
+.journey__micro { display: flex; flex-direction: column; min-width: 0; }
+.journey__micro-label { font-size: 0.74rem; font-weight: 600; color: var(--text); line-height: 1.1; }
+.journey__micro-sub { font-size: 0.56rem; color: var(--text-muted); line-height: 1.1; }
+.journey__micro output {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+.journey__micro .journey__range { width: 100%; height: 16px; }
 .journey__control-sub {
   display: block;
   font-weight: 400;
@@ -1016,7 +1075,7 @@ ul { list-style: none; }
   line-height: 1.4;
   color: var(--ink);
 }
-.journey__coach { margin-top: 0.45rem; font-size: 0.88rem; color: var(--text-muted); }
+.journey__coach { margin-top: 0.45rem; font-size: 0.88rem; color: var(--text-muted); white-space: pre-line; }
 .journey__cta {
   margin-top: auto;
   display: inline-flex;
@@ -1578,13 +1637,13 @@ ul { list-style: none; }
   .journey__board { gap: 0.8rem; }
   .journey__stage {
     min-height: 0;
-    height: 210px;
+    height: 178px;
     box-shadow: 0 0 0 3px var(--gold), 5px 6px 0 rgba(11, 31, 26, 0.2);
   }
   .journey__hud { top: 0.5rem; left: 0.5rem; right: 0.5rem; }
   .journey__bubble { max-width: 70%; font-size: 0.5rem; padding: 0.4rem 0.5rem; }
   .journey__vibe { left: 0.6rem; right: 0.6rem; bottom: 0.55rem; }
-  .journey__panel { gap: 0.4rem; padding: 0.7rem 0.7rem; box-shadow: 4px 4px 0 rgba(11, 31, 26, 0.15); }
+  .journey__panel { gap: 0.3rem; padding: 0.55rem 0.6rem; box-shadow: 4px 4px 0 rgba(11, 31, 26, 0.15); }
   .journey__panel-eyebrow { font-size: 0.46rem; }
   .journey__panel-title { font-size: 0.6rem; margin-top: -0.3rem; }
   /* Sliders pair up two per row so four inputs stay compact.
@@ -1618,6 +1677,12 @@ ul { list-style: none; }
   .journey__control-label { font-size: 0.68rem; line-height: 1.25; }
   .journey__control output, .journey__c-ctrl output { font-size: 0.7rem; }
   .journey__range { height: 20px; }
+  .journey__stash-head { margin-bottom: 0.15rem; }
+  .journey__stash-row { gap: 0.4rem; }
+  .journey__micro-label { font-size: 0.62rem; }
+  .journey__micro-sub { font-size: 0.5rem; }
+  .journey__micro output { font-size: 0.62rem; }
+  .journey__micro .journey__range { height: 18px; }
   .journey__toggle-track { width: 36px; height: 20px; }
   .journey__toggle-track::after { width: 12px; height: 12px; }
   .journey__toggle input:checked + .journey__toggle-track::after { transform: translateX(16px); }

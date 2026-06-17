@@ -274,120 +274,267 @@
      WORLD 1-2 — Protection: the brick shield
      ============================================================ */
 
+  /* shared global money state — World 1-1 and World 1-2 read & write the
+     SAME income, so moving the slider in one world moves it in the other.
+     (World 1-2 now models liabilities explicitly via its own mortgage /
+     non-mortgage sliders, so it no longer borrows World 1-1's debt figure.) */
+  var GLOBAL = { income: 5000, debt: 800 };
+  var insurancePhase = 0;                 // 0 = Brick Shield form · 1 = Force Field form
+
   var shieldRef = { ratio: 1, x: 0 };
+  var FULL_MED = 1000000;                  // RM 1M annual limit = a maxed force field
+
+  /* Unified Capy scene — BOTH defences are drawn on the same canvas at all
+     times, regardless of which input form (phase) is on screen below:
+       • the brick wall in front of Capy  = Life cover / Phase-1 target
+       • the force-field dome around Capy = Medical-card limit / RM 1M
+     Toggling phases only swaps the form UI underneath, never this graphic. */
+  function drawCapyDefenses(g, groundY) {
+    var ctx = g.ctx, w = g.w, h = g.h;
+    var lifeRatio = clamp(g.m.ratio, 0, 1.2);
+    var fieldRatio = clamp(g.m.forcefield, 0, 1.2);
+    var noCard = !g.values.medlimit;          // RM 0 limit = no medical card at all
+
+    var capH = Math.min(h * 0.26, 40);
+    var capX = Math.round(w * 0.4);
+    var cy = Math.round(groundY - capH * 0.55);
+
+    // ---- FORCE FIELD: pixel dome around Capy (drawn first, behind Capy) ----
+    var R = Math.min(w * 0.24, 28);
+    var segs = 22;
+    var litF = Math.round(clamp(fieldRatio, 0, 1) * segs);
+    var lowF = fieldRatio < 0.5;
+    var flickF = (lowF || noCard) && !g.reduced ? (((g.t * 8) | 0) % 2 === 0) : true;
+    var ffColor = noCard ? RED : fieldRatio >= 1 ? TEAL : fieldRatio >= 0.5 ? GOLD : "#d99a4a";
+    for (var i = 0; i < segs; i++) {
+      var ang = (i / segs) * Math.PI * 2 - Math.PI / 2;
+      var px = capX + Math.cos(ang) * R;
+      var py = cy + Math.sin(ang) * R * 0.95;
+      if (!noCard && i < litF && flickF) {
+        ctx.fillStyle = ffColor;
+        ctx.fillRect(Math.round(px - 1), Math.round(py - 1), 2, 2);
+      } else {
+        ctx.fillStyle = "rgba(159,216,196,0.16)";
+        ctx.fillRect(Math.round(px), Math.round(py), 1, 1);
+      }
+    }
+    if (!noCard && fieldRatio >= 1 && !g.reduced && Math.random() < 0.12) {
+      var sa = Math.random() * Math.PI * 2;
+      g.particles.spawn({
+        x: capX + Math.cos(sa) * R, y: cy + Math.sin(sa) * R * 0.95,
+        vx: 0, vy: -6, size: 1, life: 0.7, color: GOLD_LIGHT, alpha: 0.9
+      });
+    }
+
+    brickGround(g, groundY);
+    mascot.draw(ctx, capX, groundY, capH, { gaze: 0.6 });
+
+    // ---- BRICK SHIELD: vertical wall in front of Capy (lit = life cover) ----
+    var bsz = 8;
+    var wallX = Math.round(w * 0.66);
+    var rows = 5, cols = 2;
+    var lit = Math.round(clamp(lifeRatio, 0, 1) * rows * cols);
+    shieldRef.ratio = lifeRatio;
+    shieldRef.x = wallX;
+    var flicker = lifeRatio < 0.45 && !g.reduced ? (((g.t * 9) | 0) % 3 !== 0) : true;
+    var idx = 0;
+    for (var r = 0; r < rows; r++) {
+      for (var c = 0; c < cols; c++) {
+        var bx = wallX + c * bsz;
+        var by = groundY - (r + 1) * bsz;
+        if (idx < lit && flicker) {
+          ctx.fillStyle = GOLD;
+          ctx.fillRect(bx, by, bsz, bsz);
+          ctx.fillStyle = GOLD_LIGHT;
+          ctx.fillRect(bx + 1, by + 1, 2, 1);
+          ctx.fillStyle = GOLD_DARK;
+          ctx.fillRect(bx, by + bsz - 1, bsz, 1);
+          ctx.fillRect(bx + bsz - 1, by, 1, bsz);
+        } else {
+          ctx.strokeStyle = "rgba(231,192,105,0.25)";
+          ctx.strokeRect(bx + 0.5, by + 0.5, bsz - 1, bsz - 1);
+        }
+        idx++;
+      }
+    }
+    if (lifeRatio >= 1 && !g.reduced && Math.random() < 0.1) {
+      g.particles.spawn({
+        x: wallX + Math.random() * bsz * 2, y: groundY - Math.random() * bsz * rows,
+        vx: 0, vy: -8, size: 1, life: 0.8, color: GOLD_LIGHT, alpha: 0.9
+      });
+    }
+
+    // incoming "life happens" hazards bounce off a strong wall, slip a weak one
+    if (!g.reduced && g.dt && Math.random() < 0.06) {
+      g.particles.spawn({
+        x: w + 6,
+        y: h * 0.25 + Math.random() * (groundY - h * 0.32),
+        vx: -(28 + Math.random() * 22), vy: 0,
+        size: 3, life: 10, color: "rgba(242,236,224,0.6)", alpha: 0.9,
+        update: function (p) {
+          if (p.resolved || p.x > shieldRef.x + bsz * 2 + 2) return;
+          p.resolved = true;
+          if (Math.random() < Math.min(1, shieldRef.ratio)) {
+            p.vx = 40 + Math.random() * 25;   // bounced off the wall
+            p.vy = -30 - Math.random() * 20;
+            p.g = 100; p.color = GOLD_LIGHT; p.size = 2; p.life = p.age + 0.6;
+          } else {
+            p.color = RED;                     // slipped through the gap
+            p.life = p.age + 0.7;
+          }
+        }
+      });
+    }
+
+    // ---- medical-card status: gold card when insured, flashing alert at RM 0 ----
+    if (!noCard) {
+      var kx = Math.round(w * 0.1), ky = 12;
+      ctx.fillStyle = GOLD;
+      ctx.fillRect(kx, ky, 16, 11);
+      ctx.fillStyle = GOLD_DARK;
+      ctx.fillRect(kx, ky, 16, 1); ctx.fillRect(kx, ky + 10, 16, 1);
+      ctx.fillStyle = "#2e7d4f";
+      ctx.fillRect(kx + 6, ky + 2, 4, 7);
+      ctx.fillRect(kx + 3, ky + 4, 10, 3);
+    } else {
+      var blink = g.reduced || (((g.t * 3) | 0) % 2 === 0);
+      if (blink) {
+        var aw = Math.min(w - 10, 128), ah = 22;
+        var axx = Math.round(w / 2 - aw / 2), ayy = Math.round(h * 0.12);
+        ctx.fillStyle = "rgba(217,106,74,0.94)";
+        ctx.fillRect(axx, ayy, aw, ah);
+        ctx.fillStyle = "#2a0d08";
+        ctx.fillRect(axx, ayy, aw, 1); ctx.fillRect(axx, ayy + ah - 1, aw, 1);
+        ctx.fillRect(axx, ayy, 1, ah); ctx.fillRect(axx + aw - 1, ayy, 1, ah);
+        ptext(g, "CRITICAL RISK", w / 2, ayy + 9, "#fff3e6", "center");
+        ptext(g, "NO MED CARD", w / 2, ayy + 18, "#fff3e6", "center");
+      }
+    }
+  }
 
   engine.registerLevel("insurance", {
     name: "Protection",
     title: "World 1-2 · The Brick Shield",
+    // two progressive input forms, toggled by one retro pixel button. The
+    // canvas always shows both defences; only the form + title swap.
+    phases: [
+      { title: "The Brick Shield", cta: "Check Health Protection &nbsp;&rarr;" },
+      { title: "The Force Field", cta: "&larr;&nbsp; Back to Life Cover" }
+    ],
     inputs: [
-      { key: "income", label: "Monthly income", min: 1000, max: 30000, step: 100, value: 5000, fmt: "money" },
-      { key: "cover", label: "Life / takaful cover", min: 0, max: 2000000, step: 10000, value: 100000, fmt: "money" },
-      { key: "deps", label: "Dependants", min: 0, max: 6, step: 1, value: 2, fmt: "people" }
+      { key: "income", group: "PHASE 1: LIFE PROTECTION", phase: 0, label: "Monthly income", sub: "(Synced with World 1-1)", min: 1000, max: 30000, step: 100, value: 5000, fmt: "money" },
+      { key: "mortgage", group: "PHASE 1: LIFE PROTECTION", phase: 0, label: "Outstanding mortgage debt", min: 0, max: 1500000, step: 10000, value: 300000, fmt: "money" },
+      { key: "mrta", group: "PHASE 1: LIFE PROTECTION", phase: 0, label: "My mortgage is covered by MRTA / MLTA", type: "toggle", value: 0 },
+      { key: "nonmortgage", group: "PHASE 1: LIFE PROTECTION", phase: 0, label: "Outstanding non-mortgage debt", sub: "(Car, cards, PTPTN)", min: 0, max: 500000, step: 5000, value: 50000, fmt: "money" },
+      { key: "deps", group: "PHASE 1: LIFE PROTECTION", phase: 0, label: "Dependants", sub: "(People relying on you)", min: 0, max: 3, step: 1, value: 2, fmt: "deps" },
+      { key: "cover", group: "PHASE 1: LIFE PROTECTION", phase: 0, label: "Existing life / takaful cover", min: 0, max: 2000000, step: 10000, value: 100000, fmt: "money" },
+      { key: "medlimit", group: "PHASE 2: HEALTH PROTECTION", phase: 1, label: "Annual medical card limit", sub: "(RM 0 = no medical card)", min: 0, max: 2000000, step: 100000, value: 500000, fmt: "money" },
+      { key: "ciactive", group: "PHASE 2: HEALTH PROTECTION", phase: 1, label: "Critical illness policy active", type: "toggle", value: 0 }
     ],
     compute: function (v) {
-      // simple heuristic: ~10× annual income + a cushion per dependant
-      var need = v.income * 12 * 10 + v.deps * 60000;
-      var ratio = need > 0 ? v.cover / need : 1;
-      var gap = Math.max(0, need - v.cover);
-      var mood = ratio >= 1 ? "joyful"
-        : ratio >= 0.75 ? "stable"
-        : ratio >= 0.45 ? "risk-averse"
-        : "concerned";
-      var say = {
-        joyful: "Full wall! Bring it on!",
-        stable: "Decent armour. Few thin spots.",
-        cautious: "My wall is flickering...",
-        concerned: "The wall is barely holding!"
-      }[mood === "risk-averse" ? "cautious" : mood];
-      var coach = {
-        joyful: "Cover meets the safety target, so a worst day wouldn't become a financial one too. Worth reviewing whenever income or family grows.",
-        stable: "You're mostly protected — the remaining gap is the deductible life would charge your family. Often cheap to close with term cover.",
-        "risk-averse": "Capy is being careful: under half the target means your dependants would feel a real shortfall. Comparing 8+ providers usually finds an affordable fix.",
-        concerned: "A thin wall with people relying on you is the riskiest spot on this whole quest. The good news: protection is usually the cheapest problem to solve."
-      }[mood];
+      var income = v.income;
+      var deps = Math.round(v.deps);
+      var phase = v.phase ? 1 : 0;
+      var depWord = deps >= 3 ? "3+" : String(deps);
+
+      // ---- PHASE 1 · liabilities + income replacement (the brick shield) ----
+      var mrta = v.mrta ? 1 : 0;
+      var adjustedMortgage = mrta ? 0 : v.mortgage;              // MRTA settles the mortgage
+      var totalLiabilities = adjustedMortgage + v.nonmortgage;
+      var incomeReplace = deps <= 0 ? 0 : deps === 1 ? income * 12 * 7 : income * 12 * 10;
+      var target = incomeReplace + totalLiabilities;
+      var cover = v.cover;
+      var lifeRatio = target > 0 ? cover / target : 1;
+      var gap = Math.max(0, target - cover);
+
+      // ---- PHASE 2 · medical card limit (the force field) ----
+      var medlimit = v.medlimit;
+      var ciActive = v.ciactive ? 1 : 0;
+      var fieldRatio = clamp(medlimit / FULL_MED, 0, 1);         // full dome at RM 1M
+
+      var mood, say, coach, headline, stat, power;
+
+      if (phase === 0) {
+        // plain-language justification of the (large) target number
+        var why = "Target: " + money(target) + ". Why? ";
+        if (deps === 0) {
+          why += "With no dependants, the goal is simply to clear your "
+            + money(totalLiabilities) + " in active liabilities so no debt is passed on.";
+        } else {
+          why += "With " + depWord + (deps === 1 ? " dependant" : " dependants")
+            + ", your family needs " + (deps === 1 ? "7" : "10")
+            + " years of your income replaced to sustain their lives if you vanish, plus your "
+            + money(totalLiabilities) + " in active liabilities.";
+        }
+        if (mrta) why += " Your mortgage is excluded because your MRTA / MLTA handles it!";
+
+        if (lifeRatio >= 1) {
+          mood = "joyful";
+          say = "Full wall! Bring it on!";
+          headline = "Brick Shield complete — " + money(cover) + " of a " + money(target) + " target.";
+          coach = why + " Your " + money(cover) + " cover clears this in full — your family is bulletproofed.";
+        } else {
+          mood = lifeRatio >= 0.75 ? "stable" : lifeRatio >= 0.45 ? "risk-averse" : "concerned";
+          say = lifeRatio >= 0.75 ? "A few thin spots up top."
+            : lifeRatio >= 0.45 ? "My wall is flickering..." : "The wall is barely holding!";
+          headline = "Protection gap: " + money(gap) + " of a " + money(target) + " target.";
+          coach = why + " Your " + money(cover) + " cover leaves a " + money(gap)
+            + " gap — usually the cheapest financial problem to solve.";
+        }
+        stat = "SHIELD " + clamp(Math.round(lifeRatio * 100), 0, 120) + "%";
+        power = { pct: clamp(lifeRatio * 100, 0, 100), tone: lifeRatio >= 1 ? "green" : lifeRatio < 0.45 ? "red" : "gold" };
+      } else {
+        var medComment;
+        if (medlimit === 0) {
+          mood = "concerned"; say = "No medical shield?!"; stat = "MED: NONE";
+          power = { pct: 6, tone: "red" };
+          headline = "Critical risk — no medical card active.";
+          medComment = "🚨 CRITICAL RISK: Public healthcare is highly subsidized, but advanced "
+            + "treatments, specialized implants, and cancer drugs still incur heavy out-of-pocket "
+            + "costs. A major emergency could wipe out your cashflow.";
+        } else if (medlimit < 200000) {
+          mood = "risk-averse"; say = "Weak barrier, watch out."; stat = "MED " + rmShort(medlimit);
+          power = { pct: clamp(fieldRatio * 100, 6, 100), tone: "red" };
+          headline = "Weak barrier — limit under RM 200k.";
+          medComment = "⚠️ WEAK BARRIER: Fine for basic ward stays, but complex surgeries or "
+            + "intensive ICU care at Malaysian private hospitals can easily breach this ceiling "
+            + "in a single admission.";
+        } else if (medlimit < FULL_MED) {
+          mood = "stable"; say = "Modest shield holding."; stat = "MED " + rmShort(medlimit);
+          power = { pct: clamp(fieldRatio * 100, 0, 100), tone: "gold" };
+          headline = "Modest shield — " + money(medlimit) + " annual limit.";
+          medComment = "🧱 MODEST SHIELD: Covers standard private treatments well. However, to stay "
+            + "fully protected against medical inflation and long-term care without out-of-pocket "
+            + "panic, an upgrade to RM 1M+ is ideal.";
+        } else {
+          mood = "joyful"; say = "Force field maxed!"; stat = "MED MAX";
+          power = { pct: 100, tone: "green" };
+          headline = "Force field maxed — " + money(medlimit) + " annual limit.";
+          medComment = "✨ MAXED BARRIER: Secures your health completely. Comfortably covers "
+            + "long-term therapies, specialized surgeries, and private room stays at top private "
+            + "hospitals with no lifetime caps.";
+        }
+        coach = medComment + "\n• Critical Illness: " + (ciActive ? "Active" : "Inactive")
+          + " (Provides a cash payout to replace your income if you need time off work to recover).";
+      }
+
       return {
         mood: mood,
-        score: clamp(Math.round(ratio * 100), 0, 100),
-        stat: "SHIELD " + clamp(Math.round(ratio * 100), 0, 120) + "%",
-        headline: ratio >= 1
-          ? "Fully shielded — cover is " + Math.round(ratio * 100) + "% of the " + money(need) + " safety target."
-          : "Protection gap: " + money(gap) + " of a " + money(need) + " target.",
+        score: clamp(Math.round((phase === 0 ? lifeRatio : fieldRatio) * 100), 0, 100),
+        stat: stat,
+        headline: headline,
         coach: coach,
         say: say,
-        metrics: { ratio: clamp(ratio, 0, 1.2) }
+        power: power,
+        metrics: { ratio: clamp(lifeRatio, 0, 1.2), forcefield: fieldRatio }
       };
     },
     scene: {
       draw: function (g) {
-        var ctx = g.ctx, w = g.w, h = g.h;
-        var groundY = h - 14;
-        var ratio = clamp(g.m.ratio, 0, 1.2);
-        var mx = w * 0.3;
-        stars(g, 12, h * 0.35);
-
-        // wall of shield blocks: 2 cols × 5 rows, lit count = coverage
-        var bsz = 8;
-        var wallX = Math.round(w * 0.58);
-        var rows = 5, cols = 2;
-        var lit = Math.round(clamp(ratio, 0, 1) * rows * cols);
-        shieldRef.ratio = ratio;
-        shieldRef.x = wallX;
-
-        var flicker = ratio < 0.45 && !g.reduced ? (((g.t * 9) | 0) % 3 !== 0) : true;
-        var idx = 0;
-        for (var r = 0; r < rows; r++) {
-          for (var c = 0; c < cols; c++) {
-            var x = wallX + c * bsz;
-            var y = groundY - (r + 1) * bsz;
-            if (idx < lit && flicker) {
-              ctx.fillStyle = GOLD;
-              ctx.fillRect(x, y, bsz, bsz);
-              ctx.fillStyle = GOLD_LIGHT;
-              ctx.fillRect(x + 1, y + 1, 2, 1);
-              ctx.fillStyle = GOLD_DARK;
-              ctx.fillRect(x, y + bsz - 1, bsz, 1);
-              ctx.fillRect(x + bsz - 1, y, 1, bsz);
-            } else {
-              ctx.strokeStyle = "rgba(231,192,105,0.25)";
-              ctx.strokeRect(x + 0.5, y + 0.5, bsz - 1, bsz - 1);
-            }
-            idx++;
-          }
-        }
-        if (ratio >= 1 && !g.reduced && Math.random() < 0.1) {
-          g.particles.spawn({
-            x: wallX + Math.random() * bsz * 2, y: groundY - Math.random() * bsz * rows,
-            vx: 0, vy: -8, size: 1, life: 0.8, color: GOLD_LIGHT, alpha: 0.9
-          });
-        }
-
-        // incoming "life happens" hazards
-        if (!g.reduced && g.dt && Math.random() < 0.06) {
-          g.particles.spawn({
-            x: w + 6,
-            y: h * 0.25 + Math.random() * (groundY - h * 0.32),
-            vx: -(28 + Math.random() * 22), vy: 0,
-            size: 3, life: 10, color: "rgba(242,236,224,0.6)", alpha: 0.9,
-            update: function (p) {
-              if (p.resolved || p.x > shieldRef.x + bsz * 2 + 2) return;
-              p.resolved = true;
-              if (Math.random() < Math.min(1, shieldRef.ratio)) {
-                p.vx = 40 + Math.random() * 25;   // bounced off the wall
-                p.vy = -30 - Math.random() * 20;
-                p.g = 100;
-                p.color = GOLD_LIGHT;
-                p.size = 2;
-                p.life = p.age + 0.6;
-              } else {
-                p.color = RED;                     // slipped through the gap
-                p.life = p.age + 0.7;
-              }
-            }
-          });
-        }
-
-        brickGround(g, groundY);
-        mascot.draw(ctx, mx, groundY, Math.min(h * 0.26, 40), { gaze: 0.7 });
+        var groundY = g.h - 14;
+        stars(g, 12, g.h * 0.35);
+        // both defences, always — the form below decides nothing here
+        drawCapyDefenses(g, groundY);
       }
     }
   });
@@ -403,14 +550,34 @@
       { key: "age", label: "Age today", min: 20, max: 60, step: 1, value: 30, fmt: "age" },
       { key: "retireAge", label: "Retirement age", min: 40, max: 70, step: 1, value: 60, fmt: "age" },
       { key: "monthly", label: "Invested monthly", min: 0, max: 10000, step: 50, value: 600, fmt: "money" },
-      { key: "wantIncome", label: "Retirement income /mo", min: 1000, max: 20000, step: 100, value: 3000, fmt: "money" }
+      { key: "wantIncome", label: "Retirement income /mo", min: 1000, max: 20000, step: 100, value: 3000, fmt: "money" },
+      { type: "microrow", label: "Current Stash", items: [
+        { key: "cash", label: "Cash", sub: "2.5% p.a.", min: 0, max: 200000, step: 1000, value: 10000 },
+        { key: "epf", label: "EPF", sub: "5.5% p.a.", min: 0, max: 1000000, step: 5000, value: 50000 },
+        { key: "invest", label: "Invest", sub: "7.5% p.a.", min: 0, max: 1000000, step: 5000, value: 20000 }
+      ] }
     ],
     compute: function (v) {
-      var years = Math.max(1, v.retireAge - v.age);
-      var n = years * 12, r = 0.05 / 12;       // illustrative 5% p.a. return
-      var fv = v.monthly > 0 ? v.monthly * ((Math.pow(1 + r, n) - 1) / r) : 0;
-      var need = (v.wantIncome * 12) / 0.04;   // 4% withdrawal rule of thumb
-      var ratio = need > 0 ? fv / need : 0;
+      var Y = Math.max(0, v.retireAge - v.age);    // years to retire
+      var M = Y * 12;                              // months to retire
+      var cash = v.cash || 0, epf = v.epf || 0, invest = v.invest || 0;
+
+      // differentiated compounding on each existing stash bucket
+      var fvCash = cash * Math.pow(1.025, Y);      // cash @ 2.5% p.a.
+      var fvEpf = epf * Math.pow(1.055, Y);        // EPF  @ 5.5% p.a.
+      var fvInvest = invest * Math.pow(1.075, Y);  // invest @ 7.5% p.a.
+      var rM = 0.075 / 12;                         // monthly contributions @ 7.5% p.a.
+      var fvSavings = v.monthly > 0 ? v.monthly * ((Math.pow(1 + rM, M) - 1) / rM) : 0;
+      var pot = fvCash + fvEpf + fvInvest + fvSavings;
+
+      var yearsToFund = Math.max(0, 80 - v.retireAge); // fund retirement → age 80 (MY life expectancy)
+      var target = v.wantIncome * 12 * yearsToFund;     // dynamic goal: taller flag the earlier you retire
+      var ratio = target > 0 ? pot / target : 0;
+      var pct = Math.round(ratio * 100);
+
+      var stashNow = cash + epf + invest;          // what's already owned today
+      var startRatio = target > 0 ? clamp(stashNow / target, 0, 1) : 0;
+
       var mood = ratio >= 1.1 ? "joyful"
         : ratio >= 0.8 ? "growth"
         : ratio >= 0.5 ? "stable"
@@ -423,22 +590,26 @@
         cautious: "These stairs feel short...",
         concerned: "The flag is so far away."
       }[mood];
-      var coach = {
-        joyful: "Your projected pot clears the target with room to spare. Now it's about the right vehicles — EPF, unit trusts, Shariah-compliant options — and staying the course.",
-        growth: "You're on a strong trajectory. A small bump in monthly contributions, or a year or two more of compounding, closes the rest.",
-        stable: "Solid base camp. Compounding does the heavy lifting from here — the earlier you raise contributions, the cheaper the summit gets.",
-        cautious: "The maths says the current pace lands well short. Retiring slightly later or automating a bigger contribution changes this staircase dramatically.",
-        concerned: "At this pace the pot covers only a fraction of the income you want. Don't panic — starting is the hard part, and the curve is very sensitive to small changes."
-      }[mood];
+
+      var coach = ratio < 1
+        ? "Your current stash and monthly climb will compound into " + money(pot) + "—reaching "
+          + pct + "% of your " + money(target) + " goal (which funds a " + yearsToFund
+          + "-year retirement runway until age 80). Push your monthly investment dial to climb faster."
+        : "Your current stash and steady contributions will compound into " + money(pot)
+          + ", completely clearing your " + money(target) + " goal. This fully funds your "
+          + yearsToFund + "-year retirement runway. Flagpole conquered!";
+
       return {
         mood: mood,
-        score: clamp(Math.round(ratio * 100), 0, 100),
-        stat: "AGE " + v.age + "-" + v.retireAge,
-        headline: "Projected pot at " + v.retireAge + ": " + money(fv) + " — "
-          + Math.round(ratio * 100) + "% of your " + money(need) + " goal.",
+        score: clamp(pct, 0, 100),
+        stat: "GOAL " + clamp(pct, 0, 999) + "%",
+        headline: ratio >= 1
+          ? "Flagpole conquered — " + money(pot) + " vs a " + money(target) + " goal."
+          : "Projected " + money(pot) + " — " + pct + "% of your " + money(target) + " goal.",
         coach: coach,
         say: say,
-        metrics: { ratio: clamp(ratio, 0, 1.3) }
+        power: { pct: clamp(ratio * 100, 0, 100), tone: ratio >= 1 ? "green" : ratio < 0.3 ? "red" : "gold" },
+        metrics: { ratio: clamp(ratio, 0, 1.3), startRatio: startRatio }
       };
     },
     scene: {
@@ -449,29 +620,54 @@
         var ratio = clamp(g.m.ratio, 0, SCALE);
         stars(g, 14, h * 0.4);
 
-        // staircase of blocks, total height = trajectory; the last
-        // step lands flush against the flagpole
+        // staircase: a "money mound" launchpad (step 0) sized by current stash,
+        // then climbing steps rising to the projected-pot height
         var nSteps = 8;
         var stairX0 = Math.round(w * 0.1);
         var poleX = Math.round(w * 0.86);
         var stairSpan = poleX - stairX0;
         var maxClimb = groundY - 22;
-        var climb = maxClimb * (ratio / SCALE);
+        var goalClimb = maxClimb / SCALE;               // height of the GOAL line
+        var climb = maxClimb * (ratio / SCALE);         // projected-pot height
+        var startR = clamp(g.m.startRatio == null ? 0 : g.m.startRatio, 0, 1);
+        var launchH = Math.min(climb, goalClimb * startR);  // stash's share of the goal
         var ea = Math.exp(2) - 1;
         var tops = [];
         for (var i = 0; i < nSteps; i++) {
-          var f = (Math.exp(2 * (i + 1) / nSteps) - 1) / ea;
-          var sh = Math.max(2, Math.round(climb * f));
+          var sh;
+          if (i === 0) {
+            sh = launchH;                               // the launchpad foundation
+          } else {
+            var f = (Math.exp(2 * i / (nSteps - 1)) - 1) / ea;   // 0→1 across climbing steps
+            sh = launchH + (climb - launchH) * f;
+          }
+          sh = Math.max(2, Math.round(sh));
           tops.push(groundY - sh);
           var x = stairX0 + Math.round(i * stairSpan / nSteps);
           var xw = stairX0 + Math.round((i + 1) * stairSpan / nSteps) - x;
-          ctx.fillStyle = BRICK;
-          ctx.fillRect(x, groundY - sh, xw, sh);
-          ctx.fillStyle = BRICK_DARK;
-          for (var yy = groundY - sh + 4; yy < groundY; yy += 5) ctx.fillRect(x, yy, xw, 1);
-          ctx.fillRect(x + xw - 1, groundY - sh, 1, sh);
-          ctx.fillStyle = GOLD;
-          ctx.fillRect(x, groundY - sh, xw, 1);
+          if (i === 0 && launchH > 6) {
+            // thick golden money-mound foundation, with coin texture
+            ctx.fillStyle = "#c9a14a";
+            ctx.fillRect(x, groundY - sh, xw, sh);
+            for (var cyy = groundY - sh + 3; cyy < groundY - 2; cyy += 5) {
+              for (var cxx = x + 2; cxx < x + xw - 2; cxx += 5) {
+                ctx.fillStyle = GOLD_LIGHT;
+                ctx.fillRect(cxx, cyy, 2, 2);
+              }
+            }
+            ctx.fillStyle = GOLD_DARK;
+            ctx.fillRect(x + xw - 1, groundY - sh, 1, sh);
+            ctx.fillStyle = GOLD;
+            ctx.fillRect(x, groundY - sh, xw, 1);
+          } else {
+            ctx.fillStyle = BRICK;
+            ctx.fillRect(x, groundY - sh, xw, sh);
+            ctx.fillStyle = BRICK_DARK;
+            for (var yy = groundY - sh + 4; yy < groundY; yy += 5) ctx.fillRect(x, yy, xw, 1);
+            ctx.fillRect(x + xw - 1, groundY - sh, 1, sh);
+            ctx.fillStyle = GOLD;
+            ctx.fillRect(x, groundY - sh, xw, 1);
+          }
         }
 
         // goal line
@@ -506,7 +702,9 @@
 
         brickGround(g, groundY);
 
-        // Capy climbs the staircase on loop, all the way to the pole
+        // Capy climbs the staircase on a loop — standard horizontal motion.
+        // The launchpad foundation (step 0) is what lifts the start tier; the
+        // Capy's left↔right position no longer tracks the stash.
         var p = g.reduced ? 0.6 : (g.t * 0.07) % 1;
         var stepIdx = Math.min(nSteps - 1, Math.floor(p * nSteps));
         var capX = stairX0 + p * stairSpan;
@@ -683,6 +881,7 @@
       case "money": return money(v);
       case "percent": return Math.round(v) + "%";
       case "age": return "Age " + v;
+      case "deps": return v >= 3 ? "3+ people" : v + (v === 1 ? " person" : " people");
       case "people": return v + (v === 1 ? " person" : " people");
       default: return String(v);
     }
@@ -698,7 +897,12 @@
     // a level that tags its inputs with `group` renders section headers
     // and switches to the compact two-column Cashflow layout
     var hasGroups = def.inputs.some(function (inp) { return inp.group; });
+    // levels that declare `phases` show one progressive input view at a time,
+    // toggled by a single retro pixel button (keeps the panel short → no scroll)
+    var hasPhases = !!def.phases;
+    var curPhase = hasPhases ? insurancePhase : null;
     controlsEl.classList.toggle("journey__controls--grouped", hasGroups);
+    controlsEl.classList.toggle("journey__controls--phased", hasPhases);
 
     var controls = {};                 // key -> { inp, range, output }
     var baseKey = null;                // the inflow slider others scale against
@@ -742,7 +946,50 @@
 
     var lastGroup = null;
     def.inputs.forEach(function (inp) {
+      if (hasPhases && inp.phase !== curPhase) return;   // hide the other phase
+
+      // micro-stash: a labelled row of 3 compact sliders sharing one line
+      if (inp.type === "microrow") {
+        var stash = document.createElement("div");
+        stash.className = "journey__stash";
+        var stHead = document.createElement("p");
+        stHead.className = "journey__group-head journey__stash-head";
+        stHead.textContent = inp.label;
+        stash.appendChild(stHead);
+        var stRow = document.createElement("div");
+        stRow.className = "journey__stash-row";
+        inp.items.forEach(function (it) {
+          var iid = "jin-" + it.key;
+          var cur = engine.values[it.key];
+          var val = cur != null ? cur : it.value;
+          engine.setInput(it.key, val);              // seed engine state for compute
+          var cell = document.createElement("div");
+          cell.className = "journey__micro";
+          cell.innerHTML =
+            '<label class="journey__micro-label" for="' + iid + '">' + it.label + "</label>" +
+            (it.sub ? '<span class="journey__micro-sub">' + it.sub + "</span>" : "") +
+            "<output></output>" +
+            '<input class="journey__range" type="range" id="' + iid + '" min="' + it.min
+            + '" max="' + it.max + '" step="' + it.step + '" value="' + val + '" />';
+          var mr = cell.querySelector("input");
+          var mo = cell.querySelector("output");
+          mo.textContent = rmShort(val);
+          setFill(mr);
+          mr.addEventListener("input", function () {
+            setFill(this);
+            var nv = parseFloat(this.value);
+            engine.setInput(it.key, nv);
+            mo.textContent = rmShort(nv);
+          });
+          stRow.appendChild(cell);
+        });
+        stash.appendChild(stRow);
+        controlsEl.appendChild(stash);
+        return;
+      }
+
       if (inp.group && inp.group !== lastGroup) {
+        lastGroup = inp.group;
         lastGroup = inp.group;
         var head = document.createElement("p");
         head.className = "journey__group-head";
@@ -755,9 +1002,10 @@
         + (inp.type === "toggle" ? " journey__control--toggle" : "")
         + (split ? " journey__control--split" : "");
       if (inp.type === "toggle") {
+        var toggleOn = engine.values[inp.key] != null ? engine.values[inp.key] : inp.value;
         row.innerHTML =
           '<label class="journey__toggle">' +
-          '<input type="checkbox"' + (inp.value ? " checked" : "") + " />" +
+          '<input type="checkbox"' + (toggleOn ? " checked" : "") + " />" +
           '<span class="journey__toggle-track" aria-hidden="true"></span>' +
           '<span class="journey__control-label">' + inp.label + "</span>" +
           "</label>";
@@ -771,8 +1019,18 @@
       var id = "jin-" + inp.key;
       var subHtml = inp.sub ? '<span class="journey__control-sub">' + inp.sub + "</span>" : "";
       var theMax = inp.scaleWith ? dynMax(inp) : inp.max;
+      // income & debt are shared world state — seed the slider from GLOBAL so
+      // a value set in World 1-1 shows up here (and vice-versa). Every other
+      // slider seeds from the live engine value, so a phase toggle (which
+      // rebuilds this panel) never loses what the user has already dialled in.
+      var globalKey = inp.key === "income" || inp.key === "debt";
+      var current = engine.values[inp.key];
+      var theValue = globalKey
+        ? clamp(GLOBAL[inp.key], inp.min, theMax)
+        : clamp(current != null ? current : inp.value, inp.min, theMax);
+      if (globalKey) engine.setInput(inp.key, theValue);
       var rangeHtml = '<input class="journey__range" type="range" id="' + id + '" min="'
-        + inp.min + '" max="' + theMax + '" step="' + inp.step + '" value="' + inp.value + '" />';
+        + inp.min + '" max="' + theMax + '" step="' + inp.step + '" value="' + theValue + '" />';
 
       if (split) {
         row.innerHTML =
@@ -797,12 +1055,30 @@
       renderOut(inp, range, output);
       range.addEventListener("input", function () {
         setFill(this);
-        engine.setInput(inp.key, parseFloat(this.value));
+        var val = parseFloat(this.value);
+        engine.setInput(inp.key, val);
+        if (globalKey) GLOBAL[inp.key] = val;   // write back to the shared world state
         renderOut(inp, this, output);
         if (inp.base) refreshDynamic();   // inflow moved → rescale outflows + %
       });
       controlsEl.appendChild(row);
     });
+
+    // progressive phase toggle — one pixel button swaps Life ⇄ Health views
+    if (hasPhases) {
+      var nextPhase = curPhase === 0 ? 1 : 0;
+      var toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = "journey__phase-toggle";
+      toggle.innerHTML = def.phases[curPhase].cta;
+      toggle.addEventListener("click", function () {
+        insurancePhase = nextPhase;
+        engine.setInput("phase", nextPhase);   // swap commentary / power readout
+        if (def.phases[nextPhase].title) titleEl.textContent = def.phases[nextPhase].title;
+        buildControls(def);                      // swap only the form UI (canvas persists)
+      });
+      controlsEl.appendChild(toggle);
+    }
   }
 
   var lastSay = "";
@@ -810,6 +1086,12 @@
     var i = engine.order.indexOf(e.id);
     tagEl.textContent = "World 1-" + (i + 1);
     titleEl.textContent = e.def.title.split("·")[1].trim();
+    // phased levels always open on PHASE 1 (with its own panel title)
+    if (e.def.phases) {
+      insurancePhase = 0;
+      engine.values.phase = 0;
+      if (e.def.phases[0].title) titleEl.textContent = e.def.phases[0].title;
+    }
     buildControls(e.def);
     for (var id in chips) chips[id].classList.toggle("is-active", id === e.id);
     if (vibeBoxEl) vibeBoxEl.classList.remove("is-green", "is-red");
