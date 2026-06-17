@@ -550,14 +550,33 @@
       { key: "age", label: "Age today", min: 20, max: 60, step: 1, value: 30, fmt: "age" },
       { key: "retireAge", label: "Retirement age", min: 40, max: 70, step: 1, value: 60, fmt: "age" },
       { key: "monthly", label: "Invested monthly", min: 0, max: 10000, step: 50, value: 600, fmt: "money" },
+      { type: "microrow", label: "Current Stash", items: [
+        { key: "cash", label: "Cash", sub: "2.5% p.a.", min: 0, max: 200000, step: 1000, value: 10000 },
+        { key: "epf", label: "EPF", sub: "5.5% p.a.", min: 0, max: 1000000, step: 5000, value: 50000 },
+        { key: "invest", label: "Invest", sub: "7.5% p.a.", min: 0, max: 1000000, step: 5000, value: 20000 }
+      ] },
       { key: "wantIncome", label: "Retirement income /mo", min: 1000, max: 20000, step: 100, value: 3000, fmt: "money" }
     ],
     compute: function (v) {
-      var years = Math.max(1, v.retireAge - v.age);
-      var n = years * 12, r = 0.05 / 12;       // illustrative 5% p.a. return
-      var fv = v.monthly > 0 ? v.monthly * ((Math.pow(1 + r, n) - 1) / r) : 0;
-      var need = (v.wantIncome * 12) / 0.04;   // 4% withdrawal rule of thumb
-      var ratio = need > 0 ? fv / need : 0;
+      var Y = Math.max(0, v.retireAge - v.age);    // years to retire
+      var M = Y * 12;                              // months to retire
+      var cash = v.cash || 0, epf = v.epf || 0, invest = v.invest || 0;
+
+      // differentiated compounding on each existing stash bucket
+      var fvCash = cash * Math.pow(1.025, Y);      // cash @ 2.5% p.a.
+      var fvEpf = epf * Math.pow(1.055, Y);        // EPF  @ 5.5% p.a.
+      var fvInvest = invest * Math.pow(1.075, Y);  // invest @ 7.5% p.a.
+      var rM = 0.075 / 12;                         // monthly contributions @ 7.5% p.a.
+      var fvSavings = v.monthly > 0 ? v.monthly * ((Math.pow(1 + rM, M) - 1) / rM) : 0;
+      var pot = fvCash + fvEpf + fvInvest + fvSavings;
+
+      var target = v.wantIncome * 300;             // 25 yrs × 12 mo of income replacement
+      var ratio = target > 0 ? pot / target : 0;
+      var pct = Math.round(ratio * 100);
+
+      var stashNow = cash + epf + invest;          // what's already owned today
+      var startRatio = target > 0 ? clamp(stashNow / target, 0, 1) : 0;
+
       var mood = ratio >= 1.1 ? "joyful"
         : ratio >= 0.8 ? "growth"
         : ratio >= 0.5 ? "stable"
@@ -570,22 +589,26 @@
         cautious: "These stairs feel short...",
         concerned: "The flag is so far away."
       }[mood];
-      var coach = {
-        joyful: "Your projected pot clears the target with room to spare. Now it's about the right vehicles — EPF, unit trusts, Shariah-compliant options — and staying the course.",
-        growth: "You're on a strong trajectory. A small bump in monthly contributions, or a year or two more of compounding, closes the rest.",
-        stable: "Solid base camp. Compounding does the heavy lifting from here — the earlier you raise contributions, the cheaper the summit gets.",
-        cautious: "The maths says the current pace lands well short. Retiring slightly later or automating a bigger contribution changes this staircase dramatically.",
-        concerned: "At this pace the pot covers only a fraction of the income you want. Don't panic — starting is the hard part, and the curve is very sensitive to small changes."
-      }[mood];
+
+      var coach = ratio < 1
+        ? "Your current stash and monthly climb will compound into " + money(pot) + "—reaching "
+          + pct + "% of your " + money(target) + " goal (which replaces your " + money(v.wantIncome)
+          + " income for 25 years). Push your monthly investment dial to climb faster."
+        : "Your current stash and steady contributions will compound into " + money(pot)
+          + ", completely clearing your " + money(target) + " goal. This fully funds your "
+          + "25-year retirement runway. Flagpole conquered!";
+
       return {
         mood: mood,
-        score: clamp(Math.round(ratio * 100), 0, 100),
-        stat: "AGE " + v.age + "-" + v.retireAge,
-        headline: "Projected pot at " + v.retireAge + ": " + money(fv) + " — "
-          + Math.round(ratio * 100) + "% of your " + money(need) + " goal.",
+        score: clamp(pct, 0, 100),
+        stat: "GOAL " + clamp(pct, 0, 999) + "%",
+        headline: ratio >= 1
+          ? "Flagpole conquered — " + money(pot) + " vs a " + money(target) + " goal."
+          : "Projected " + money(pot) + " — " + pct + "% of your " + money(target) + " goal.",
         coach: coach,
         say: say,
-        metrics: { ratio: clamp(ratio, 0, 1.3) }
+        power: { pct: clamp(ratio * 100, 0, 100), tone: ratio >= 1 ? "green" : ratio < 0.3 ? "red" : "gold" },
+        metrics: { ratio: clamp(ratio, 0, 1.3), startRatio: startRatio }
       };
     },
     scene: {
@@ -653,9 +676,24 @@
 
         brickGround(g, groundY);
 
-        // Capy climbs the staircase on loop, all the way to the pole
-        var p = g.reduced ? 0.6 : (g.t * 0.07) % 1;
-        var stepIdx = Math.min(nSteps - 1, Math.floor(p * nSteps));
+        // Capy starts elevated by what's already stashed, then climbs only the
+        // funded portion of the staircase on a loop
+        var startR = clamp(g.m.startRatio == null ? 0 : g.m.startRatio, 0, 1);
+        var pTop = clamp(ratio, 0, 1);
+        var pBase = Math.min(startR, pTop);
+        var spanP = Math.max(0, pTop - pBase);
+        var p = g.reduced ? pBase + spanP * 0.6 : pBase + ((g.t * 0.07) % 1) * spanP;
+        var stepIdx = Math.min(nSteps - 1, Math.max(0, Math.floor(p * nSteps)));
+
+        // teal "you start here" tier marking the current-stash head start
+        if (pBase > 0.02) {
+          var bi = Math.min(nSteps - 1, Math.floor(pBase * nSteps));
+          var bx0 = stairX0 + Math.round(bi * stairSpan / nSteps);
+          var bxw = stairX0 + Math.round((bi + 1) * stairSpan / nSteps) - bx0;
+          ctx.fillStyle = TEAL;
+          ctx.fillRect(bx0, tops[bi] - 1, bxw, 1);
+        }
+
         var capX = stairX0 + p * stairSpan;
         var capY = tops[stepIdx];
         mascot.draw(ctx, capX, capY, Math.min(h * 0.2, 32), { walk: g.t * 6, gaze: 0.8 });
@@ -896,7 +934,49 @@
     var lastGroup = null;
     def.inputs.forEach(function (inp) {
       if (hasPhases && inp.phase !== curPhase) return;   // hide the other phase
+
+      // micro-stash: a labelled row of 3 compact sliders sharing one line
+      if (inp.type === "microrow") {
+        var stash = document.createElement("div");
+        stash.className = "journey__stash";
+        var stHead = document.createElement("p");
+        stHead.className = "journey__group-head journey__stash-head";
+        stHead.textContent = inp.label;
+        stash.appendChild(stHead);
+        var stRow = document.createElement("div");
+        stRow.className = "journey__stash-row";
+        inp.items.forEach(function (it) {
+          var iid = "jin-" + it.key;
+          var cur = engine.values[it.key];
+          var val = cur != null ? cur : it.value;
+          engine.setInput(it.key, val);              // seed engine state for compute
+          var cell = document.createElement("div");
+          cell.className = "journey__micro";
+          cell.innerHTML =
+            '<label class="journey__micro-label" for="' + iid + '">' + it.label + "</label>" +
+            (it.sub ? '<span class="journey__micro-sub">' + it.sub + "</span>" : "") +
+            "<output></output>" +
+            '<input class="journey__range" type="range" id="' + iid + '" min="' + it.min
+            + '" max="' + it.max + '" step="' + it.step + '" value="' + val + '" />';
+          var mr = cell.querySelector("input");
+          var mo = cell.querySelector("output");
+          mo.textContent = rmShort(val);
+          setFill(mr);
+          mr.addEventListener("input", function () {
+            setFill(this);
+            var nv = parseFloat(this.value);
+            engine.setInput(it.key, nv);
+            mo.textContent = rmShort(nv);
+          });
+          stRow.appendChild(cell);
+        });
+        stash.appendChild(stRow);
+        controlsEl.appendChild(stash);
+        return;
+      }
+
       if (inp.group && inp.group !== lastGroup) {
+        lastGroup = inp.group;
         lastGroup = inp.group;
         var head = document.createElement("p");
         head.className = "journey__group-head";

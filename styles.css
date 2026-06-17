@@ -925,6 +925,22 @@ ul { list-style: none; }
 .journey__phase-toggle:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 rgba(11, 31, 26, 0.3); }
 .journey__phase-toggle:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 rgba(11, 31, 26, 0.3); }
 .journey__phase-toggle:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+
+/* micro-stash: a labelled "Current Stash" header with three compact sliders
+   side-by-side on one row, so existing assets cost almost no vertical space */
+.journey__stash { grid-column: 1 / -1; }
+.journey__stash-head { margin-bottom: 0.3rem; }
+.journey__stash-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.6rem; }
+.journey__micro { display: flex; flex-direction: column; min-width: 0; }
+.journey__micro-label { font-size: 0.74rem; font-weight: 600; color: var(--text); line-height: 1.1; }
+.journey__micro-sub { font-size: 0.56rem; color: var(--text-muted); line-height: 1.1; }
+.journey__micro output {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+.journey__micro .journey__range { width: 100%; height: 16px; }
 .journey__control-sub {
   display: block;
   font-weight: 400;
@@ -1661,6 +1677,12 @@ ul { list-style: none; }
   .journey__control-label { font-size: 0.68rem; line-height: 1.25; }
   .journey__control output, .journey__c-ctrl output { font-size: 0.7rem; }
   .journey__range { height: 20px; }
+  .journey__stash-head { margin-bottom: 0.15rem; }
+  .journey__stash-row { gap: 0.4rem; }
+  .journey__micro-label { font-size: 0.62rem; }
+  .journey__micro-sub { font-size: 0.5rem; }
+  .journey__micro output { font-size: 0.62rem; }
+  .journey__micro .journey__range { height: 18px; }
   .journey__toggle-track { width: 36px; height: 20px; }
   .journey__toggle-track::after { width: 12px; height: 12px; }
   .journey__toggle input:checked + .journey__toggle-track::after { transform: translateX(16px); }
