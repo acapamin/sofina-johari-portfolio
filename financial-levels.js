@@ -1402,6 +1402,12 @@
   });
 
   engine.on("state", function (s) {
+    // remember the live inputs for the active world so the cross-world
+    // roadmap report can replay every selection, even after switching tabs
+    if (engine.levelId) {
+      var snap = worldValues[engine.levelId] || (worldValues[engine.levelId] = {});
+      for (var vk in engine.values) snap[vk] = engine.values[vk];
+    }
     headlineEl.textContent = s.headline || "";
     coachEl.textContent = s.coach || "";
     statEl.textContent = s.stat || "";
@@ -1441,6 +1447,513 @@
       chips[id].classList.toggle("is-done", (progress[id] || 0) >= 60);
     });
   });
+
+  /* ============================================================
+     CROSS-WORLD ROADMAP — the "Turn this into a real plan" popup
+     Compiles all four worlds (titles, every selection, readiness
+     scores and the exact dynamic commentary) into a printable report
+     and a Send-to-Sofina submission.
+     ============================================================ */
+
+  // last-known inputs per world; seeded with each world's defaults so the
+  // report is complete even for worlds the user never opened
+  var worldValues = {};
+  function seedDefaults(def) {
+    var vals = {};
+    def.inputs.forEach(function (inp) {
+      if (inp.type === "microrow" || inp.type === "keyrow") {
+        inp.items.forEach(function (it) { vals[it.key] = it.value; });
+      } else if (inp.type === "toggle") {
+        vals[inp.key] = inp.value || 0;
+      } else {
+        vals[inp.key] = inp.value;
+      }
+    });
+    return vals;
+  }
+  engine.order.forEach(function (id) { worldValues[id] = seedDefaults(engine.levels[id]); });
+
+  // human-readable list of every slider / toggle selection in a world
+  function describeInputs(def, vals) {
+    var rows = [];
+    def.inputs.forEach(function (inp) {
+      if (inp.type === "microrow") {
+        inp.items.forEach(function (it) {
+          rows.push({ label: it.label + (it.sub ? " (" + it.sub + ")" : ""), value: money(vals[it.key] || 0) });
+        });
+      } else if (inp.type === "keyrow") {
+        inp.items.forEach(function (it) {
+          rows.push({ label: it.label, value: vals[it.key] ? "Yes" : "No" });
+        });
+      } else if (inp.type === "toggle") {
+        rows.push({ label: inp.label, value: vals[inp.key] ? "Yes" : "No" });
+      } else {
+        rows.push({ label: inp.label + (inp.sub ? " " + inp.sub : ""), value: fmtVal(inp, vals[inp.key]) });
+      }
+    });
+    return rows;
+  }
+
+  // assemble the full snapshot across all four worlds
+  function collectReport() {
+    var worlds = [];
+    var totalScore = 0;
+    engine.order.forEach(function (id, i) {
+      var def = engine.levels[id];
+      var vals = Object.assign({}, worldValues[id]);
+      // honour the cross-world synced figures
+      if ("income" in vals) vals.income = GLOBAL.income;
+      if ("debt" in vals) vals.debt = GLOBAL.debt;
+
+      var sections = [];
+      if (def.phases) {
+        // phased world (Protection): report BOTH phase commentaries
+        def.phases.forEach(function (ph, p) {
+          var st = def.compute(Object.assign({}, vals, { phase: p }));
+          sections.push({ phaseTitle: ph.title, st: st });
+        });
+      } else {
+        sections.push({ phaseTitle: null, st: def.compute(vals) });
+      }
+
+      // overall readiness for a world = its primary (first) section score
+      totalScore += sections[0].st.score || 0;
+      worlds.push({
+        tag: "World 1-" + (i + 1),
+        name: def.title.split("·")[1].trim(),
+        inputs: describeInputs(def, vals),
+        sections: sections
+      });
+    });
+    return { worlds: worlds, overall: Math.round(totalScore / engine.order.length) };
+  }
+
+  function toneClass(tone) {
+    return tone === "green" ? " is-green" : tone === "red" ? " is-red" : "";
+  }
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  // ---- render the report into the modal (HTML) ----
+  function renderReportHTML(report) {
+    var html = '<div class="plan-report__head">'
+      + '<p class="plan-report__overall">Overall readiness <b>' + report.overall + '%</b></p>'
+      + '<p class="plan-report__intro">A snapshot of your four-world money quest with Capy. '
+      + 'Bring this to your session with Sofina.</p></div>';
+
+    report.worlds.forEach(function (wld) {
+      var primary = wld.sections[0].st;
+      var p = clamp(Math.round((primary.power && primary.power.pct) || primary.score || 0), 0, 100);
+      var tone = primary.power ? primary.power.tone : "gold";
+      html += '<section class="plan-world">'
+        + '<div class="plan-world__top"><div>'
+        + '<p class="plan-world__tag">' + esc(wld.tag) + '</p>'
+        + '<p class="plan-world__name">' + esc(wld.name) + '</p></div>'
+        + '<span class="plan-world__score">' + esc(primary.stat || (primary.score + "%")) + '</span></div>'
+        + '<div class="plan-bar"><div class="plan-bar__fill' + toneClass(tone) + '" style="width:' + p + '%"></div></div>';
+
+      html += '<ul class="plan-world__inputs">';
+      wld.inputs.forEach(function (r) {
+        html += '<li><span>' + esc(r.label) + '</span><b>' + esc(r.value) + '</b></li>';
+      });
+      html += '</ul>';
+
+      wld.sections.forEach(function (sec) {
+        html += '<div class="plan-world__phase">';
+        if (sec.phaseTitle) html += '<p class="plan-world__phase-title">' + esc(sec.phaseTitle) + '</p>';
+        html += '<p class="plan-world__headline">' + esc(sec.st.headline) + '</p>'
+          + '<p class="plan-world__coach">' + esc(sec.st.coach) + '</p>'
+          + '<p class="plan-world__say">' + esc(sec.st.say) + '</p></div>';
+      });
+      html += '</section>';
+    });
+    return html;
+  }
+
+  // ---- render the report as plain text (form payload + mailto body) ----
+  function renderReportText(report, remark) {
+    var L = [];
+    L.push("CAPY'S MONEY QUEST — ROADMAP");
+    L.push("Overall readiness: " + report.overall + "%");
+    L.push("================================================");
+    report.worlds.forEach(function (wld) {
+      L.push("");
+      L.push(wld.tag + " · " + wld.name + "   [" + (wld.sections[0].st.stat || "") + "]");
+      L.push("------------------------------------------------");
+      L.push("Your selections:");
+      wld.inputs.forEach(function (r) { L.push("  • " + r.label + ": " + r.value); });
+      wld.sections.forEach(function (sec) {
+        L.push("");
+        if (sec.phaseTitle) L.push("[" + sec.phaseTitle + "]");
+        L.push(sec.st.headline);
+        L.push(sec.st.coach);
+        L.push("Capy says: “" + sec.st.say + "”");
+      });
+    });
+    L.push("");
+    L.push("================================================");
+    L.push("User remark: " + (remark && remark.trim() ? remark.trim() : "(none)"));
+    return L.join("\n");
+  }
+
+  /* ---------- modal plumbing ---------- */
+  var planBtn = document.getElementById("journeyPlanBtn");
+  var planModal = document.getElementById("planModal");
+  var planBackdrop = document.getElementById("planModalBackdrop");
+  var planClose = document.getElementById("planModalClose");
+  var planReportEl = document.getElementById("planReport");
+  var planRemarkEl = document.getElementById("planRemark");
+  var planPrintBtn = document.getElementById("planPrintBtn");
+  var planSendBtn = document.getElementById("planSendBtn");
+  var planStatusEl = document.getElementById("planSendStatus");
+
+  var SOFINA_EMAIL = "sofinajohari.uwealth@gmail.com";
+  var currentReport = null;
+  var lastFocus = null;
+
+  function setStatus(msg, kind) {
+    if (!planStatusEl) return;
+    if (!msg) { planStatusEl.hidden = true; return; }
+    planStatusEl.hidden = false;
+    planStatusEl.textContent = msg;
+    planStatusEl.className = "plan-send__status " + (kind === "ok" ? "is-ok" : kind === "err" ? "is-err" : "");
+  }
+
+  function openPlan() {
+    if (!planModal) return;
+    currentReport = collectReport();
+    planReportEl.innerHTML = renderReportHTML(currentReport);
+    setStatus("", null);
+    if (planSendBtn) { planSendBtn.disabled = false; planSendBtn.innerHTML = "✉ Send to Sofina"; }
+    lastFocus = document.activeElement;
+    planModal.hidden = false;
+    document.body.style.overflow = "hidden";
+    if (planClose) setTimeout(function () { planClose.focus(); }, 30);
+    document.addEventListener("keydown", onPlanKey);
+  }
+  function closePlan() {
+    if (!planModal) return;
+    planModal.hidden = true;
+    document.body.style.overflow = "";
+    document.removeEventListener("keydown", onPlanKey);
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+  function onPlanKey(e) { if (e.key === "Escape") closePlan(); }
+
+  function encodeForm(data) {
+    return Object.keys(data).map(function (k) {
+      return encodeURIComponent(k) + "=" + encodeURIComponent(data[k]);
+    }).join("&");
+  }
+
+  function sendToSofina() {
+    if (!currentReport) currentReport = collectReport();
+    var remark = planRemarkEl ? planRemarkEl.value : "";
+    var text = renderReportText(currentReport, remark);
+    planSendBtn.disabled = true;
+    setStatus("Sending your roadmap…", null);
+
+    var payload = encodeForm({
+      "form-name": "capy-roadmap",
+      readiness: currentReport.overall + "%",
+      remark: remark || "(none)",
+      report: text
+    });
+
+    fetch("/", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: payload
+    }).then(function (res) {
+      if (!res.ok) throw new Error("bad status " + res.status);
+      setStatus("Sent! Sofina will receive your roadmap. ✓", "ok");
+      planSendBtn.innerHTML = "✓ Sent";
+    }).catch(function () {
+      setStatus("Submission failed — check your connection and try again.", "err");
+      planSendBtn.disabled = false;
+      planSendBtn.innerHTML = "&#x2709; Send to Sofina";
+    });
+  }
+
+  /* ---------- PDF download (jsPDF, lazy-loaded) ----------
+     Same trigger pattern as the ebook: create an <a download> and click it.
+     jsPDF is only fetched the first time the button is clicked. */
+
+  var JSPDF_CDN = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+
+  function loadJsPDF(cb) {
+    if (window.jspdf && window.jspdf.jsPDF) { cb(); return; }
+    var s = document.createElement("script");
+    s.src = JSPDF_CDN;
+    s.onload = cb;
+    s.onerror = function () {
+      if (planPrintBtn) { planPrintBtn.disabled = false; planPrintBtn.textContent = "↓ Download PDF"; }
+    };
+    document.head.appendChild(s);
+  }
+
+  function downloadRoadmapPDF(report) {
+    var JsPDF = window.jspdf.jsPDF;
+    var doc = new JsPDF({ unit: "mm", format: "a4" });
+    var PW = doc.internal.pageSize.getWidth();   // 210
+    var PH = doc.internal.pageSize.getHeight();  // 297
+    var ML = 15, MR = 15, MT = 16, MB = 18;
+    var CW = PW - ML - MR;                       // 180
+    var y = 0;
+
+    var INK       = [11,  31,  26];
+    var GOLD      = [201, 161, 74];
+    var GOLD_DK   = [122, 90,  30];
+    var CREAM     = [242, 236, 224];
+    var MUTED     = [110, 118, 115];
+    var GOLD_BG   = [253, 248, 235];
+    var GREEN_BAR = [92,  184, 122];
+    var RED_BAR   = [217, 106, 74];
+    var BORDER    = [210, 202, 185];
+
+    function tc(c) { doc.setTextColor(c[0], c[1], c[2]); }
+    function fc(c) { doc.setFillColor(c[0], c[1], c[2]); }
+    function dc(c) { doc.setDrawColor(c[0], c[1], c[2]); }
+
+    function checkPage(need) {
+      if (y + need > PH - MB) { doc.addPage(); y = MT; }
+    }
+
+    /* Strip anything jsPDF base-14 (cp1252) fonts cannot render:
+       emoji replaced with ASCII markers, curly punctuation normalised,
+       everything outside Latin-1 dropped.                             */
+    function clean(str) {
+      if (!str) return "";
+      return String(str)
+        .replace(/•/g, "-")
+        .replace(/[‘’]/g, "'")
+        .replace(/[“”]/g, '"')
+        .replace(/–/g, "-")
+        .replace(/—/g, "--")
+        .replace(/\u{1F6A8}/gu, "[!] ")
+        .replace(/⚡/g,     "[+] ")
+        .replace(/\u{1F9F1}/gu, "[-] ")
+        .replace(/✨/g,     "[*] ")
+        .replace(/[^\x00-\xFF]/g, "")
+        .replace(/\n/g, " ")
+        .replace(/\s{2,}/g, " ")
+        .trim();
+    }
+
+    /* ----------------------------------------------------------------
+       HEADER BAR
+    ---------------------------------------------------------------- */
+    fc(INK);  doc.rect(0, 0, PW, 28, "F");
+    fc(GOLD); doc.rect(0, 28, PW, 1,  "F");
+
+    tc(GOLD); doc.setFont("helvetica", "normal"); doc.setFontSize(7);
+    doc.text("CAPY'S QUEST  by  SOFINA JOHARI", ML, 10);
+
+    tc(CREAM); doc.setFont("helvetica", "bold"); doc.setFontSize(16);
+    doc.text("YOUR MONEY JOURNEY ROADMAP", ML, 21);
+
+    var dateStr = new Date().toLocaleDateString("en-MY",
+      { day: "numeric", month: "long", year: "numeric" });
+    tc(GOLD); doc.setFont("helvetica", "normal"); doc.setFontSize(7);
+    doc.text(dateStr, PW - MR, 10, { align: "right" });
+
+    y = 38;
+
+    /* ----------------------------------------------------------------
+       OVERALL READINESS
+    ---------------------------------------------------------------- */
+    tc(GOLD_DK); doc.setFont("helvetica", "normal"); doc.setFontSize(8);
+    doc.text("OVERALL READINESS", PW / 2, y, { align: "center" });
+    y += 7;
+
+    tc(INK); doc.setFont("helvetica", "bold"); doc.setFontSize(26);
+    doc.text(report.overall + "%", PW / 2, y, { align: "center" });
+    y += 6;
+
+    tc(MUTED); doc.setFont("helvetica", "normal"); doc.setFontSize(8.5);
+    var intro = doc.splitTextToSize(
+      "A snapshot of your four-world money quest with Capy. Bring this to your session with Sofina.",
+      CW * 0.82);
+    doc.text(intro, PW / 2, y, { align: "center" });
+    y += intro.length * 5 + 7;
+
+    dc(BORDER); doc.setLineWidth(0.3); doc.setLineDash([2, 2]);
+    doc.line(ML, y, PW - MR, y); doc.setLineDash([]); y += 9;
+
+    /* ----------------------------------------------------------------
+       INPUT GRID CONSTANTS
+       Two equal columns separated by a fixed gap.
+       Each column: label (wrapping) on the left, value right-aligned.
+    ---------------------------------------------------------------- */
+    var GAP  = 10;                // mm gap between the two columns
+    var COLW = (CW - GAP) / 2;   // each column = 85mm
+    var VALW = 27;                // space reserved for value text
+    var LABW = COLW - VALW - 1;  // label wrap width = 57mm
+    var xL   = ML;                // left label start
+    var xLV  = ML + COLW;        // left value right edge
+    var xR   = ML + COLW + GAP;  // right label start
+    var xRV  = ML + CW;          // right value right edge
+    var LH   = 4.5;               // line-height within multi-line labels
+    var RG   = 3;                 // extra gap after each input row
+
+    /* ----------------------------------------------------------------
+       WORLDS
+    ---------------------------------------------------------------- */
+    report.worlds.forEach(function (wld, wi) {
+      var primary  = wld.sections[0].st;
+      var pct      = clamp(
+        ((primary.power && primary.power.pct != null)
+          ? primary.power.pct : (primary.score || 0)) / 100, 0, 1);
+      var tone     = primary.power ? primary.power.tone : "gold";
+      var barColor = tone === "green" ? GREEN_BAR : tone === "red" ? RED_BAR : GOLD;
+
+      checkPage(35);
+
+      /* gold rule above each world */
+      fc(GOLD); doc.rect(ML - 2, y, CW + 4, 0.9, "F"); y += 4;
+
+      /* world tag (left) + stat badge (right) on same baseline */
+      tc(GOLD); doc.setFont("helvetica", "normal"); doc.setFontSize(7.5);
+      doc.text(wld.tag, ML, y);
+
+      var statText = clean(primary.stat || (primary.score + "%"));
+      doc.setFont("helvetica", "bold"); doc.setFontSize(7.5);
+      var statW = doc.getTextWidth(statText) + 7;
+      fc(GOLD_BG); dc(INK); doc.setLineWidth(0.3);
+      doc.rect(PW - MR - statW, y - 5.5, statW, 7.5, "FD");
+      tc(INK);
+      doc.text(statText, PW - MR - statW / 2, y - 0.5, { align: "center" });
+      y += 5;
+
+      /* world name */
+      tc(INK); doc.setFont("helvetica", "bold"); doc.setFontSize(13);
+      doc.text(clean(wld.name), ML, y); y += 5.5;
+
+      /* power bar */
+      fc([228, 220, 204]); doc.rect(ML, y, CW, 3,    "F");
+      fc(barColor);         doc.rect(ML, y, CW * pct, 3, "F");
+      y += 8;
+
+      /* ---- 2-column inputs: labels wrap to multiple lines ---- */
+      doc.setFontSize(8);
+      for (var i = 0; i < wld.inputs.length; i += 2) {
+        var L = wld.inputs[i];
+        var R = wld.inputs[i + 1] || null;
+
+        var lLines = doc.splitTextToSize(clean(L.label), LABW);
+        var rLines = R ? doc.splitTextToSize(clean(R.label), LABW) : [];
+        var nLines = Math.max(lLines.length, rLines.length, 1);
+        var rowH   = nLines * LH + RG;
+
+        checkPage(rowH + 4);
+
+        /* left label — all wrapped lines */
+        tc(MUTED); doc.setFont("helvetica", "normal");
+        for (var ll = 0; ll < lLines.length; ll++) {
+          doc.text(lLines[ll], xL, y + ll * LH);
+        }
+        /* left value — bold, right-aligned to column edge, on first line */
+        tc(INK); doc.setFont("helvetica", "bold");
+        doc.text(clean(L.value), xLV, y, { align: "right" });
+
+        if (R) {
+          tc(MUTED); doc.setFont("helvetica", "normal");
+          for (var rl = 0; rl < rLines.length; rl++) {
+            doc.text(rLines[rl], xR, y + rl * LH);
+          }
+          tc(INK); doc.setFont("helvetica", "bold");
+          doc.text(clean(R.value), xRV, y, { align: "right" });
+        }
+
+        /* dotted separator below each row */
+        dc(BORDER); doc.setLineWidth(0.2); doc.setLineDash([1, 1.5]);
+        var sepY = y + nLines * LH + 0.5;
+        doc.line(xL,  sepY, xLV - 2, sepY);
+        if (R) doc.line(xR, sepY, xRV, sepY);
+        doc.setLineDash([]); doc.setFont("helvetica", "normal");
+
+        y += rowH;
+      }
+      y += 5;
+
+      /* ---- commentary sections (headline / coach / say) ---- */
+      wld.sections.forEach(function (sec) {
+
+        /* optional phase title (World 1-2 only) */
+        if (sec.phaseTitle) {
+          checkPage(10);
+          tc(GOLD_DK); doc.setFont("helvetica", "bold"); doc.setFontSize(7.5);
+          doc.text(clean(sec.phaseTitle).toUpperCase(), ML, y); y += 5.5;
+        }
+
+        /* headline */
+        checkPage(12);
+        tc(INK); doc.setFont("helvetica", "bold"); doc.setFontSize(11);
+        var heads = doc.splitTextToSize(clean(sec.st.headline || ""), CW);
+        doc.text(heads, ML, y); y += heads.length * 6 + 2;
+
+        /* coach text — fully wrapped, no truncation */
+        tc(MUTED); doc.setFont("helvetica", "normal"); doc.setFontSize(8.5);
+        var coachLines = doc.splitTextToSize(clean(sec.st.coach || ""), CW);
+        for (var cl = 0; cl < coachLines.length; cl++) {
+          checkPage(5.5);
+          doc.text(coachLines[cl], ML, y);
+          y += 4.8;
+        }
+        y += 2;
+
+        /* Capy says */
+        checkPage(9);
+        tc(GOLD_DK); doc.setFont("helvetica", "italic"); doc.setFontSize(8.5);
+        doc.text('"' + clean(sec.st.say || "") + '"', ML, y); y += 9;
+      });
+
+      /* separator between worlds (not after last) */
+      if (wi < report.worlds.length - 1) {
+        checkPage(10);
+        dc(BORDER); doc.setLineWidth(0.3); doc.setLineDash([3, 2]);
+        doc.line(ML, y, PW - MR, y); doc.setLineDash([]); y += 9;
+      }
+    });
+
+    /* ----------------------------------------------------------------
+       PAGE FOOTERS — page number only, centred
+    ---------------------------------------------------------------- */
+    var nPages = doc.internal.getNumberOfPages();
+    for (var p = 1; p <= nPages; p++) {
+      doc.setPage(p);
+      tc(MUTED); doc.setFont("helvetica", "normal"); doc.setFontSize(7);
+      doc.text(String(p) + " / " + String(nPages), PW / 2, PH - 8, { align: "center" });
+    }
+
+    /* trigger download — identical to ebook-gate.js triggerDownload() */
+    var blob = doc.output("blob");
+    var a    = document.createElement("a");
+    a.href   = URL.createObjectURL(blob);
+    a.download = "capy-roadmap-sofina.pdf";
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); document.body.removeChild(a); }, 1000);
+
+    if (planPrintBtn) {
+      planPrintBtn.disabled = false;
+      planPrintBtn.textContent = "↓ Download PDF";
+    }
+  }
+
+  if (planBtn) planBtn.addEventListener("click", openPlan);
+  if (planClose) planClose.addEventListener("click", closePlan);
+  if (planBackdrop) planBackdrop.addEventListener("click", closePlan);
+  if (planPrintBtn) planPrintBtn.addEventListener("click", function () {
+    if (!currentReport) currentReport = collectReport();
+    planPrintBtn.disabled = true;
+    planPrintBtn.textContent = "Generating…";
+    loadJsPDF(function () { downloadRoadmapPDF(currentReport); });
+  });
+  if (planSendBtn) planSendBtn.addEventListener("click", sendToSofina);
 
   engine.start(engine.order[0]);
   // re-measure once layout has settled, and repaint when the pixel font lands

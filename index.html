@@ -526,12 +526,51 @@
                 <p class="journey__headline" id="journeyHeadline"></p>
                 <p class="journey__coach" id="journeyCoach"></p>
               </div>
-              <a class="journey__cta" href="#contact">Turn this into a real plan</a>
+              <button type="button" class="journey__cta" id="journeyPlanBtn">Turn this into a real plan</button>
             </div>
           </div>
 
           <p class="journey__fine">Illustrative numbers only — the assumptions are deliberately simple, and this isn't personal financial advice. For that, scroll down and say hello.</p>
         </div>
+
+        <!-- ===== Capy Quest · Roadmap modal ===== -->
+        <div class="plan-modal" id="planModal" hidden>
+          <div class="plan-modal__backdrop" id="planModalBackdrop"></div>
+          <div class="plan-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="planModalTitle">
+            <header class="plan-modal__bar">
+              <div>
+                <p class="plan-modal__eyebrow">Capy's Quest · Save File</p>
+                <h3 class="plan-modal__title" id="planModalTitle">Your Money Journey Roadmap</h3>
+              </div>
+              <button type="button" class="plan-modal__close" id="planModalClose" aria-label="Close roadmap">&times;</button>
+            </header>
+
+            <div class="plan-modal__scroll" id="planModalScroll">
+              <div class="plan-report" id="planReport"><!-- built by financial-levels.js --></div>
+
+              <div class="plan-send" id="planSend">
+                <label class="plan-send__label" for="planRemark">A note for Sofina <span>(optional)</span></label>
+                <textarea id="planRemark" class="plan-send__remark" rows="3"
+                  placeholder="e.g. I'd like help closing my protection gap — when are you free for a chat?"></textarea>
+                <p class="plan-send__status" id="planSendStatus" role="status" hidden></p>
+              </div>
+            </div>
+
+            <footer class="plan-modal__actions">
+              <button type="button" class="plan-btn plan-btn--ghost" id="planPrintBtn">&#x2193; Download PDF</button>
+              <button type="button" class="plan-btn plan-btn--gold" id="planSendBtn">&#x2709; Send to Sofina</button>
+            </footer>
+          </div>
+        </div>
+
+        <!-- Hidden form so Netlify detects & wires up the "capy-roadmap" submission -->
+        <form name="capy-roadmap" data-netlify="true" netlify-honeypot="bot-field" hidden>
+          <input type="hidden" name="form-name" value="capy-roadmap" />
+          <p hidden><label>Don't fill this out: <input name="bot-field" /></label></p>
+          <input type="text" name="readiness" />
+          <input type="text" name="remark" />
+          <textarea name="report"></textarea>
+        </form>
 
         <div class="tools__classic reveal">
           <span class="tools__classic-label">Prefer the classic calculators?</span>

@@ -750,7 +750,11 @@ ul { list-style: none; }
   pointer-events: none;
 }
 .journey__bubble {
-  max-width: 60%;
+  /* flexible, content-sized bubble: shrinks to its text and is capped so it
+     can never grow across the stat chip or hide the canvas sprites below */
+  width: fit-content;
+  max-width: min(58%, 22ch);
+  height: auto;
   background: var(--cream);
   color: var(--ink);
   border: 2px solid var(--ink);
@@ -761,6 +765,8 @@ ul { list-style: none; }
   font-size: 0.52rem;
   line-height: 1.6;
   text-transform: uppercase;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .journey__stat {
   flex-shrink: 0;
@@ -1662,7 +1668,7 @@ ul { list-style: none; }
     box-shadow: 0 0 0 3px var(--gold), 5px 6px 0 rgba(11, 31, 26, 0.2);
   }
   .journey__hud { top: 0.45rem; left: 0.45rem; right: 0.45rem; }
-  .journey__bubble { max-width: 60%; font-size: 0.46rem; padding: 0.3rem 0.45rem; line-height: 1.5; }
+  .journey__bubble { max-width: min(56%, 20ch); font-size: 0.46rem; padding: 0.3rem 0.45rem; line-height: 1.5; }
   .journey__vibe { left: 0.6rem; right: 0.6rem; bottom: 0.55rem; }
   .journey__panel { gap: 0.3rem; padding: 0.55rem 0.6rem; box-shadow: 4px 4px 0 rgba(11, 31, 26, 0.15); }
   .journey__panel-eyebrow { font-size: 0.46rem; }
@@ -2836,4 +2842,325 @@ ul { list-style: none; }
 @media (max-width: 480px) {
   .contact-modal__panel { border-radius: 14px; width: 100%; }
   .contact-modal__checkboxes { gap: 0.55rem; }
+}
+
+/* ============================================================
+   CAPY QUEST · ROADMAP MODAL  (the "Turn this into a real plan" popup)
+   Pixel-art themed, mobile-contained (single non-scrolling viewport),
+   with a print-perfect report layout.
+   ============================================================ */
+
+.plan-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(0.5rem, 2vw, 1.5rem);
+}
+.plan-modal[hidden] { display: none; }
+
+.plan-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(7, 18, 15, 0.78);
+  backdrop-filter: blur(2px);
+}
+
+.plan-modal__dialog {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  width: min(720px, 100%);
+  max-height: min(92dvh, 100%);
+  background: #fffdf8;
+  border: 3px solid var(--ink);
+  box-shadow: 0 0 0 3px var(--gold), 12px 14px 0 rgba(11, 31, 26, 0.35);
+  animation: planPop 0.18s steps(3) both;
+}
+@keyframes planPop {
+  from { transform: translateY(10px) scale(0.98); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+
+/* header bar — fixed, never scrolls */
+.plan-modal__bar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  background: var(--ink);
+  color: var(--cream);
+  border-bottom: 3px solid var(--gold);
+}
+.plan-modal__eyebrow {
+  font-family: var(--font-pixel);
+  font-size: 0.5rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--gold-soft);
+}
+.plan-modal__title {
+  font-family: var(--font-pixel);
+  font-weight: 400;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  text-transform: uppercase;
+  color: var(--cream);
+  margin-top: 0.35rem;
+}
+.plan-modal__close {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  font-size: 1.3rem;
+  line-height: 1;
+  color: var(--ink);
+  background: var(--gold);
+  border: 2px solid var(--cream);
+  cursor: pointer;
+  transition: transform 0.12s steps(2), background-color 0.2s;
+}
+.plan-modal__close:hover { background: var(--gold-soft); transform: translate(-1px, -1px); }
+
+/* the single scroll region — keeps the dialog within one viewport */
+.plan-modal__scroll {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 1rem 1.1rem 0.5rem;
+}
+
+/* footer actions — fixed, never scrolls */
+.plan-modal__actions {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 0.6rem;
+  padding: 0.8rem 1rem;
+  border-top: 2px solid var(--border);
+  background: #f7f1e6;
+}
+.plan-btn {
+  flex: 1 1 0;
+  font-family: var(--font-pixel);
+  font-size: 0.55rem;
+  line-height: 1.5;
+  text-transform: uppercase;
+  padding: 0.7rem 0.6rem;
+  border: 2px solid var(--ink);
+  cursor: pointer;
+  transition: transform 0.12s steps(2), box-shadow 0.15s, background-color 0.2s;
+}
+.plan-btn--gold { color: var(--ink); background: var(--gold); box-shadow: 4px 4px 0 rgba(11, 31, 26, 0.4); }
+.plan-btn--gold:hover { background: var(--gold-soft); transform: translate(-1px, -1px); box-shadow: 5px 5px 0 rgba(11, 31, 26, 0.4); }
+.plan-btn--ghost { color: var(--ink); background: #fffdf8; box-shadow: 4px 4px 0 rgba(11, 31, 26, 0.18); }
+.plan-btn--ghost:hover { background: #f1e8d4; transform: translate(-1px, -1px); }
+.plan-btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 rgba(11, 31, 26, 0.4); }
+.plan-btn:disabled { opacity: 0.55; cursor: default; transform: none; box-shadow: none; }
+
+/* ---------- the report itself ---------- */
+.plan-report__head {
+  text-align: center;
+  border-bottom: 2px dashed var(--border);
+  padding-bottom: 0.8rem;
+  margin-bottom: 0.9rem;
+}
+.plan-report__overall {
+  font-family: var(--font-pixel);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  color: var(--gold-dark, #7a5a1e);
+}
+.plan-report__overall b { color: var(--ink); font-size: 1.1rem; }
+.plan-report__intro { font-size: 0.85rem; color: var(--text-muted); margin-top: 0.4rem; }
+
+.plan-world {
+  border: 2px solid var(--ink);
+  background: #fffefb;
+  box-shadow: 4px 4px 0 rgba(11, 31, 26, 0.1);
+  padding: 0.85rem 0.9rem;
+  margin-bottom: 0.95rem;
+  break-inside: avoid;
+}
+.plan-world__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.plan-world__tag {
+  font-family: var(--font-pixel);
+  font-size: 0.5rem;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.plan-world__name {
+  font-family: var(--font-pixel);
+  font-weight: 400;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin-top: 0.2rem;
+}
+.plan-world__score {
+  font-family: var(--font-pixel);
+  font-size: 0.55rem;
+  color: var(--ink);
+  background: var(--gold-soft);
+  border: 2px solid var(--ink);
+  padding: 0.25rem 0.45rem;
+  white-space: nowrap;
+}
+.plan-bar {
+  height: 9px;
+  margin: 0.55rem 0 0.2rem;
+  background: rgba(11, 31, 26, 0.12);
+  border: 1px solid rgba(11, 31, 26, 0.3);
+  overflow: hidden;
+}
+.plan-bar__fill { height: 100%; background: var(--gold); }
+.plan-bar__fill.is-green { background: #5cb87a; }
+.plan-bar__fill.is-red { background: var(--rust, #d96a4a); }
+
+.plan-world__inputs {
+  list-style: none;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.15rem 0.8rem;
+}
+.plan-world__inputs li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  border-bottom: 1px dotted var(--border);
+  padding: 0.12rem 0;
+}
+.plan-world__inputs b { color: var(--ink); font-weight: 600; }
+
+.plan-world__phase { margin-top: 0.6rem; }
+.plan-world__phase-title {
+  font-family: var(--font-pixel);
+  font-size: 0.5rem;
+  text-transform: uppercase;
+  color: var(--gold-dark, #7a5a1e);
+  margin-bottom: 0.15rem;
+}
+.plan-world__headline {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  line-height: 1.35;
+  color: var(--ink);
+  margin-top: 0.5rem;
+}
+.plan-world__coach {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+  margin-top: 0.3rem;
+  white-space: pre-line;
+}
+.plan-world__say {
+  font-family: var(--font-pixel);
+  font-size: 0.5rem;
+  text-transform: uppercase;
+  color: var(--gold-dark, #7a5a1e);
+  margin-top: 0.5rem;
+}
+.plan-world__say::before { content: "\201C"; }
+.plan-world__say::after { content: "\201D"; }
+
+/* ---------- send-to-Sofina block ---------- */
+.plan-send {
+  border: 2px dashed var(--border);
+  background: #f7f1e6;
+  padding: 0.8rem 0.9rem;
+  margin: 0.4rem 0 0.6rem;
+}
+.plan-send__label {
+  display: block;
+  font-family: var(--font-pixel);
+  font-size: 0.55rem;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin-bottom: 0.45rem;
+}
+.plan-send__label span { color: var(--text-muted); text-transform: none; }
+.plan-send__remark {
+  width: 100%;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--ink);
+  background: #fffdf8;
+  border: 2px solid var(--ink);
+  padding: 0.55rem 0.6rem;
+  resize: vertical;
+}
+.plan-send__remark:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.plan-send__status {
+  font-size: 0.82rem;
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.6rem;
+  border: 2px solid var(--ink);
+}
+.plan-send__status.is-ok { background: #e4f5e9; color: #1d6b39; border-color: #5cb87a; }
+.plan-send__status.is-err { background: #fbeae4; color: #9a3416; border-color: var(--rust, #d96a4a); }
+
+@media (max-width: 620px) {
+  .plan-modal { padding: 0; }
+  .plan-modal__dialog { width: 100%; max-height: 100dvh; height: 100dvh; border-width: 0; box-shadow: none; }
+  .plan-modal__title { font-size: 0.66rem; }
+  .plan-modal__scroll { padding: 0.8rem 0.8rem 0.4rem; }
+  .plan-world__inputs { grid-template-columns: 1fr; }
+  .plan-world__headline { font-size: 0.88rem; }
+  .plan-btn { font-size: 0.48rem; padding: 0.65rem 0.4rem; }
+}
+
+/* ============================================================
+   PRINT — isolate the roadmap into a clean, un-cropped document
+   ============================================================ */
+@media print {
+  body > *:not(.plan-modal) { display: none !important; }
+  .plan-modal,
+  .plan-modal__dialog {
+    position: static !important;
+    display: block !important;
+    width: auto !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+  .plan-modal__backdrop,
+  .plan-modal__close,
+  .plan-modal__actions,
+  .plan-send { display: none !important; }
+  .plan-modal__bar {
+    background: #fff !important;
+    color: #111 !important;
+    border-bottom: 2px solid #111 !important;
+  }
+  .plan-modal__eyebrow,
+  .plan-modal__title { color: #111 !important; }
+  .plan-modal__scroll { overflow: visible !important; padding: 0 !important; }
+  .plan-world {
+    box-shadow: none !important;
+    border: 1px solid #333 !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  @page { margin: 14mm; }
 }
