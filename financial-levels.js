@@ -550,12 +550,12 @@
       { key: "age", label: "Age today", min: 20, max: 60, step: 1, value: 30, fmt: "age" },
       { key: "retireAge", label: "Retirement age", min: 40, max: 70, step: 1, value: 60, fmt: "age" },
       { key: "monthly", label: "Invested monthly", min: 0, max: 10000, step: 50, value: 600, fmt: "money" },
+      { key: "wantIncome", label: "Retirement income /mo", min: 1000, max: 20000, step: 100, value: 3000, fmt: "money" },
       { type: "microrow", label: "Current Stash", items: [
         { key: "cash", label: "Cash", sub: "2.5% p.a.", min: 0, max: 200000, step: 1000, value: 10000 },
         { key: "epf", label: "EPF", sub: "5.5% p.a.", min: 0, max: 1000000, step: 5000, value: 50000 },
         { key: "invest", label: "Invest", sub: "7.5% p.a.", min: 0, max: 1000000, step: 5000, value: 20000 }
-      ] },
-      { key: "wantIncome", label: "Retirement income /mo", min: 1000, max: 20000, step: 100, value: 3000, fmt: "money" }
+      ] }
     ],
     compute: function (v) {
       var Y = Math.max(0, v.retireAge - v.age);    // years to retire
@@ -570,7 +570,8 @@
       var fvSavings = v.monthly > 0 ? v.monthly * ((Math.pow(1 + rM, M) - 1) / rM) : 0;
       var pot = fvCash + fvEpf + fvInvest + fvSavings;
 
-      var target = v.wantIncome * 300;             // 25 yrs × 12 mo of income replacement
+      var yearsToFund = Math.max(0, 80 - v.retireAge); // fund retirement → age 80 (MY life expectancy)
+      var target = v.wantIncome * 12 * yearsToFund;     // dynamic goal: taller flag the earlier you retire
       var ratio = target > 0 ? pot / target : 0;
       var pct = Math.round(ratio * 100);
 
@@ -592,11 +593,11 @@
 
       var coach = ratio < 1
         ? "Your current stash and monthly climb will compound into " + money(pot) + "—reaching "
-          + pct + "% of your " + money(target) + " goal (which replaces your " + money(v.wantIncome)
-          + " income for 25 years). Push your monthly investment dial to climb faster."
+          + pct + "% of your " + money(target) + " goal (which funds a " + yearsToFund
+          + "-year retirement runway until age 80). Push your monthly investment dial to climb faster."
         : "Your current stash and steady contributions will compound into " + money(pot)
           + ", completely clearing your " + money(target) + " goal. This fully funds your "
-          + "25-year retirement runway. Flagpole conquered!";
+          + yearsToFund + "-year retirement runway. Flagpole conquered!";
 
       return {
         mood: mood,
@@ -619,29 +620,54 @@
         var ratio = clamp(g.m.ratio, 0, SCALE);
         stars(g, 14, h * 0.4);
 
-        // staircase of blocks, total height = trajectory; the last
-        // step lands flush against the flagpole
+        // staircase: a "money mound" launchpad (step 0) sized by current stash,
+        // then climbing steps rising to the projected-pot height
         var nSteps = 8;
         var stairX0 = Math.round(w * 0.1);
         var poleX = Math.round(w * 0.86);
         var stairSpan = poleX - stairX0;
         var maxClimb = groundY - 22;
-        var climb = maxClimb * (ratio / SCALE);
+        var goalClimb = maxClimb / SCALE;               // height of the GOAL line
+        var climb = maxClimb * (ratio / SCALE);         // projected-pot height
+        var startR = clamp(g.m.startRatio == null ? 0 : g.m.startRatio, 0, 1);
+        var launchH = Math.min(climb, goalClimb * startR);  // stash's share of the goal
         var ea = Math.exp(2) - 1;
         var tops = [];
         for (var i = 0; i < nSteps; i++) {
-          var f = (Math.exp(2 * (i + 1) / nSteps) - 1) / ea;
-          var sh = Math.max(2, Math.round(climb * f));
+          var sh;
+          if (i === 0) {
+            sh = launchH;                               // the launchpad foundation
+          } else {
+            var f = (Math.exp(2 * i / (nSteps - 1)) - 1) / ea;   // 0→1 across climbing steps
+            sh = launchH + (climb - launchH) * f;
+          }
+          sh = Math.max(2, Math.round(sh));
           tops.push(groundY - sh);
           var x = stairX0 + Math.round(i * stairSpan / nSteps);
           var xw = stairX0 + Math.round((i + 1) * stairSpan / nSteps) - x;
-          ctx.fillStyle = BRICK;
-          ctx.fillRect(x, groundY - sh, xw, sh);
-          ctx.fillStyle = BRICK_DARK;
-          for (var yy = groundY - sh + 4; yy < groundY; yy += 5) ctx.fillRect(x, yy, xw, 1);
-          ctx.fillRect(x + xw - 1, groundY - sh, 1, sh);
-          ctx.fillStyle = GOLD;
-          ctx.fillRect(x, groundY - sh, xw, 1);
+          if (i === 0 && launchH > 6) {
+            // thick golden money-mound foundation, with coin texture
+            ctx.fillStyle = "#c9a14a";
+            ctx.fillRect(x, groundY - sh, xw, sh);
+            for (var cyy = groundY - sh + 3; cyy < groundY - 2; cyy += 5) {
+              for (var cxx = x + 2; cxx < x + xw - 2; cxx += 5) {
+                ctx.fillStyle = GOLD_LIGHT;
+                ctx.fillRect(cxx, cyy, 2, 2);
+              }
+            }
+            ctx.fillStyle = GOLD_DARK;
+            ctx.fillRect(x + xw - 1, groundY - sh, 1, sh);
+            ctx.fillStyle = GOLD;
+            ctx.fillRect(x, groundY - sh, xw, 1);
+          } else {
+            ctx.fillStyle = BRICK;
+            ctx.fillRect(x, groundY - sh, xw, sh);
+            ctx.fillStyle = BRICK_DARK;
+            for (var yy = groundY - sh + 4; yy < groundY; yy += 5) ctx.fillRect(x, yy, xw, 1);
+            ctx.fillRect(x + xw - 1, groundY - sh, 1, sh);
+            ctx.fillStyle = GOLD;
+            ctx.fillRect(x, groundY - sh, xw, 1);
+          }
         }
 
         // goal line
@@ -676,24 +702,11 @@
 
         brickGround(g, groundY);
 
-        // Capy starts elevated by what's already stashed, then climbs only the
-        // funded portion of the staircase on a loop
-        var startR = clamp(g.m.startRatio == null ? 0 : g.m.startRatio, 0, 1);
-        var pTop = clamp(ratio, 0, 1);
-        var pBase = Math.min(startR, pTop);
-        var spanP = Math.max(0, pTop - pBase);
-        var p = g.reduced ? pBase + spanP * 0.6 : pBase + ((g.t * 0.07) % 1) * spanP;
-        var stepIdx = Math.min(nSteps - 1, Math.max(0, Math.floor(p * nSteps)));
-
-        // teal "you start here" tier marking the current-stash head start
-        if (pBase > 0.02) {
-          var bi = Math.min(nSteps - 1, Math.floor(pBase * nSteps));
-          var bx0 = stairX0 + Math.round(bi * stairSpan / nSteps);
-          var bxw = stairX0 + Math.round((bi + 1) * stairSpan / nSteps) - bx0;
-          ctx.fillStyle = TEAL;
-          ctx.fillRect(bx0, tops[bi] - 1, bxw, 1);
-        }
-
+        // Capy climbs the staircase on a loop — standard horizontal motion.
+        // The launchpad foundation (step 0) is what lifts the start tier; the
+        // Capy's left↔right position no longer tracks the stash.
+        var p = g.reduced ? 0.6 : (g.t * 0.07) % 1;
+        var stepIdx = Math.min(nSteps - 1, Math.floor(p * nSteps));
         var capX = stairX0 + p * stairSpan;
         var capY = tops[stepIdx];
         mascot.draw(ctx, capX, capY, Math.min(h * 0.2, 32), { walk: g.t * 6, gaze: 0.8 });
