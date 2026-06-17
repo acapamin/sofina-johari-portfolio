@@ -422,14 +422,14 @@
       { title: "The Force Field", cta: "&larr;&nbsp; Back to Life Cover" }
     ],
     inputs: [
-      { key: "income", group: "PHASE 1 · THE BRICK SHIELD", phase: 0, label: "Monthly income", sub: "(Synced with World 1-1)", min: 1000, max: 30000, step: 100, value: 5000, fmt: "money" },
-      { key: "mortgage", group: "PHASE 1 · THE BRICK SHIELD", phase: 0, label: "Outstanding mortgage debt", min: 0, max: 1500000, step: 10000, value: 300000, fmt: "money" },
-      { key: "mrta", group: "PHASE 1 · THE BRICK SHIELD", phase: 0, label: "My property loan is covered by MRTA / MRTT / MLTA / MLTT", type: "toggle", value: 0 },
-      { key: "nonmortgage", group: "PHASE 1 · THE BRICK SHIELD", phase: 0, label: "Outstanding non-mortgage debt", sub: "(Car loans, cards, PTPTN, personal)", min: 0, max: 500000, step: 5000, value: 50000, fmt: "money" },
-      { key: "deps", group: "PHASE 1 · THE BRICK SHIELD", phase: 0, label: "Dependants", sub: "(People relying on your income)", min: 0, max: 3, step: 1, value: 2, fmt: "deps" },
-      { key: "cover", group: "PHASE 1 · THE BRICK SHIELD", phase: 0, label: "Existing life / takaful cover", min: 0, max: 2000000, step: 10000, value: 100000, fmt: "money" },
-      { key: "medlimit", group: "PHASE 2 · THE FORCE FIELD", phase: 1, label: "Annual medical card limit", sub: "(RM 0 = no medical card)", min: 0, max: 2000000, step: 100000, value: 500000, fmt: "money" },
-      { key: "ciactive", group: "PHASE 2 · THE FORCE FIELD", phase: 1, label: "Critical illness policy active", type: "toggle", value: 0 }
+      { key: "income", group: "PHASE 1: LIFE PROTECTION", phase: 0, label: "Monthly income", sub: "(Synced with World 1-1)", min: 1000, max: 30000, step: 100, value: 5000, fmt: "money" },
+      { key: "mortgage", group: "PHASE 1: LIFE PROTECTION", phase: 0, label: "Outstanding mortgage debt", min: 0, max: 1500000, step: 10000, value: 300000, fmt: "money" },
+      { key: "mrta", group: "PHASE 1: LIFE PROTECTION", phase: 0, label: "My mortgage is covered by MRTA / MLTA", type: "toggle", value: 0 },
+      { key: "nonmortgage", group: "PHASE 1: LIFE PROTECTION", phase: 0, label: "Outstanding non-mortgage debt", sub: "(Car, cards, PTPTN)", min: 0, max: 500000, step: 5000, value: 50000, fmt: "money" },
+      { key: "deps", group: "PHASE 1: LIFE PROTECTION", phase: 0, label: "Dependants", sub: "(People relying on you)", min: 0, max: 3, step: 1, value: 2, fmt: "deps" },
+      { key: "cover", group: "PHASE 1: LIFE PROTECTION", phase: 0, label: "Existing life / takaful cover", min: 0, max: 2000000, step: 10000, value: 100000, fmt: "money" },
+      { key: "medlimit", group: "PHASE 2: HEALTH PROTECTION", phase: 1, label: "Annual medical card limit", sub: "(RM 0 = no medical card)", min: 0, max: 2000000, step: 100000, value: 500000, fmt: "money" },
+      { key: "ciactive", group: "PHASE 2: HEALTH PROTECTION", phase: 1, label: "Critical illness policy active", type: "toggle", value: 0 }
     ],
     compute: function (v) {
       var income = v.income;
@@ -489,39 +489,33 @@
           mood = "concerned"; say = "No medical shield?!"; stat = "MED: NONE";
           power = { pct: 6, tone: "red" };
           headline = "Critical risk — no medical card active.";
-          medComment = "CRITICAL RISK: No Medical Shield! A common misconception is that "
-            + "Malaysian public healthcare is 100% free. While heavily subsidised, advanced "
-            + "treatments, specialised implants, specific cancer drugs, and long-term care still "
-            + "incur massive out-of-pocket expenses. Without a medical card, a single major health "
-            + "emergency can completely wipe out your World 1-1 Cashflow coins.";
+          medComment = "🚨 CRITICAL RISK: Public healthcare is highly subsidized, but advanced "
+            + "treatments, specialized implants, and cancer drugs still incur heavy out-of-pocket "
+            + "costs. A major emergency could wipe out your cashflow.";
         } else if (medlimit < 200000) {
           mood = "risk-averse"; say = "Weak barrier, watch out."; stat = "MED " + rmShort(medlimit);
           power = { pct: clamp(fieldRatio * 100, 6, 100), tone: "red" };
           headline = "Weak barrier — limit under RM 200k.";
-          medComment = "WEAK BARRIER: Your annual limit is under RM 200k. While this handles basic "
-            + "ward stays, complex surgical procedures, intensive care (ICU), or multi-month cancer "
-            + "therapies at private hospitals in Malaysia can easily breach this ceiling in a single "
-            + "admission, leaving you to fund the rest.";
+          medComment = "⚠️ WEAK BARRIER: Fine for basic ward stays, but complex surgeries or "
+            + "intensive ICU care at Malaysian private hospitals can easily breach this ceiling "
+            + "in a single admission.";
         } else if (medlimit < FULL_MED) {
           mood = "stable"; say = "Modest shield holding."; stat = "MED " + rmShort(medlimit);
           power = { pct: clamp(fieldRatio * 100, 0, 100), tone: "gold" };
           headline = "Modest shield — " + money(medlimit) + " annual limit.";
-          medComment = "MODEST SHIELD: An annual limit between RM 200k and RM 999k covers standard "
-            + "private hospital treatments well. However, to fully secure your Capy against medical "
-            + "inflation and long-term critical illness treatments without out-of-pocket panics, "
-            + "upgrading to a modern RM 1 Million+ limit is recommended.";
+          medComment = "🧱 MODEST SHIELD: Covers standard private treatments well. However, to stay "
+            + "fully protected against medical inflation and long-term care without out-of-pocket "
+            + "panic, an upgrade to RM 1M+ is ideal.";
         } else {
           mood = "joyful"; say = "Force field maxed!"; stat = "MED MAX";
           power = { pct: 100, tone: "green" };
           headline = "Force field maxed — " + money(medlimit) + " annual limit.";
-          medComment = "ENERGY BARRIER MAXED! An annual limit of RM 1 Million+ completely secures "
-            + "your health barrier. This comfortably covers critical long-term treatments, specialised "
-            + "robotic surgeries, and private room stays at top-tier Malaysian private hospitals "
-            + "without any lifetime caps.";
+          medComment = "✨ MAXED BARRIER: Secures your health completely. Comfortably covers "
+            + "long-term therapies, specialized surgeries, and private room stays at top private "
+            + "hospitals with no lifetime caps.";
         }
-        coach = medComment + " Critical Illness Status: " + (ciActive ? "Active" : "Inactive")
-          + ". (A basic CI policy ensures you get a lump sum cash payout to handle everyday living "
-          + "bills if you need to take months off work to recover.)";
+        coach = medComment + "\n• Critical Illness: " + (ciActive ? "Active" : "Inactive")
+          + " (Provides a cash payout to replace your income if you need time off work to recover).";
       }
 
       return {

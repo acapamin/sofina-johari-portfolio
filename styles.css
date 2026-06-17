@@ -705,7 +705,7 @@ ul { list-style: none; }
 .journey__board {
   display: grid;
   grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-  gap: 1.25rem;
+  gap: 1rem;
   align-items: stretch;
 }
 .journey__stage {
@@ -845,12 +845,12 @@ ul { list-style: none; }
 .journey__panel {
   display: flex;
   flex-direction: column;
-  gap: 1.1rem;
+  gap: 0.9rem;
   background: #fffdf8;
   border: 3px solid var(--ink);
   border-radius: 0;
   box-shadow: 8px 8px 0 rgba(11, 31, 26, 0.15);
-  padding: 1.6rem 1.5rem;
+  padding: 1.3rem 1.25rem;
 }
 .journey__panel-eyebrow {
   font-family: var(--font-pixel);
@@ -886,18 +886,22 @@ ul { list-style: none; }
 /* phased levels (Protection): the visible input view is kept short, and one
    retro pixel button toggles Brick Shield ⇄ Force Field. Rows use tight
    spacing so each phase fits one mobile screen without page scrolling. */
-.journey__controls--phased { grid-template-columns: 1fr; gap: 0.4rem; }
-.journey__controls--phased .journey__control--split { gap: 0.05rem 0.7rem; }
-.journey__controls--phased .journey__control--toggle { margin: 0.05rem 0; }
-.journey__controls--phased .journey__control-sub { font-size: 0.62rem; margin-top: 0.02rem; }
-.journey__controls--phased .journey__group-head { padding-bottom: 0.25rem; }
-.journey__controls--phased .journey__toggle { gap: 0.55rem; }
+.journey__controls--phased { grid-template-columns: 1fr; gap: 0.3rem; }
+.journey__controls--phased .journey__control--split { gap: 0 0.7rem; }
+.journey__controls--phased .journey__control--split .journey__c-ctrl { gap: 0.05rem; }
+.journey__controls--phased .journey__c-ctrl .journey__range { height: 16px; }
+.journey__controls--phased .journey__c-ctrl output { font-size: 0.74rem; }
+.journey__controls--phased .journey__control--toggle { margin: 0; }
+.journey__controls--phased .journey__control-sub { font-size: 0.58rem; line-height: 1.1; margin-top: 0; }
+.journey__controls--phased .journey__group-head { padding-bottom: 0.2rem; }
+.journey__controls--phased .journey__toggle { gap: 0.5rem; }
+.journey__controls--phased .journey__toggle-track { width: 36px; height: 20px; }
 .journey__controls--phased .journey__toggle .journey__control-label {
-  font-size: 0.74rem;
-  line-height: 1.25;
+  font-size: 0.72rem;
+  line-height: 1.2;
 }
 .journey__phase-toggle {
-  margin-top: 0.4rem;
+  margin-top: 0.3rem;
   width: 100%;
   display: inline-flex;
   align-items: center;
@@ -1055,7 +1059,7 @@ ul { list-style: none; }
   line-height: 1.4;
   color: var(--ink);
 }
-.journey__coach { margin-top: 0.45rem; font-size: 0.88rem; color: var(--text-muted); }
+.journey__coach { margin-top: 0.45rem; font-size: 0.88rem; color: var(--text-muted); white-space: pre-line; }
 .journey__cta {
   margin-top: auto;
   display: inline-flex;
@@ -1617,13 +1621,13 @@ ul { list-style: none; }
   .journey__board { gap: 0.8rem; }
   .journey__stage {
     min-height: 0;
-    height: 210px;
+    height: 178px;
     box-shadow: 0 0 0 3px var(--gold), 5px 6px 0 rgba(11, 31, 26, 0.2);
   }
   .journey__hud { top: 0.5rem; left: 0.5rem; right: 0.5rem; }
   .journey__bubble { max-width: 70%; font-size: 0.5rem; padding: 0.4rem 0.5rem; }
   .journey__vibe { left: 0.6rem; right: 0.6rem; bottom: 0.55rem; }
-  .journey__panel { gap: 0.4rem; padding: 0.7rem 0.7rem; box-shadow: 4px 4px 0 rgba(11, 31, 26, 0.15); }
+  .journey__panel { gap: 0.3rem; padding: 0.55rem 0.6rem; box-shadow: 4px 4px 0 rgba(11, 31, 26, 0.15); }
   .journey__panel-eyebrow { font-size: 0.46rem; }
   .journey__panel-title { font-size: 0.6rem; margin-top: -0.3rem; }
   /* Sliders pair up two per row so four inputs stay compact.
