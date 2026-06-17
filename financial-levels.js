@@ -721,34 +721,67 @@
 
   engine.registerLevel("legacy", {
     name: "Legacy",
-    title: "World 1-4 · The Map Home",
+    title: "World 1-4 · THE WILLOW GATE",
     inputs: [
       { key: "loved", label: "Loved ones", min: 1, max: 8, step: 1, value: 3, fmt: "people" },
-      { key: "docs", label: "Assets documented", min: 0, max: 100, step: 5, value: 25, fmt: "percent" },
-      { key: "will", label: "Will / wasiat written", type: "toggle", value: 0 }
+      {
+        key: "keys", type: "keyrow", label: "Legacy Keys",
+        items: [
+          { key: "epf", label: "EPF and/or Tabung Haji Nominees Added", value: 0 },
+          { key: "will", label: "Will / Wasiat Written", value: 0 },
+          { key: "hibah", label: "Hibah / Insurance Beneficiary Assigned", value: 0 }
+        ]
+      }
     ],
     compute: function (v) {
-      var readiness = (v.will ? 0.5 : 0) + (v.docs / 100) * 0.5;
-      var mood = readiness >= 0.7 ? "serene" : readiness >= 0.35 ? "calm" : "thoughtful";
+      // --- Asset Unlock Factor -----------------------------------------
+      // Base 10% (assets frozen under probate); each active legacy key adds
+      // +30%, capped at 100%.
+      var epf = v.epf ? 1 : 0, will = v.will ? 1 : 0, hibah = v.hibah ? 1 : 0;
+      var readiness = Math.min(1, 0.10 + epf * 0.30 + will * 0.30 + hibah * 0.30);
+      var pct = Math.round(readiness * 100);
+      var express = epf || hibah;          // nominees / Hibah bypass the courts
+      var loved = v.loved;
+
+      var mood = pct >= 100 ? "serene" : pct >= 40 ? "calm" : "thoughtful";
       var say = {
-        serene: "All mapped. They'll be okay.",
-        calm: "A good start. Gently does it.",
+        serene: "All unfrozen. They'll be okay.",
+        calm: "A good start — keep unlocking.",
         thoughtful: "It's love, really."
       }[mood];
-      var coach = {
-        serene: "With a will or wasiat in place and your assets mapped, you've given your loved ones clarity instead of paperwork during the hardest week of their lives.",
-        calm: "You've begun the map — every account you list and every wish you write down is a burden lifted from someone you love. No rush; just keep going.",
-        thoughtful: "Most Malaysians put this off, and that's completely human. A simple list of what you own and a basic will or wasiat is a profound act of care — and easier than it feels."
-      }[mood];
+
+      // --- conversational Malaysian estate-planning commentary ----------
+      var coach;
+      if (!epf && !will && !hibah) {
+        coach = "🚨 ASSETS FROZEN: Without an estate plan, your hard-earned coins are "
+          + "locked in legal limbo. Your " + loved + " loved ones will face a complex, "
+          + "multi-year probate court maze just to access your bank accounts.";
+      } else if (epf && will && hibah) {
+        coach = "✨ LEGACY SECURED! Your wealth is completely unfrozen and mapped directly "
+          + "to your " + loved + " loved ones. With valid wills and Hibah express lanes in "
+          + "place, your coins transfer instantly with zero legal delays.";
+      } else if (will) {
+        coach = "🧱 COURT RUNWAY: Your Will/Wasiat ensures physical properties are "
+          + "distributed exactly how you want. However, Wills still must clear the slow "
+          + "probate court process. Consider a Hibah or direct nomination to provide your "
+          + "family with immediate cash.";
+      } else {
+        coach = "⚡ EXPRESS LANE ACTIVE: Your nominated funds or Hibah will bypass the "
+          + "courts entirely and reach your beneficiaries instantly. However, your physical "
+          + "properties or un-nominated cash savings remain frozen without a Will/Wasiat.";
+      }
+
       return {
         mood: mood,
-        score: Math.round(readiness * 100),
-        stat: "READY " + Math.round(readiness * 100) + "%",
-        headline: Math.round(readiness * 100) + "% legacy-ready for "
-          + v.loved + (v.loved === 1 ? " loved one." : " loved ones."),
+        score: pct,
+        stat: "READY " + pct + "%",
+        headline: pct + "% legacy-ready for "
+          + loved + (loved === 1 ? " loved one." : " loved ones."),
         coach: coach,
         say: say,
-        metrics: { readiness: readiness, docs: v.docs / 100 }
+        // POWER bar tracks readiness: red when fully frozen, green when secured
+        power: { pct: pct, tone: pct >= 100 ? "green" : (express || will ? "gold" : "red") },
+        metrics: { readiness: readiness, express: express ? 1 : 0, will: will }
       };
     },
     scene: {
@@ -756,88 +789,119 @@
         var ctx = g.ctx, w = g.w, h = g.h;
         var groundY = h - 10;
         var v = g.values;
+        var express = !!(v.epf || v.hibah);   // either melts the legal ice block
+        var will = !!v.will;                   // completes the structural bridge
         stars(g, 30, h * 0.6);
 
-        // pixel moon (mid-left sky, clear of the HUD strip and the map)
+        // pixel moon (mid-left sky, clear of the HUD strip)
         ctx.fillStyle = "rgba(246,231,189,0.8)";
-        ctx.fillRect(12, 28, 8, 8);
-        ctx.fillRect(10, 30, 12, 4);
+        ctx.fillRect(12, 24, 8, 8);
+        ctx.fillRect(10, 26, 12, 4);
         ctx.fillStyle = "rgba(201,161,74,0.4)";
-        ctx.fillRect(15, 31, 2, 2);
+        ctx.fillRect(15, 27, 2, 2);
 
-        // the family map panel (sits below the HUD strip)
-        var mw = Math.round(Math.min(w * 0.52, 120));
-        var mh = Math.round(Math.min(h * 0.62, 96));
-        var mx0 = Math.round(w * 0.62 - mw / 2);
-        var my0 = Math.round(h * 0.52 - mh / 2);
-        ctx.fillStyle = "rgba(246,241,231,0.08)";
-        ctx.fillRect(mx0, my0, mw, mh);
-        ctx.fillStyle = GOLD;
-        ctx.fillRect(mx0, my0, mw, 1); ctx.fillRect(mx0, my0 + mh - 1, mw, 1);
-        ctx.fillRect(mx0, my0, 1, mh); ctx.fillRect(mx0 + mw - 1, my0, 1, mh);
+        // anchors: Capy (left) → Willow Gate (centre) → the home (upper right)
+        var capX = Math.round(w * 0.13), capY = groundY;
+        var houseX = Math.round(w * 0.84), houseY = Math.round(h * 0.34);
+        var gateX = Math.round(w * 0.50), gateTop = Math.round(h * 0.30);
+        var sx = capX + 6, sy = capY - 14;     // heart launch point (Capy's chest)
+        var ex = houseX, ey = houseY + 8;      // the home's doorway
+        function px(t) { return sx + (ex - sx) * t; }
+        function py(t) { return sy + (ey - sy) * t; }
+        var iceAt = 0.62;                      // where the frozen barrier sits
 
-        // home: a little pixel house at the top of the map
-        var hx = mx0 + mw / 2, hy = my0 + 14;
-        ctx.fillStyle = GOLD;
-        ctx.fillRect(Math.round(hx - 5), hy - 4, 10, 7);
-        ctx.fillRect(Math.round(hx - 3), hy - 7, 6, 3);
-        ctx.fillRect(Math.round(hx - 1), hy - 9, 2, 2);
-        ctx.fillStyle = BRICK_DARK;
-        ctx.fillRect(Math.round(hx - 1), hy, 2, 3);
-
-        // dotted paths to each heart; documented = bright gold trail
-        var n = v.loved;
-        var solid = Math.round((v.docs / 100) * n);
-        for (var k = 0; k < n; k++) {
-          // span stops short of the wasiat seal in the bottom-right corner
-          var tx = n === 1 ? hx : mx0 + 10 + (mw - 32) * (k / (n - 1));
-          var ty = my0 + mh - 16 + ((k % 2) * 4);
-          var documented = k < solid;
-          var step = documented ? 4 : 8;
-          var dist = Math.hypot(tx - hx, ty - hy - 4);
-          for (var d = 6; d < dist - 4; d += step) {
-            var pxd = hx + (tx - hx) * (d / dist);
-            var pyd = (hy + 4) + (ty - hy - 4) * (d / dist);
-            ctx.fillStyle = documented ? "rgba(231,192,105,0.9)" : "rgba(242,236,224,0.25)";
-            ctx.fillRect(Math.round(pxd), Math.round(pyd), 1, 1);
+        // --- WILL: a solid structural bridge from Capy through the gate home
+        if (will) {
+          for (var bt = 0.05; bt < 0.98; bt += 0.045) {
+            var bx = Math.round(px(bt)), by = Math.round(py(bt));
+            ctx.fillStyle = GOLD;
+            ctx.fillRect(bx, by + 5, 3, 2);
+            ctx.fillStyle = GOLD_DARK;
+            ctx.fillRect(bx, by + 7, 1, 4);
           }
-          heart(ctx, Math.round(tx - 2), Math.round(ty), documented ? RED : "rgba(242,236,224,0.3)");
-        }
-
-        // wasiat scroll in the map corner
-        var wx2 = mx0 + mw - 12, wy2 = my0 + mh - 14;
-        if (v.will) {
-          ctx.fillStyle = "#f6f1e7";
-          ctx.fillRect(wx2, wy2, 7, 9);
-          ctx.fillStyle = GOLD;
-          ctx.fillRect(wx2, wy2 + 3, 7, 2);
-          ctx.fillStyle = BRICK_DARK;
-          ctx.fillRect(wx2 + 1, wy2 + 6, 5, 1);
         } else {
-          ctx.fillStyle = "rgba(242,236,224,0.3)";
-          ctx.fillRect(wx2, wy2, 2, 1); ctx.fillRect(wx2 + 5, wy2, 2, 1);
-          ctx.fillRect(wx2, wy2 + 8, 2, 1); ctx.fillRect(wx2 + 5, wy2 + 8, 2, 1);
-          ctx.fillRect(wx2, wy2, 1, 2); ctx.fillRect(wx2 + 6, wy2, 1, 2);
-          ctx.fillRect(wx2, wy2 + 7, 1, 2); ctx.fillRect(wx2 + 6, wy2 + 7, 1, 2);
+          // faint dotted trail — the path is not yet a solid bridge
+          for (var dt2 = 0.06; dt2 < 0.96; dt2 += 0.08) {
+            ctx.fillStyle = "rgba(242,236,224,0.22)";
+            ctx.fillRect(Math.round(px(dt2)), Math.round(py(dt2)) + 5, 1, 1);
+          }
         }
 
-        // drifting fireflies
-        if (!g.reduced && g.dt && Math.random() < 0.04) {
+        // --- the Willow Gate frame (its pathways open once a Will is written)
+        var postCol = will ? GOLD : "rgba(231,192,105,0.35)";
+        var gateH = groundY - gateTop;
+        ctx.fillStyle = postCol;
+        ctx.fillRect(gateX - 16, gateTop, 3, gateH);     // left post
+        ctx.fillRect(gateX + 13, gateTop, 3, gateH);     // right post
+        ctx.fillRect(gateX - 16, gateTop, 32, 3);        // lintel
+        ctx.fillStyle = will ? "rgba(159,216,196,0.85)" : "rgba(159,216,196,0.3)";
+        for (var s = 0; s < 5; s++) {                    // drooping willow strands
+          var wx = gateX - 12 + s * 6;
+          var sway = g.reduced ? 0 : Math.round(Math.sin(g.t * 1.4 + s) * 1);
+          ctx.fillRect(wx + sway, gateTop + 3, 1, 6 + (s % 2) * 4);
+        }
+
+        // --- the home (upper right)
+        var houseCol = will ? GOLD : "rgba(231,192,105,0.55)";
+        ctx.fillStyle = houseCol;
+        ctx.fillRect(houseX - 6, houseY - 4, 12, 9);
+        ctx.fillRect(houseX - 4, houseY - 8, 8, 4);
+        ctx.fillRect(houseX - 1, houseY - 11, 2, 3);
+        ctx.fillStyle = will ? BRICK_DARK : "rgba(10,26,20,0.6)";
+        ctx.fillRect(houseX - 1, houseY + 1, 2, 4);      // door
+
+        // --- FROZEN ice block: traps the hearts until an express key melts it
+        if (!express) {
+          var iceCx = Math.round(px(iceAt));
+          var iceTopY = Math.round(h * 0.20);
+          var iceBotY = groundY - 1;
+          for (var iy = iceTopY; iy < iceBotY; iy += 4) {
+            for (var ix = -7; ix <= 7; ix += 4) {
+              var sh = 0.30 + 0.22 * Math.abs(Math.sin(g.t * 1.1 + iy * 0.25 + ix));
+              ctx.fillStyle = "rgba(168,208,234," + (g.reduced ? "0.4" : sh.toFixed(2)) + ")";
+              ctx.fillRect(iceCx + ix, iy, 3, 3);
+            }
+          }
+          ctx.fillStyle = "rgba(224,242,255,0.75)";
+          ctx.fillRect(iceCx - 8, iceTopY, 18, 1);
+          ctx.fillRect(iceCx - 8, iceBotY - 1, 18, 1);
+          ptext(g, "FROZEN", iceCx, iceTopY - 3, "rgba(206,234,255,0.95)");
+        } else if (!g.reduced && g.dt && Math.random() < 0.14) {
+          // express lane active: melt-water sparkles drift up where ice was
           g.particles.spawn({
-            x: mx0 + Math.random() * mw,
-            y: my0 + mh,
-            vx: (Math.random() - 0.5) * 3, vy: -4 - Math.random() * 4,
-            size: 1, life: 4, color: GOLD_LIGHT, alpha: 0.5
+            x: px(iceAt) + (Math.random() - 0.5) * 14, y: groundY - Math.random() * 22,
+            vx: (Math.random() - 0.5) * 3, vy: -5 - Math.random() * 4,
+            size: 1, life: 1.2, color: TEAL, alpha: 0.7
           });
         }
 
-        // thin grass ground
+        // --- flying hearts: Capy's love, heading for the home
+        var n = v.loved;
+        for (var k = 0; k < n; k++) {
+          var t;
+          if (express) {
+            // free flight: hearts shoot straight through into the house frame
+            t = g.reduced ? (0.3 + 0.6 * (k / Math.max(1, n))) : ((g.t * 0.4 + k * 0.31) % 1);
+            if (t > 0.95 && !g.reduced && Math.random() < 0.3) {
+              g.particles.spawn({
+                x: ex, y: ey, vx: (Math.random() - 0.5) * 6, vy: -3,
+                size: 1, life: 0.6, color: GOLD_LIGHT, alpha: 0.9
+              });
+            }
+          } else {
+            // trapped: hearts bob in the open ground before the ice wall
+            t = 0.10 + (iceAt - 0.18) * ((Math.sin(g.t * 1.6 + k * 1.7) + 1) / 2);
+          }
+          heart(ctx, Math.round(px(t) - 2), Math.round(py(t)),
+            express ? RED : "rgba(217,106,74,0.55)");
+        }
+
+        // --- thin grass ground + Capy
         ctx.fillStyle = BRICK;
         ctx.fillRect(0, groundY, w, h - groundY);
         ctx.fillStyle = "rgba(159,216,196,0.5)";
         ctx.fillRect(0, groundY, w, 1);
-
-        mascot.draw(ctx, w * 0.15, groundY, Math.min(h * 0.24, 36), { gaze: 0.8 });
+        mascot.draw(ctx, capX, groundY, Math.min(h * 0.24, 36), { gaze: 0.8 });
       }
     }
   });
@@ -985,6 +1049,37 @@
         });
         stash.appendChild(stRow);
         controlsEl.appendChild(stash);
+        return;
+      }
+
+      // legacy keys: a compact container of space-saving binary checkboxes
+      if (inp.type === "keyrow") {
+        var keys = document.createElement("div");
+        keys.className = "journey__keys";
+        if (inp.label) {
+          var kHead = document.createElement("p");
+          kHead.className = "journey__group-head journey__keys-head";
+          kHead.textContent = inp.label;
+          keys.appendChild(kHead);
+        }
+        inp.items.forEach(function (it) {
+          var kid = "jin-" + it.key;
+          var cur = engine.values[it.key];
+          var on = (cur != null ? cur : it.value) ? true : false;
+          engine.setInput(it.key, on ? 1 : 0);     // seed engine state for compute
+          var lab = document.createElement("label");
+          lab.className = "journey__key";
+          lab.setAttribute("for", kid);
+          lab.innerHTML =
+            '<input type="checkbox" id="' + kid + '"' + (on ? " checked" : "") + " />" +
+            '<span class="journey__key-box" aria-hidden="true"></span>' +
+            '<span class="journey__key-label">' + it.label + "</span>";
+          lab.querySelector("input").addEventListener("change", function () {
+            engine.setInput(it.key, this.checked ? 1 : 0);
+          });
+          keys.appendChild(lab);
+        });
+        controlsEl.appendChild(keys);
         return;
       }
 
