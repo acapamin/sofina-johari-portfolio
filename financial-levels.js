@@ -34,9 +34,9 @@
     return "RM" + v;
   }
 
-  function ptext(g, str, x, y, color, align) {
+  function ptext(g, str, x, y, color, align, size) {
     var ctx = g.ctx;
-    ctx.font = "8px " + PFONT;
+    ctx.font = (size || 8) + "px " + PFONT;
     ctx.fillStyle = color || "rgba(242,236,224,0.9)";
     ctx.textAlign = align || "center";
     ctx.fillText(str, Math.round(x), Math.round(y));
@@ -122,6 +122,56 @@
       ctx.fillRect(Math.round(sx), Math.round(sy), 1, 1);
     }
     ctx.globalAlpha = 1;
+  }
+
+  /* World 1-4 · short pyramid of pixel coins. `frozen` paints them frosted
+     blue (locked in probate); otherwise bright gold (cleared for the family).
+     Returns its bounds so the caller can frame it in ice. */
+  function coinStack(g, cx, baseY, frozen) {
+    var ctx = g.ctx;
+    cx = Math.round(cx); baseY = Math.round(baseY);
+    var cs = 5, gap = 1, step = cs + gap, rowsN = 4, cols = 4;
+    var totalW = cols * step - gap;
+    var x0 = cx - Math.round(totalW / 2);
+    for (var r = 0; r < rowsN; r++) {
+      var rowY = baseY - (r + 1) * step;
+      var cN = cols - r;                         // pyramid: each tier loses one coin
+      var rx = x0 + Math.round(r * step / 2);    // …and centres over the one below
+      for (var c = 0; c < cN; c++) {
+        var x = rx + c * step;
+        ctx.fillStyle = frozen ? "#6f93ad" : GOLD;
+        ctx.fillRect(x, rowY, cs, cs);
+        ctx.fillStyle = frozen ? "#bcdcf0" : GOLD_LIGHT;
+        ctx.fillRect(x + 1, rowY + 1, 2, 1);
+        ctx.fillStyle = frozen ? "#46627a" : GOLD_DARK;
+        ctx.fillRect(x, rowY + cs - 1, cs, 1);
+      }
+    }
+    return { x0: x0, w: totalW, top: baseY - rowsN * step };
+  }
+
+  /* World 1-4 · a tiny waiting capybara (a "loved one") outside the home.
+     Deliberately chunky (8×6) so it still reads at mobile canvas sizes. */
+  function miniCapy(g, cx, baseY, faceLeft) {
+    var ctx = g.ctx;
+    cx = Math.round(cx); baseY = Math.round(baseY);
+    var O = "#2b1a10", B = "#b07d46", S = "#8a5d33";
+    var bx = cx - 4, by = baseY - 6;
+    ctx.fillStyle = "rgba(0,0,0,0.3)";
+    ctx.fillRect(cx - 4, baseY, 8, 1);          // shadow
+    ctx.fillStyle = O;
+    ctx.fillRect(bx, by, 8, 6);                 // outline body
+    ctx.fillStyle = B;
+    ctx.fillRect(bx + 1, by + 1, 6, 4);         // fur fill
+    ctx.fillStyle = O;
+    ctx.fillRect(bx + 1, by - 1, 1, 1);         // ears
+    ctx.fillRect(bx + 6, by - 1, 1, 1);
+    ctx.fillRect(bx + 1, baseY - 1, 1, 1);      // legs
+    ctx.fillRect(bx + 6, baseY - 1, 1, 1);
+    ctx.fillStyle = S;                          // snout nub
+    ctx.fillRect(faceLeft ? bx : bx + 7, by + 2, 1, 2);
+    ctx.fillStyle = "#1c1008";                  // eye
+    ctx.fillRect(faceLeft ? bx + 2 : bx + 5, by + 1, 1, 1);
   }
 
   /* ============================================================
@@ -719,6 +769,10 @@
      (handled gently — a calm night scene, never an alarmed mascot)
      ============================================================ */
 
+  // tracks the Will toggle so the frozen-coins stash can SLIDE through the
+  // gate (rather than teleport) the moment the Will is written
+  var legacyCoins = { will: false, t0: -1 };
+
   engine.registerLevel("legacy", {
     name: "Legacy",
     title: "World 1-4 · THE WILLOW GATE",
@@ -727,9 +781,9 @@
       {
         key: "keys", type: "keyrow", label: "Legacy Keys",
         items: [
-          { key: "epf", label: "EPF and/or Tabung Haji Nominees Added", value: 0 },
-          { key: "will", label: "Will / Wasiat Written", value: 0 },
-          { key: "hibah", label: "Hibah / Insurance Beneficiary Assigned", value: 0 }
+          { key: "epf", label: "EPF Nominee Added", value: 0 },
+          { key: "hibah", label: "Insurance / Takaful Beneficiary Assigned", value: 0 },
+          { key: "will", label: "Will / Wasiat / Hibah Arranged", value: 0 }
         ]
       }
     ],
@@ -750,25 +804,42 @@
         thoughtful: "It's love, really."
       }[mood];
 
-      // --- conversational Malaysian estate-planning commentary ----------
+      // --- explicit commentary permutation matrix -----------------------
+      // epf = EPF nominee · hibah = Insurance/Takaful beneficiary ·
+      // will = Will/Wasiat/Hibah (property pathway). Eight exact statements.
       var coach;
-      if (!epf && !will && !hibah) {
-        coach = "🚨 ASSETS FROZEN: Without an estate plan, your hard-earned coins are "
-          + "locked in legal limbo. Your " + loved + " loved ones will face a complex, "
-          + "multi-year probate court maze just to access your bank accounts.";
-      } else if (epf && will && hibah) {
-        coach = "✨ LEGACY SECURED! Your wealth is completely unfrozen and mapped directly "
-          + "to your " + loved + " loved ones. With valid wills and Hibah express lanes in "
-          + "place, your coins transfer instantly with zero legal delays.";
-      } else if (will) {
-        coach = "🧱 COURT RUNWAY: Your Will/Wasiat ensures physical properties are "
-          + "distributed exactly how you want. However, Wills still must clear the slow "
-          + "probate court process. Consider a Hibah or direct nomination to provide your "
-          + "family with immediate cash.";
+      if (!epf && !hibah && !will) {
+        coach = "🚨 ASSETS FROZEN: Without a plan, your coins are locked in legal limbo. "
+          + "Your loved ones face a complex, multi-year probate court maze just to access "
+          + "basic bank accounts.";
+      } else if (epf && !hibah && !will) {
+        coach = "⚡ PARTIAL EXPRESS LANE: Your EPF funds bypass court and reach beneficiaries "
+          + "instantly. However, all physical property, cash stashes, and life insurance "
+          + "remain frozen until you secure a Will/Hibah.";
+      } else if (!epf && hibah && !will) {
+        coach = "⚡ PARTIAL EXPRESS LANE: Your nominated insurance/takaful clears instantly "
+          + "for immediate emergency cash. But without an EPF nominee or a Will/Hibah, your "
+          + "retirement fund and property are stuck in court.";
+      } else if (!epf && !hibah && will) {
+        coach = "🧱 ASSET PATHWAY READY: Your Will or Hibah ensures your physical properties "
+          + "are cleanly gifted to the right people. However, your family is left with zero "
+          + "immediate emergency cash while the estate processes.";
+      } else if (epf && hibah && !will) {
+        coach = "⚡ EXPRESS RUNWAY ACTIVE: Your liquid wealth (EPF and insurance cash payouts) "
+          + "transfers instantly for daily bills. However, your physical properties or home "
+          + "remain legally stuck without a Will or Hibah.";
+      } else if (epf && !hibah && will) {
+        coach = "🧱 PREPARED ESTATE: Your EPF transfers instantly and your property "
+          + "distribution is freed up via Will or Hibah. Consider nominating your "
+          + "insurance/takaful to add immediate, court-free cash flow for daily bills.";
+      } else if (!epf && hibah && will) {
+        coach = "🧱 PROTECTED HOME: Your main properties are secured via Will/Hibah and your "
+          + "insurance provides fast cash. Don't forget your EPF! Without a direct nominee "
+          + "assigned, those retirement coins fall back into court.";
       } else {
-        coach = "⚡ EXPRESS LANE ACTIVE: Your nominated funds or Hibah will bypass the "
-          + "courts entirely and reach your beneficiaries instantly. However, your physical "
-          + "properties or un-nominated cash savings remain frozen without a Will/Wasiat.";
+        coach = "✨ MASTER LEGACY SECURED! Your EPF and insurance/takaful express lanes "
+          + "guarantee immediate financial support, while your Will or Hibah perfectly "
+          + "safeguards and routes your properties. Zero legal delays.";
       }
 
       return {
@@ -787,121 +858,257 @@
     scene: {
       draw: function (g) {
         var ctx = g.ctx, w = g.w, h = g.h;
-        var groundY = h - 10;
+        var groundY = h - 14;                  // floor line matches World 1-1
         var v = g.values;
-        var express = !!(v.epf || v.hibah);   // either melts the legal ice block
-        var will = !!v.will;                   // completes the structural bridge
-        stars(g, 30, h * 0.6);
+        var epf = !!v.epf;                     // nominees → a stream of love
+        var hibah = !!v.hibah;                 // Hibah → an instant wealth conduit
+        var will = !!v.will;                   // Will → the coins clear the gate
+        var loved = Math.max(1, Math.round(v.loved || 1));
 
-        // pixel moon (mid-left sky, clear of the HUD strip)
+        stars(g, 22, h * 0.5);
+
+        // pixel moon — low enough to clear the HUD bubble/stat strip on top
+        var moonX = Math.round(w * 0.40), moonY = Math.round(h * 0.26);
         ctx.fillStyle = "rgba(246,231,189,0.8)";
-        ctx.fillRect(12, 24, 8, 8);
-        ctx.fillRect(10, 26, 12, 4);
+        ctx.fillRect(moonX, moonY, 7, 7);
+        ctx.fillRect(moonX - 2, moonY + 2, 11, 3);
         ctx.fillStyle = "rgba(201,161,74,0.4)";
-        ctx.fillRect(15, 27, 2, 2);
+        ctx.fillRect(moonX + 2, moonY + 3, 2, 2);
 
-        // anchors: Capy (left) → Willow Gate (centre) → the home (upper right)
-        var capX = Math.round(w * 0.13), capY = groundY;
-        var houseX = Math.round(w * 0.84), houseY = Math.round(h * 0.34);
-        var gateX = Math.round(w * 0.50), gateTop = Math.round(h * 0.30);
-        var sx = capX + 6, sy = capY - 14;     // heart launch point (Capy's chest)
-        var ex = houseX, ey = houseY + 8;      // the home's doorway
+        // --- anchors: Capy (left) · Willow archway (centre) · home (right) ---
+        var capH = Math.min(h * 0.26, 30);
+        var capX = Math.round(w * 0.12);
+        var capChestY = Math.round(groundY - capH * 0.45);
+
+        var gateX = Math.round(w * 0.45);
+        var gateH = Math.min(h * 0.52, 52);                 // taller, prominent arch
+        var gateTop = Math.round(groundY - gateH);
+        var openHalf = Math.max(7, Math.round(w * 0.05));   // half the doorway
+        var pillarW = 4;
+        var springY = Math.round(gateTop + gateH * 0.34);   // arch springline
+
+        // home scaled down ~12% to free room for the coin piles + capybaras
+        var houseW = Math.round(Math.min(w * 0.19, 28));
+        var houseH = Math.round(Math.min(h * 0.35, 30));
+        var houseCX = Math.round(w * 0.85);
+        var houseBaseY = groundY;                           // sits low on the ground
+
+        // waiting loved-ones cluster, just in front of (left of) the home
+        var clusterRight = houseCX - Math.round(houseW / 2) - 3;
+        var clusterCX = clusterRight - 8;
+
+        // flight path: Capy's chest → the waiting capybaras, through the gate
+        var sx = capX + 5, sy = capChestY;
+        var ex = clusterCX, ey = groundY - 5;
         function px(t) { return sx + (ex - sx) * t; }
         function py(t) { return sy + (ey - sy) * t; }
-        var iceAt = 0.62;                      // where the frozen barrier sits
 
-        // --- WILL: a solid structural bridge from Capy through the gate home
-        if (will) {
-          for (var bt = 0.05; bt < 0.98; bt += 0.045) {
-            var bx = Math.round(px(bt)), by = Math.round(py(bt));
-            ctx.fillStyle = GOLD;
-            ctx.fillRect(bx, by + 5, 3, 2);
-            ctx.fillStyle = GOLD_DARK;
-            ctx.fillRect(bx, by + 7, 1, 4);
-          }
-        } else {
-          // faint dotted trail — the path is not yet a solid bridge
-          for (var dt2 = 0.06; dt2 < 0.96; dt2 += 0.08) {
-            ctx.fillStyle = "rgba(242,236,224,0.22)";
-            ctx.fillRect(Math.round(px(dt2)), Math.round(py(dt2)) + 5, 1, 1);
-          }
-        }
-
-        // --- the Willow Gate frame (its pathways open once a Will is written)
-        var postCol = will ? GOLD : "rgba(231,192,105,0.35)";
-        var gateH = groundY - gateTop;
-        ctx.fillStyle = postCol;
-        ctx.fillRect(gateX - 16, gateTop, 3, gateH);     // left post
-        ctx.fillRect(gateX + 13, gateTop, 3, gateH);     // right post
-        ctx.fillRect(gateX - 16, gateTop, 32, 3);        // lintel
-        ctx.fillStyle = will ? "rgba(159,216,196,0.85)" : "rgba(159,216,196,0.3)";
-        for (var s = 0; s < 5; s++) {                    // drooping willow strands
-          var wx = gateX - 12 + s * 6;
-          var sway = g.reduced ? 0 : Math.round(Math.sin(g.t * 1.4 + s) * 1);
-          ctx.fillRect(wx + sway, gateTop + 3, 1, 6 + (s % 2) * 4);
-        }
-
-        // --- the home (upper right)
-        var houseCol = will ? GOLD : "rgba(231,192,105,0.55)";
-        ctx.fillStyle = houseCol;
-        ctx.fillRect(houseX - 6, houseY - 4, 12, 9);
-        ctx.fillRect(houseX - 4, houseY - 8, 8, 4);
-        ctx.fillRect(houseX - 1, houseY - 11, 2, 3);
-        ctx.fillStyle = will ? BRICK_DARK : "rgba(10,26,20,0.6)";
-        ctx.fillRect(houseX - 1, houseY + 1, 2, 4);      // door
-
-        // --- FROZEN ice block: traps the hearts until an express key melts it
-        if (!express) {
-          var iceCx = Math.round(px(iceAt));
-          var iceTopY = Math.round(h * 0.20);
-          var iceBotY = groundY - 1;
-          for (var iy = iceTopY; iy < iceBotY; iy += 4) {
-            for (var ix = -7; ix <= 7; ix += 4) {
-              var sh = 0.30 + 0.22 * Math.abs(Math.sin(g.t * 1.1 + iy * 0.25 + ix));
-              ctx.fillStyle = "rgba(168,208,234," + (g.reduced ? "0.4" : sh.toFixed(2)) + ")";
-              ctx.fillRect(iceCx + ix, iy, 3, 3);
-            }
-          }
-          ctx.fillStyle = "rgba(224,242,255,0.75)";
-          ctx.fillRect(iceCx - 8, iceTopY, 18, 1);
-          ctx.fillRect(iceCx - 8, iceBotY - 1, 18, 1);
-          ptext(g, "FROZEN", iceCx, iceTopY - 3, "rgba(206,234,255,0.95)");
-        } else if (!g.reduced && g.dt && Math.random() < 0.14) {
-          // express lane active: melt-water sparkles drift up where ice was
-          g.particles.spawn({
-            x: px(iceAt) + (Math.random() - 0.5) * 14, y: groundY - Math.random() * 22,
-            vx: (Math.random() - 0.5) * 3, vy: -5 - Math.random() * 4,
-            size: 1, life: 1.2, color: TEAL, alpha: 0.7
-          });
-        }
-
-        // --- flying hearts: Capy's love, heading for the home
-        var n = v.loved;
-        for (var k = 0; k < n; k++) {
-          var t;
-          if (express) {
-            // free flight: hearts shoot straight through into the house frame
-            t = g.reduced ? (0.3 + 0.6 * (k / Math.max(1, n))) : ((g.t * 0.4 + k * 0.31) % 1);
-            if (t > 0.95 && !g.reduced && Math.random() < 0.3) {
-              g.particles.spawn({
-                x: ex, y: ey, vx: (Math.random() - 0.5) * 6, vy: -3,
-                size: 1, life: 0.6, color: GOLD_LIGHT, alpha: 0.9
-              });
-            }
-          } else {
-            // trapped: hearts bob in the open ground before the ice wall
-            t = 0.10 + (iceAt - 0.18) * ((Math.sin(g.t * 1.6 + k * 1.7) + 1) / 2);
-          }
-          heart(ctx, Math.round(px(t) - 2), Math.round(py(t)),
-            express ? RED : "rgba(217,106,74,0.55)");
-        }
-
-        // --- thin grass ground + Capy
+        // --- thin grass ground (structures sit on top) ---------------------
         ctx.fillStyle = BRICK;
         ctx.fillRect(0, groundY, w, h - groundY);
         ctx.fillStyle = "rgba(159,216,196,0.5)";
         ctx.fillRect(0, groundY, w, 1);
-        mascot.draw(ctx, capX, groundY, Math.min(h * 0.24, 36), { gaze: 0.8 });
+
+        // --- the cleared path (gold once a Will is written, else faint) -----
+        if (will) {
+          for (var bt = 0.04; bt < 0.99; bt += 0.045) {
+            var bx = Math.round(px(bt)), by = Math.round(py(bt));
+            ctx.fillStyle = GOLD;
+            ctx.fillRect(bx, by + 5, 3, 2);
+            ctx.fillStyle = GOLD_DARK;
+            ctx.fillRect(bx, by + 7, 1, 2);
+          }
+        } else {
+          for (var dt2 = 0.06; dt2 < 0.96; dt2 += 0.09) {
+            ctx.fillStyle = "rgba(242,236,224,0.20)";
+            ctx.fillRect(Math.round(px(dt2)), Math.round(py(dt2)) + 5, 1, 1);
+          }
+        }
+
+        // --- HIBAH: a glowing teal conduit + fast motes (instant transfer) --
+        if (hibah) {
+          for (var ct = 0.02; ct < 1; ct += 0.025) {
+            var cx2 = Math.round(px(ct)), cy2 = Math.round(py(ct));
+            var pulse = (Math.sin(g.t * 6 - ct * 12) + 1) / 2;
+            ctx.fillStyle = "rgba(159,216,196," + (0.22 + pulse * 0.5).toFixed(2) + ")";
+            ctx.fillRect(cx2, cy2 + 1, 2, 2);
+          }
+          var motes = g.reduced ? 3 : 5;
+          for (var m2 = 0; m2 < motes; m2++) {
+            var mt = g.reduced ? (m2 / motes) : ((g.t * 0.9 + m2 / motes) % 1);
+            var mx = Math.round(px(mt)), my = Math.round(py(mt));
+            ctx.fillStyle = TEAL;
+            ctx.fillRect(mx, my, 3, 3);
+            ctx.fillStyle = GOLD_LIGHT;
+            ctx.fillRect(mx + 1, my + 1, 1, 1);
+          }
+        }
+
+        // --- the WILLOW GATE: a vintage stone archway -----------------------
+        var lit = will;
+        var stone = lit ? GOLD : "rgba(231,192,105,0.34)";
+        var stoneHi = lit ? GOLD_LIGHT : "rgba(246,231,189,0.32)";
+        var stoneLo = lit ? GOLD_DARK : "rgba(122,90,30,0.42)";
+        var lpx = gateX - openHalf - pillarW;   // left pillar
+        var rpx = gateX + openHalf;             // right pillar
+        var pillarBot = groundY - 2;
+        ctx.fillStyle = stone;
+        ctx.fillRect(lpx, springY, pillarW, pillarBot - springY);
+        ctx.fillRect(rpx, springY, pillarW, pillarBot - springY);
+        ctx.fillStyle = stoneHi;                // lit left edge
+        ctx.fillRect(lpx, springY, 1, pillarBot - springY);
+        ctx.fillRect(rpx, springY, 1, pillarBot - springY);
+        ctx.fillStyle = stoneLo;                // shaded right edge + seams
+        ctx.fillRect(lpx + pillarW - 1, springY, 1, pillarBot - springY);
+        ctx.fillRect(rpx + pillarW - 1, springY, 1, pillarBot - springY);
+        for (var sy2 = springY + 5; sy2 < pillarBot; sy2 += 6) {
+          ctx.fillRect(lpx, sy2, pillarW, 1);
+          ctx.fillRect(rpx, sy2, pillarW, 1);
+        }
+        ctx.fillStyle = stone;                  // chunky base plinths → reads as a gate
+        ctx.fillRect(lpx - 1, pillarBot, pillarW + 2, 2);
+        ctx.fillRect(rpx - 1, pillarBot, pillarW + 2, 2);
+        // the arch ring — stepped voussoir blocks curving over the doorway
+        var rC = openHalf + pillarW / 2;
+        var archVR = springY - gateTop;
+        var steps = 8;
+        for (var a = 0; a <= steps; a++) {
+          var ang = Math.PI * (a / steps);
+          var ox = gateX - Math.cos(ang) * rC;
+          var oy = springY - Math.sin(ang) * archVR;
+          ctx.fillStyle = stone;
+          ctx.fillRect(Math.round(ox - pillarW / 2), Math.round(oy), pillarW, 5);
+          ctx.fillStyle = stoneHi;
+          ctx.fillRect(Math.round(ox - pillarW / 2), Math.round(oy), pillarW, 1);
+        }
+        // drooping willow strands from the archway underside
+        ctx.fillStyle = lit ? "rgba(159,216,196,0.85)" : "rgba(159,216,196,0.32)";
+        for (var s = 0; s < 5; s++) {
+          var wx = gateX - openHalf + 1 + s * Math.round((openHalf * 2 - 2) / 4);
+          var sway = g.reduced ? 0 : Math.round(Math.sin(g.t * 1.4 + s) * 1);
+          ctx.fillRect(wx + sway, springY + 1, 1, 5 + (s % 2) * 4);
+        }
+
+        // --- the family HOME (right, larger, sitting low) -------------------
+        var hx0 = houseCX - Math.round(houseW / 2);
+        var bodyTop = houseBaseY - Math.round(houseH * 0.6);
+        ctx.fillStyle = "#d8b86a";
+        ctx.fillRect(hx0, bodyTop, houseW, houseBaseY - bodyTop);
+        ctx.fillStyle = GOLD_DARK;
+        ctx.fillRect(hx0, bodyTop, houseW, 1);
+        ctx.fillRect(hx0, houseBaseY - 1, houseW, 1);
+        var roofH = Math.round(houseH * 0.42);
+        var roofTopY = bodyTop - roofH;
+        var halfW = Math.round(houseW / 2) + 1;
+        for (var ry = 0; ry <= roofH; ry++) {
+          var ww = Math.round(halfW * 2 * (ry / roofH)) + 1;
+          ctx.fillStyle = "#b5894a";
+          ctx.fillRect(houseCX - Math.round(ww / 2), roofTopY + ry, ww, 1);
+        }
+        ctx.fillStyle = "#7a5a1e";              // chimney
+        ctx.fillRect(hx0 + houseW - 5, roofTopY + 2, 3, roofH - 2);
+        var winGlow = will ? "rgba(246,231,189,0.95)" : "rgba(246,231,189,0.55)";
+        var dwW = Math.max(3, Math.round(houseW * 0.26));
+        var dwH = Math.round(houseH * 0.4);
+        ctx.fillStyle = "#5a3d1e";              // doorway
+        ctx.fillRect(houseCX - Math.round(dwW / 2), houseBaseY - dwH, dwW, dwH);
+        ctx.fillStyle = winGlow;               // lit windows
+        ctx.fillRect(hx0 + 2, bodyTop + 3, 3, 3);
+        ctx.fillRect(hx0 + houseW - 5, bodyTop + 3, 3, 3);
+
+        // --- waiting loved ones: small capybaras in front of the home -------
+        for (var i = 0; i < loved; i++) {
+          var rowIdx = i >= 4 ? 1 : 0;          // wrap to a back row past 4
+          var colIdx = rowIdx ? i - 4 : i;
+          var mcx = clusterRight - colIdx * 8 - rowIdx * 4;
+          var mby = groundY - rowIdx * 3;
+          miniCapy(g, mcx, mby, true);
+        }
+
+        // --- the FROZEN COINS mechanic: the Will SLIDES the stash through ---
+        var fcXL = Math.round(w * 0.30);          // locked, on Capy's side
+        var fcXR = Math.round(w * 0.63);          // cleared, on the family's side
+        // detect the Will toggle flipping → start the slide (or re-freeze)
+        if (will && !legacyCoins.will) legacyCoins.t0 = g.t;
+        if (!will) legacyCoins.t0 = -1;
+        legacyCoins.will = will;
+        var MOVE = 0.9;                            // slide duration (seconds)
+        var moveP = !will ? 0
+          : (g.reduced || legacyCoins.t0 < 0) ? 1
+          : clamp((g.t - legacyCoins.t0) / MOVE, 0, 1);
+
+        if (!will) {
+          // locked on the Capy's (left) side, encased in frosted ice
+          var st = coinStack(g, fcXL, groundY, true);
+          var shim = g.reduced ? 0.5 : 0.30 + 0.3 * ((Math.sin(g.t * 2) + 1) / 2);
+          ctx.fillStyle = "rgba(206,234,255," + shim.toFixed(2) + ")";
+          ctx.fillRect(st.x0 - 2, st.top - 2, st.w + 4, 1);
+          ctx.fillRect(st.x0 - 2, groundY - 1, st.w + 4, 1);
+          ctx.fillRect(st.x0 - 2, st.top - 2, 1, groundY - st.top + 1);
+          ctx.fillRect(st.x0 + st.w + 1, st.top - 2, 1, groundY - st.top + 1);
+          if (!g.reduced) {
+            for (var fp = 0; fp < 5; fp++) {
+              var fy = st.top + ((g.t * 6 + fp * 5) % (groundY - st.top));
+              ctx.fillStyle = "rgba(224,242,255,0.5)";
+              ctx.fillRect(st.x0 + (fp * 4) % st.w, Math.round(fy), 1, 1);
+            }
+          }
+        } else if (moveP < 1) {
+          // IN TRANSIT: the icy stash flies horizontally through the arch centre
+          var mx2 = Math.round(fcXL + (fcXR - fcXL) * moveP);
+          var lift = Math.round(Math.sin(moveP * Math.PI) * gateH * 0.4);
+          coinStack(g, mx2, groundY - lift, true);
+          if (!g.reduced && Math.random() < 0.6) {   // frost trail behind them
+            g.particles.spawn({
+              x: mx2 - 8, y: groundY - lift - 6, vx: -5, vy: -2,
+              size: 1, life: 0.5, color: "rgba(188,220,240,0.9)", alpha: 0.85
+            });
+          }
+        } else {
+          // ARRIVED: coins land on the family's side and shine, freshly unlocked
+          var st2 = coinStack(g, fcXR, groundY, false);
+          var twk = (Math.sin(g.t * 5) + 1) / 2;
+          ctx.fillStyle = "rgba(246,231,189," + (0.4 + twk * 0.6).toFixed(2) + ")";
+          ctx.fillRect(fcXR - 2, st2.top - 3, 5, 1);   // sparkle cross on the cap
+          ctx.fillRect(fcXR, st2.top - 5, 1, 5);
+          if (!g.reduced && Math.random() < 0.5) {
+            g.particles.spawn({
+              x: fcXR + (Math.random() - 0.5) * 14, y: groundY - 4 - Math.random() * 12,
+              vx: 0, vy: -6, size: 1, life: 0.7, color: GOLD_LIGHT, alpha: 1
+            });
+          }
+        }
+
+        // --- corner status labels (small pixel scale), clear of the centre
+        // and tucked just under the HUD bubble / stat chip ------------------
+        if (!will) {
+          // top-left corner, mapping to the frozen stash on the left below
+          ptext(g, "Frozen Coins", 3, Math.round(h * 0.34), "rgba(206,234,255,0.95)", "left", 6);
+        } else {
+          // top-right corner, sitting above the house + the shining coin pile.
+          // kept short ("passed") so it clears the wider 2-line speech bubble
+          var ry1 = Math.round(h * 0.28);
+          ptext(g, "Coins passed", w - 3, ry1, "rgba(246,231,189,0.95)", "right", 6);
+          ptext(g, "to loved ones", w - 3, ry1 + 8, "rgba(246,231,189,0.95)", "right", 6);
+        }
+
+        // --- EPF: a continuous stream of love hearts to the loved ones ------
+        if (epf) {
+          var nH = Math.min(6, 3 + loved);
+          for (var k = 0; k < nH; k++) {
+            var t = g.reduced ? (0.2 + 0.7 * (k / nH)) : ((g.t * 0.45 + k / nH) % 1);
+            heart(ctx, Math.round(px(t) - 2), Math.round(py(t) - 1), RED);
+            if (t > 0.93 && !g.reduced && Math.random() < 0.25) {
+              g.particles.spawn({
+                x: ex, y: ey, vx: (Math.random() - 0.5) * 5, vy: -3,
+                size: 1, life: 0.6, color: GOLD_LIGHT, alpha: 0.9
+              });
+            }
+          }
+        }
+
+        // --- Capy, drawn last so it always reads on top --------------------
+        mascot.draw(ctx, capX, groundY, capH, { gaze: 0.8 });
       }
     }
   });
@@ -1052,7 +1259,8 @@
         return;
       }
 
-      // legacy keys: a compact container of space-saving binary checkboxes
+      // legacy keys: full-width, thumb-friendly toggles (World 1-2 switch
+      // format) inside one tight container with a section header
       if (inp.type === "keyrow") {
         var keys = document.createElement("div");
         keys.className = "journey__keys";
@@ -1068,11 +1276,11 @@
           var on = (cur != null ? cur : it.value) ? true : false;
           engine.setInput(it.key, on ? 1 : 0);     // seed engine state for compute
           var lab = document.createElement("label");
-          lab.className = "journey__key";
+          lab.className = "journey__toggle journey__key";
           lab.setAttribute("for", kid);
           lab.innerHTML =
             '<input type="checkbox" id="' + kid + '"' + (on ? " checked" : "") + " />" +
-            '<span class="journey__key-box" aria-hidden="true"></span>' +
+            '<span class="journey__toggle-track" aria-hidden="true"></span>' +
             '<span class="journey__key-label">' + it.label + "</span>";
           lab.querySelector("input").addEventListener("change", function () {
             engine.setInput(it.key, this.checked ? 1 : 0);
