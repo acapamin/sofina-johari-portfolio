@@ -1740,14 +1740,17 @@
     });
   }
 
-  /* ---------- PDF download (native jsPDF vector text, lazy-loaded) -------
-     The roadmap is drawn directly as crisp vector text and shapes — not a
-     screenshot — so it is sharp, selectable and small. Content reflows with
-     real page breaks (with widow / keep-with-next control) so a line, row or
-     card is never cut across pages. A branded header and footer is painted on
-     every page. jsPDF is only fetched the first time the button is clicked. */
+  /* ---------- PDF download (faithful capture of the on-screen roadmap) -----
+     The user loves the in-app look (pixel font, serif headlines, bordered
+     cards, two-column inputs), so the PDF is a high-resolution capture of the
+     real, fully-styled roadmap DOM via html2canvas — not a re-draw. To stay
+     crisp and never cut a card, the worlds are grouped two-per-A4-page (worlds
+     1 & 2 on page one, 3 & 4 on page two) and each group is captured on its own
+     branded page. No footer or page numbers — clean, like the app. Both
+     libraries are only fetched the first time the button is clicked. */
 
   var JSPDF_CDN = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+  var H2C_CDN   = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
 
   function loadScript(src, onload, onerror) {
     var s = document.createElement("script");
@@ -1761,254 +1764,148 @@
     if (planPrintBtn) { planPrintBtn.disabled = false; planPrintBtn.textContent = "Download PDF"; }
   }
 
-  // Lazy-load jsPDF, then run cb().
+  // Lazy-load jsPDF, then html2canvas, then run cb().
   function loadPdfLibs(cb) {
-    if (window.jspdf && window.jspdf.jsPDF) { cb(); return; }
-    loadScript(JSPDF_CDN, cb, function () {
+    function haveJsPDF() { return window.jspdf && window.jspdf.jsPDF; }
+    function haveH2C()   { return !!window.html2canvas; }
+    function fail() {
       resetPrintBtn();
       setStatus("Couldn't load the PDF tools — check your connection and try again.", "err");
-    });
+    }
+    function ensureH2C() {
+      if (haveH2C()) { cb(); return; }
+      loadScript(H2C_CDN, cb, fail);
+    }
+    if (haveJsPDF()) { ensureH2C(); return; }
+    loadScript(JSPDF_CDN, ensureH2C, fail);
   }
 
-  /* Draw the whole roadmap as native vector text + shapes. Pure: depends only
-     on the jsPDF `doc` and the `report` object, so it renders identically in
-     the browser and in offline tests. Reflows with real page breaks (widow /
-     keep-with-next control) so a line, row or card is never cut across pages. */
-  function renderRoadmapToDoc(doc, report) {
-    var PW = doc.internal.pageSize.getWidth();   // 210
-    var PH = doc.internal.pageSize.getHeight();  // 297
-    var ML = 14, MR = 14;
-    var CW = PW - ML - MR;                        // 182
-    var HEADER_H = 22;
-    var BODY_TOP = HEADER_H + 11;                 // 33
-    var BODY_BOT = PH - 16;                       // content bottom limit
+  /* Build an off-screen "page" that mirrors the on-screen dialog: the branded
+     header bar (minus the close button) above a cream body holding the given
+     report nodes. Returns the detached element, ready to be captured. */
+  function buildPdfPage(reportNodes) {
+    var PAGE_W = 720;                               // matches the dialog width so wrapping is identical
+    var PAGE_H = Math.round(PAGE_W * 297 / 210);    // A4 proportions (~1018px)
 
-    // palette — mirrors the on-screen roadmap (styles.css)
-    var INK     = [11,  31,  26];
-    var GOLD    = [201, 161, 74];
-    var GOLDSFT = [224, 201, 140];
-    var GOLDDK  = [122, 90,  30];
-    var CREAM   = [240, 233, 219];
-    var RULE    = [224, 217, 200];
-    var MUTED   = [88,  104, 98];
-    var GREEN   = [60,  150, 96];
-    var RED     = [201, 86,  60];
-    var PAGE_BG = [253, 253, 248];
+    var page = document.createElement("div");
+    page.className = "plan-pdf-page";
+    page.style.cssText =
+      "position:fixed;left:-10000px;top:0;width:" + PAGE_W + "px;min-height:" + PAGE_H + "px;" +
+      "display:flex;flex-direction:column;background:#fffdf8;box-sizing:border-box;margin:0;z-index:-1;";
 
-    function tc(c) { doc.setTextColor(c[0], c[1], c[2]); }
-    function fc(c) { doc.setFillColor(c[0], c[1], c[2]); }
-    function dc(c) { doc.setDrawColor(c[0], c[1], c[2]); }
-    function cl(n, a, b) { return Math.max(a, Math.min(b, n)); }
-
-    // jsPDF's standard fonts are WinAnsi-only, so emoji and exotic symbols in
-    // the quest copy would render as garbage (and corrupt line spacing). Strip
-    // them, map a few common glyphs to ASCII, and tidy the leftover spacing.
-    function san(s) {
-      var KEEP = "\u2013\u2014\u2018\u2019\u201C\u201D\u2022\u2026"; // – — ‘ ’ “ ” • …
-      return String(s == null ? "" : s)
-        .replace(/\u2212/g, "-")                          // minus sign -> hyphen
-        .replace(/[\u2190-\u21FF]/g, "->")               // arrows -> ASCII arrow
-        .replace(/[\uFE00-\uFE0F]/g, "")                 // emoji variation selectors
-        .replace(/[\u2000-\u206F]/g, function (m) {      // general punctuation:
-          return KEEP.indexOf(m) >= 0 ? m : "";            //   keep dashes/quotes/etc, drop the rest
-        })
-        .replace(new RegExp("[^\\x00-\\xFF" + KEEP + "]", "g"), "") // emoji & other symbols
-        .replace(/[ \t]{2,}/g, " ")
-        .replace(/\s+([,.;:!?])/g, "$1")
-        .trim();
-    }
-    // Normalise all-caps world names (e.g. "THE WILLOW GATE") to title case so
-    // every heading reads consistently; mixed-case names are left untouched.
-    function titleName(s) {
-      s = san(s);
-      if (s && s === s.toUpperCase()) {
-        s = s.toLowerCase().replace(/\b([a-z])/g, function (_, c) { return c.toUpperCase(); });
+    // header — clone the real bar so fonts and colours match exactly
+    var bar = document.querySelector(".plan-modal__bar");
+    if (bar) {
+      var header = bar.cloneNode(true);
+      var closeBtn = header.querySelector(".plan-modal__close");
+      if (closeBtn && closeBtn.parentNode) closeBtn.parentNode.removeChild(closeBtn);
+      var dateEl = header.querySelector(".plan-modal__date");
+      if (dateEl) {
+        dateEl.removeAttribute("id");
+        dateEl.textContent = new Date().toLocaleDateString("en-MY",
+          { day: "numeric", month: "long", year: "numeric" });
       }
-      return s;
+      page.appendChild(header);
     }
 
-    function paintPageBg() { fc(PAGE_BG); doc.rect(0, 0, PW, PH, "F"); }
-
-    // Branded header band, painted on every page.
-    function drawHeader() {
-      fc(INK);  doc.rect(0, 0, PW, HEADER_H, "F");
-      fc(GOLD); doc.rect(0, HEADER_H, PW, 0.8, "F");
-      tc(GOLD); doc.setFont("courier", "bold"); doc.setFontSize(7);
-      doc.text("CAPY'S QUEST  ::  SOFINA JOHARI", ML, 8);
-      tc([245, 240, 228]); doc.setFont("helvetica", "bold"); doc.setFontSize(13);
-      doc.text("Your Money Journey Roadmap", ML, 16.5);
-      var dateStr = new Date().toLocaleDateString("en-MY",
-        { day: "numeric", month: "long", year: "numeric" });
-      tc(GOLD); doc.setFont("courier", "normal"); doc.setFontSize(7);
-      doc.text(dateStr, PW - MR, 8, { align: "right" });
-    }
-
-    var y = 0;
-    function newPage(first) {
-      if (!first) doc.addPage();
-      paintPageBg();
-      drawHeader();
-      y = BODY_TOP;
-    }
-    function ensure(h) { if (y + h > BODY_BOT) newPage(false); }
-
-    // Wrapped paragraph with widow control: never strands a single line on a
-    // fresh page (keeps the last two lines together). Re-applies font per line
-    // so styling survives page breaks.
-    function paragraph(text, x, w, lineH, color, font, style, size) {
-      doc.setFont(font, style); doc.setFontSize(size);
-      var lines = doc.splitTextToSize(String(text == null ? "" : text), w);
-      var i = 0;
-      while (i < lines.length) {
-        var avail = Math.floor((BODY_BOT - y) / lineH);
-        if (avail <= 0) { newPage(false); avail = Math.floor((BODY_BOT - y) / lineH); }
-        var remaining = lines.length - i;
-        if (avail < remaining && remaining - avail === 1) avail = Math.max(1, avail - 1);
-        var take = Math.min(avail, remaining);
-        for (var j = 0; j < take; j++, i++) {
-          doc.setFont(font, style); doc.setFontSize(size); tc(color);
-          doc.text(lines[i], x, y + lineH - 1.5);
-          y += lineH;
-        }
-        if (i < lines.length) newPage(false);
-      }
-    }
-
-    // ----- page 1: hero -----
-    newPage(true);
-
-    fc(INK);  doc.roundedRect(ML, y, CW, 30, 2.5, 2.5, "F");
-    fc(GOLD); doc.roundedRect(ML, y, 2.6, 30, 1.3, 1.3, "F");
-    tc(GOLDSFT); doc.setFont("courier", "bold"); doc.setFontSize(8);
-    doc.text("OVERALL READINESS", ML + 9, y + 11);
-    tc([245, 240, 228]); doc.setFont("helvetica", "bold"); doc.setFontSize(34);
-    doc.text(String(report.overall) + "%", ML + 9, y + 25);
-
-    var introX = ML + 66, introW = CW - 66 - 8, iy = y + 7.5;
-    doc.setFont("helvetica", "normal"); doc.setFontSize(9.5); tc(GOLDSFT);
-    var introLines = doc.splitTextToSize(
-      "A snapshot of your four-world money quest with Capy. "
-      + "Bring this roadmap to your session with Sofina to turn it into a plan.", introW);
-    for (var k = 0; k < introLines.length; k++) { doc.text(introLines[k], introX, iy); iy += 5; }
-    y += 30 + 10;
-
-    // ----- worlds -----
-    report.worlds.forEach(function (wld, wi) {
-      var primary = wld.sections[0].st;
-      var pct  = cl(Math.round((primary.power && primary.power.pct) || primary.score || 0), 0, 100);
-      var tone = primary.power ? primary.power.tone : "gold";
-      var fill = tone === "green" ? GREEN : tone === "red" ? RED : GOLD;
-      var badge = san(String(primary.stat || (primary.score + "%")));
-
-      // measure the name (the badge reserves room on the first line)
-      doc.setFont("times", "bold"); doc.setFontSize(16);
-      var nameLines = doc.splitTextToSize(titleName(wld.name), CW - 40);
-      var nameH = nameLines.length * 7;
-      var headH = 5 + nameH + 7;
-
-      y += wi === 0 ? 2 : 9;
-      if (wi > 0) { dc(RULE); doc.setLineWidth(0.3); doc.line(ML, y - 4.5, ML + CW, y - 4.5); }
-      ensure(headH + 16); // keep the header block + first rows together
-
-      // tag
-      tc(GOLD); doc.setFont("courier", "bold"); doc.setFontSize(7.5);
-      doc.text(san(String(wld.tag)).toUpperCase(), ML, y + 3.6);
-
-      // score badge, top-right, aligned to the name
-      doc.setFont("courier", "bold"); doc.setFontSize(9);
-      var bw = doc.getTextWidth(badge) + 8;
-      var bx = ML + CW - bw, by = y + 5.5;
-      fc(GOLDSFT); dc(INK); doc.setLineWidth(0.5);
-      doc.roundedRect(bx, by, bw, 8.5, 1.6, 1.6, "FD");
-      tc(INK); doc.text(badge, bx + bw / 2, by + 5.7, { align: "center" });
-
-      // name
-      tc(INK); doc.setFont("times", "bold"); doc.setFontSize(16);
-      var ny = y + 11;
-      for (var n = 0; n < nameLines.length; n++) { doc.text(nameLines[n], ML, ny); ny += 7; }
-
-      // progress bar
-      var barY = ny - 1.5;
-      fc(CREAM); doc.roundedRect(ML, barY, CW, 3.4, 1.7, 1.7, "F");
-      fc(fill);  doc.roundedRect(ML, barY, Math.max(3.4, CW * pct / 100), 3.4, 1.7, 1.7, "F");
-      y = barY + 3.4 + 6;
-
-      // input rows: label (wraps) left, value bold right, hairline under each
-      wld.inputs.forEach(function (r) {
-        doc.setFont("helvetica", "normal"); doc.setFontSize(9.5);
-        var labelLines = doc.splitTextToSize(san(String(r.label)), CW - 34);
-        var rowH = Math.max(6.4, labelLines.length * 4.7 + 2.6);
-        ensure(rowH);
-        var ry = y;
-        tc(MUTED); doc.setFont("helvetica", "normal"); doc.setFontSize(9.5);
-        for (var i = 0; i < labelLines.length; i++) doc.text(labelLines[i], ML, ry + 3.6 + i * 4.7);
-        tc(INK); doc.setFont("helvetica", "bold"); doc.setFontSize(10);
-        doc.text(san(String(r.value)), ML + CW, ry + 3.7, { align: "right" });
-        dc(RULE); doc.setLineWidth(0.2); doc.line(ML, ry + rowH - 1, ML + CW, ry + rowH - 1);
-        y = ry + rowH;
-      });
-
-      // section commentary (one per phase)
-      wld.sections.forEach(function (sec) {
-        y += 4;
-        // keep the opener together: title + headline + first lines of the body,
-        // so a headline is never stranded at the foot of a page.
-        doc.setFont("times", "bold"); doc.setFontSize(13);
-        var headline = san(sec.st.headline);
-        var hlCount = doc.splitTextToSize(headline || "", CW).length;
-        ensure((sec.phaseTitle ? 5.5 : 0) + hlCount * 5.7 + 1.6 + 2 * 5.0);
-        if (sec.phaseTitle) {
-          tc(GOLDDK); doc.setFont("courier", "bold"); doc.setFontSize(7.5);
-          doc.text(san(String(sec.phaseTitle)).toUpperCase(), ML, y + 3.4); y += 5.5;
-        }
-        paragraph(headline, ML, CW, 5.7, INK, "times", "bold", 13);
-        y += 1.6;
-        paragraph(san(sec.st.coach), ML, CW, 5.0, MUTED, "helvetica", "normal", 9.5);
-        var say = san(String(sec.st.say || ""));
-        if (say) {
-          y += 2;
-          paragraph("“" + say.toUpperCase() + "”",
-            ML, CW, 4.8, GOLDDK, "courier", "bold", 8);
-        }
-      });
-    });
-
-    // ----- footers -----
-    var nPages = doc.internal.getNumberOfPages();
-    for (var p = 1; p <= nPages; p++) {
-      doc.setPage(p);
-      dc(RULE); doc.setLineWidth(0.3); doc.line(ML, PH - 11, ML + CW, PH - 11);
-      tc(MUTED); doc.setFont("helvetica", "normal"); doc.setFontSize(7);
-      doc.text("Prepared with Capy's Quest  ::  sofinajohari.com", ML, PH - 7);
-      tc(MUTED); doc.setFont("courier", "normal"); doc.setFontSize(7);
-      doc.text(p + " / " + nPages, PW - MR, PH - 7, { align: "right" });
-    }
+    // body fills the page below the header; cards are centred vertically so a
+    // short page (e.g. worlds 3 & 4) stays balanced instead of leaving a gap
+    var body = document.createElement("div");
+    body.style.cssText =
+      "flex:1 1 auto;display:flex;flex-direction:column;justify-content:center;padding:18px 20px;";
+    var report = document.createElement("div");
+    report.className = "plan-report";
+    reportNodes.forEach(function (n) { report.appendChild(n.cloneNode(true)); });
+    // no trailing card margin at the foot of a page
+    var worldsIn = report.querySelectorAll(".plan-world");
+    if (worldsIn.length) worldsIn[worldsIn.length - 1].style.marginBottom = "0";
+    body.appendChild(report);
+    page.appendChild(body);
+    return page;
   }
 
   function downloadRoadmapPDF(report) {
-    report = report || currentReport || collectReport();
-    var doc;
-    try {
-      var JsPDF = window.jspdf.jsPDF;
-      doc = new JsPDF({ unit: "mm", format: "a4", compress: true });
-      renderRoadmapToDoc(doc, report);
-    } catch (e) {
-      if (window.console && console.error) console.error("roadmap pdf:", e);
+    var node = document.getElementById("planReport");
+    if (!node || !node.innerHTML.trim()) {
+      if (node) node.innerHTML = renderReportHTML(report || currentReport || collectReport());
+    }
+    var worlds = node ? node.querySelectorAll(".plan-world") : [];
+    if (!node || !worlds.length) {
       resetPrintBtn();
       setStatus("Couldn't build the PDF — please try again.", "err");
       return;
     }
+    var head = node.querySelector(".plan-report__head");
 
-    var blob = doc.output("blob");
-    var a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "capy-roadmap-sofina.pdf";
-    a.style.display = "none";
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(function () { URL.revokeObjectURL(a.href); document.body.removeChild(a); }, 1000);
-    resetPrintBtn();
-    setStatus("", null);
+    // group worlds two per page; the overall-readiness head sits on page one
+    var pages = [];
+    for (var i = 0; i < worlds.length; i += 2) {
+      var g = [worlds[i]];
+      if (worlds[i + 1]) g.push(worlds[i + 1]);
+      pages.push((i === 0 && head) ? [head].concat(g) : g);
+    }
+
+    function fail(e) {
+      if (e && window.console && console.error) console.error("roadmap pdf:", e);
+      resetPrintBtn();
+      setStatus("Couldn't build the PDF — please try again.", "err");
+    }
+
+    var scale = Math.min(3, (window.devicePixelRatio || 1) * 2);
+    var fontsReady = (document.fonts && document.fonts.ready)
+      ? document.fonts.ready : Promise.resolve();
+
+    fontsReady.then(function () {
+      // capture each page group to its own canvas, one at a time
+      return pages.reduce(function (chain, nodes) {
+        return chain.then(function (canvases) {
+          var el = buildPdfPage(nodes);
+          document.body.appendChild(el);
+          return window.html2canvas(el, {
+            backgroundColor: "#fffdf8",
+            scale: scale,
+            useCORS: true,
+            logging: false
+          }).then(function (canvas) {
+            if (el.parentNode) el.parentNode.removeChild(el);
+            canvases.push(canvas);
+            return canvases;
+          });
+        });
+      }, Promise.resolve([]));
+    }).then(function (canvases) {
+      var JsPDF = window.jspdf.jsPDF;
+      var pdf = new JsPDF({ unit: "mm", format: "a4", compress: true });
+      var PW = pdf.internal.pageSize.getWidth();   // 210
+      var PH = pdf.internal.pageSize.getHeight();  // 297
+
+      // one shared width for every page keeps the scale and side margins
+      // consistent; only shrink if a page would otherwise overflow the height
+      var maxAspect = 0;
+      canvases.forEach(function (c) { maxAspect = Math.max(maxAspect, c.height / c.width); });
+      var drawW = Math.min(PW, PH / maxAspect);
+
+      canvases.forEach(function (canvas, idx) {
+        if (idx > 0) pdf.addPage();
+        pdf.setFillColor(253, 253, 248);
+        pdf.rect(0, 0, PW, PH, "F");
+        var w = drawW;
+        var h = canvas.height * (w / canvas.width);
+        var x = (PW - w) / 2;
+        pdf.addImage(canvas.toDataURL("image/png"), "PNG", x, 0, w, h);
+      });
+
+      var blob = pdf.output("blob");
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "capy-roadmap-sofina.pdf";
+      a.style.display = "none";
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); document.body.removeChild(a); }, 1000);
+      resetPrintBtn();
+      setStatus("", null);
+    }).catch(fail);
   }
 
   if (planBtn) planBtn.addEventListener("click", openPlan);
