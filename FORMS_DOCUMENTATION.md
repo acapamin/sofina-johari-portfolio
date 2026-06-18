@@ -137,11 +137,11 @@ Email delivery is handled entirely by the function — **no Netlify Forms / dash
 > Because `eazylaundry.biz` is verified in Resend, the function delivers to Sofina's gmail directly with no per-recipient restriction. The `RESEND_API_KEY` must belong to the same Resend account that owns `eazylaundry.biz`. To change the recipient or sender, edit the `TO` / `FROM` constants in that one file. The `roadmap@` mailbox does not need to exist; `reply_to` is set to the visitor's email so Sofina's replies reach them.
 
 ### Download PDF
-- File: `financial-levels.js` — `downloadRoadmapPDF()` opens a hidden iframe to `assets/ebook/src/capy-roadmap.html` with the report data encoded in the URL hash.
-- The template renders an A4 ebook-branded PDF using the same self-hosted **Fraunces** and **Instrument Sans** fonts and colour palette as the main ebook.
+- File: `financial-levels.js` — `downloadRoadmapPDF()` opens a hidden iframe to `assets/capy-roadmap/capy-roadmap.html` with the report data encoded in the URL hash.
+- The template renders an A4 ebook-branded PDF using the shared self-hosted **Fraunces** and **Instrument Sans** fonts in `assets/fonts/` and the same colour palette as the main ebook.
 - Each world gets its own page. The first page includes the overall readiness summary; the last page includes the "Next Step" CTA.
 - The template loads **html2canvas** + **jsPDF** from cdnjs, captures each page, assembles a PDF blob, and triggers an automatic download via `<a download>`, matching the ebook's instant-download UX.
-- Each world shows its toolkit category (Cashflow, Protection, Future, Legacy) and a labelled "Power" progress bar, consistent with the in-app toolkit.
+- Each world shows its toolkit category (Cashflow, Protection, Future, Legacy), a left-aligned world title/theme, and a labelled "Power" progress bar with its percentage value, consistent with the in-app toolkit.
 
 ### Report text structure:
 ```

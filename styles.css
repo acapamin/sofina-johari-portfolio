@@ -3058,6 +3058,15 @@ ul { list-style: none; }
   border: 1px solid rgba(11, 31, 26, 0.3);
   overflow: hidden;
 }
+.plan-bar__pct {
+  font-family: var(--font-pixel);
+  font-size: 0.5rem;
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+  min-width: 2rem;
+  text-align: right;
+}
 .plan-bar__fill { height: 100%; background: var(--gold); }
 .plan-bar__fill.is-green { background: #5cb87a; }
 .plan-bar__fill.is-red { background: var(--rust, #d96a4a); }

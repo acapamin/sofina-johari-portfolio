@@ -5,7 +5,7 @@
 ## Fonts
 
 The book uses **self-hosted static instances** of Fraunces and Instrument Sans
-(in `../fonts/`), wired up with `@font-face` at the top of `book.html`.
+(in `../../fonts/`), shared with the Capy's Quest roadmap PDF and wired up with `@font-face` at the top of `book.html`.
 
 Do **not** switch back to the Google Fonts `<link>` (the variable fonts). When
 Chromium prints a variable font to PDF it embeds every glyph as a Type3
@@ -13,7 +13,7 @@ vector-drawing procedure, which made the old PDF ~1.8 MB and painfully slow to
 open. The static instances embed as normal subsetted TrueType: ~0.6 MB, fast,
 and with selectable text.
 
-To rebuild the static instances (rarely needed): `../fonts/build-fonts.sh`.
+To rebuild the static instances (rarely needed): `../../fonts/build-fonts.sh`.
 
 ## Regenerate the PDF
 

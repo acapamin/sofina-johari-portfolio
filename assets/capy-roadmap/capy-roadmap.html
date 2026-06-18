@@ -101,9 +101,12 @@
     flex-shrink: 0; font-size: 10pt; font-weight: 700; letter-spacing: .08em;
     background: rgba(201,161,74,.12); color: var(--ink); padding: 2.2mm 4.5mm; border-radius: 2mm;
   }
+  .world__eyebrow { display: block; text-align: left; }
+  .world__name { text-align: left; }
   .world__bar { margin-top: 4mm; display: flex; align-items: center; gap: 3mm; }
   .world__bar-label { font-size: 7.5pt; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; color: var(--gold-deep); white-space: nowrap; }
   .world__bar-track { flex: 1; height: 4mm; background: rgba(11,31,26,.1); border-radius: 2mm; overflow: hidden; }
+  .world__bar-pct { font-size: 8.5pt; font-weight: 700; color: var(--ink); white-space: nowrap; min-width: 10mm; text-align: right; }
   .world__bar-fill { height: 100%; border-radius: 2mm; }
   .world__bar-fill.is-green { background: var(--green-bar); }
   .world__bar-fill.is-red { background: var(--red-bar); }
@@ -178,12 +181,12 @@ function renderWorldPage(report, wld, pageNum, total, isFirst, isLast) {
 
   html += '<div class="content-head">'
     + '<div class="world__top" style="margin-bottom:2mm;">'
-    + '<div><div class="eyebrow"><span></span>' + esc(wld.tag) + ' · ' + esc(wld.category) + '<span></span></div>'
+    + '<div><div class="eyebrow world__eyebrow">' + esc(wld.tag) + ' · ' + esc(wld.category) + '</div>'
     + '<h2>' + esc(wld.name) + '</h2></div>'
     + '<span class="world__score">' + statText + '</span></div>'
     + '</div>'
     + '<div class="world">'
-    + '<div class="world__bar"><span class="world__bar-label">Power</span><div class="world__bar-track"><div class="world__bar-fill ' + toneClass(tone) + '" style="width:' + pct + '%"></div></div></div>';
+    + '<div class="world__bar"><span class="world__bar-label">Power</span><div class="world__bar-track"><div class="world__bar-fill ' + toneClass(tone) + '" style="width:' + pct + '%"></div></div><span class="world__bar-pct">' + pct + '%</span></div>';
 
   if (wld.inputs && wld.inputs.length) {
     html += '<div class="inputs">';

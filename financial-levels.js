@@ -1553,7 +1553,7 @@
         + '<p class="plan-world__tag">' + esc(wld.tag) + ' · ' + esc(wld.category) + '</p>'
         + '<p class="plan-world__name">' + esc(wld.name) + '</p></div>'
         + '<span class="plan-world__score">' + esc(primary.stat || (primary.score + "%")) + '</span></div>'
-        + '<div class="plan-bar"><span class="plan-bar__label">Power</span><div class="plan-bar__track"><div class="plan-bar__fill' + toneClass(tone) + '" style="width:' + p + '%"></div></div></div>';
+        + '<div class="plan-bar"><span class="plan-bar__label">Power</span><div class="plan-bar__track"><div class="plan-bar__fill' + toneClass(tone) + '" style="width:' + p + '%"></div></div><span class="plan-bar__pct">' + p + '%</span></div>';
 
       html += '<ul class="plan-world__inputs">';
       wld.inputs.forEach(function (r) {
@@ -1748,7 +1748,7 @@
      so the user saves a vector, selectable-text PDF that matches the ebook
      brand exactly. */
 
-  var ROADMAP_TEMPLATE = "assets/ebook/src/capy-roadmap.html";
+  var ROADMAP_TEMPLATE = "assets/capy-roadmap/capy-roadmap.html";
 
   function resetPrintBtn() {
     if (planPrintBtn) { planPrintBtn.disabled = false; planPrintBtn.textContent = "Download PDF"; }
