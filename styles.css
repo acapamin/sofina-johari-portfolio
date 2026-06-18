@@ -1636,7 +1636,9 @@ ul { list-style: none; }
   .story__media { order: -1; padding: 1rem 0; }
   .services__grid { grid-template-columns: 1fr 1fr; }
   .journey__board { grid-template-columns: 1fr; }
-  .journey__stage { min-height: 380px; }
+  /* Single-column board: keep the stage close to the desktop's near-square
+     proportions so the scenes (tuned for ~1:1) never get vertically crushed. */
+  .journey__stage { min-height: 0; aspect-ratio: 7 / 6; }
   .stats__grid { grid-template-columns: 1fr 1fr; gap: 2rem; }
   .credentials__groups { grid-template-columns: 1fr; }
   .testimonials__grid { grid-template-columns: 1fr; }
@@ -1669,7 +1671,10 @@ ul { list-style: none; }
   .journey__board { gap: 0.5rem; }
   .journey__stage {
     min-height: 0;
-    height: 178px;
+    height: auto;
+    /* Match the desktop scene proportions instead of a squashed fixed height,
+       so coins, Capy and the staircase keep their vertical breathing room. */
+    aspect-ratio: 5 / 4;
     box-shadow: 0 0 0 3px var(--gold), 5px 6px 0 rgba(11, 31, 26, 0.2);
   }
   .journey__hud { top: 0.45rem; left: 0.45rem; right: 0.45rem; }
