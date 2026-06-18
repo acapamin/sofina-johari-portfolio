@@ -1,9 +1,10 @@
 # Forms Documentation
 
 ## Overview
-The website uses two custom Google Forms with beautiful modal UI:
-1. **Ebook Gate Form** - Lead magnet for free financial planning ebook
-2. **Contact/Website Application Form** - Comprehensive consultation booking form
+The website uses three forms with custom modal UI:
+1. **Ebook Gate Form** - Lead magnet for free financial planning ebook (Google Forms)
+2. **Contact/Website Application Form** - Comprehensive consultation booking form (Google Forms)
+3. **Capy's Quest Roadmap** - "Send to Sofina" from the Capy financial journey (Netlify Forms)
 
 ---
 
@@ -90,6 +91,66 @@ The website uses two custom Google Forms with beautiful modal UI:
 
 ---
 
+---
+
+## Capy's Quest Roadmap — "Send to Sofina"
+
+**Backend:** Netlify Forms (`form-name: capy-roadmap`)
+
+**Location:** Plan modal triggered by "Turn this into a real plan" button in the Your Toolkit section (#tools)
+
+**Trigger:** The "Send to Sofina" button inside the roadmap modal
+
+### Fields (same contact fields as Ebook Gate):
+| Field | Form key | Type | Required | Notes |
+|-------|----------|------|----------|-------|
+| Name | `name` | Text | ✓ | Full name |
+| Email | `email` | Email | ✓ | Email address |
+| WhatsApp Number | `whatsapp` | Tel | ✓ | Phone number |
+| Subscribe to Broadcast | `subscribe` | Radio | ✗ | "Yes, subscribe to broadcast on whatsapp" or "No" |
+| Readiness | `readiness` | Text | auto | Overall % score across all four worlds |
+| Remark | `remark` | Text | ✗ | Optional note for Sofina |
+| Report | `report` | Textarea | auto | Full plain-text roadmap including contact details and all world commentary |
+
+### Implementation:
+- File: `financial-levels.js` — `sendToSofina()` function and `renderReportText()`
+- HTML Modal ID: `#planModal`
+- Submission: Standard POST to `/` (Netlify intercepts and emails Sofina)
+- Validation: Name, email, and WhatsApp are validated client-side before submit
+- The `report` field embeds the contact details at the top of the plain-text body, so Sofina sees everything in one place
+- The hidden detection form at the bottom of the tools section registers all field names with Netlify at deploy time
+
+### Report text structure:
+```
+CAPY'S MONEY QUEST — ROADMAP
+Overall readiness: XX%
+================================================
+
+CONTACT DETAILS
+Name: ...
+Email: ...
+WhatsApp: ...
+WhatsApp Broadcast: ...
+================================================
+
+World 1-1 · The Coin Pipes   [+RMXXX]
+...inputs and commentary...
+
+World 1-2 · The Brick Shield   [SHIELD XX%]
+...inputs and commentary (both phases)...
+
+World 1-3 · The Flagpole Climb   [GOAL XX%]
+...
+
+World 1-4 · THE WILLOW GATE   [READY XX%]
+...
+
+================================================
+User remark: ...
+```
+
+---
+
 ## Technical Notes
 
 ### Google Forms API
@@ -116,10 +177,11 @@ The website uses two custom Google Forms with beautiful modal UI:
 ## File Structure
 
 ```
-index.html              - HTML markup for both modals
-styles.css             - CSS for .ebook-modal, .contact-modal classes
+index.html              - HTML markup for all three modals + Netlify detection form
+styles.css             - CSS for .ebook-modal, .contact-modal, .plan-modal/.plan-send classes
 ebook-gate.js          - Ebook form logic and submission
 contact-form.js        - Contact form logic and submission
+financial-levels.js    - Capy's Quest roadmap modal logic and sendToSofina()
 ```
 
 ---

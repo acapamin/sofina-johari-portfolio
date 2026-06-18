@@ -549,6 +549,28 @@
               <div class="plan-report" id="planReport"><!-- built by financial-levels.js --></div>
 
               <div class="plan-send" id="planSend">
+                <div class="plan-send__fields">
+                  <p class="plan-send__fields-heading">Your contact details</p>
+                  <div class="plan-send__field">
+                    <label class="plan-send__field-label" for="planName">Name <span aria-label="required">*</span></label>
+                    <input class="plan-send__field-input" type="text" id="planName" placeholder="Your full name" autocomplete="name" />
+                  </div>
+                  <div class="plan-send__field">
+                    <label class="plan-send__field-label" for="planEmail">Email <span aria-label="required">*</span></label>
+                    <input class="plan-send__field-input" type="email" id="planEmail" placeholder="you@example.com" autocomplete="email" />
+                  </div>
+                  <div class="plan-send__field">
+                    <label class="plan-send__field-label" for="planWhatsapp">WhatsApp Number <span aria-label="required">*</span></label>
+                    <input class="plan-send__field-input" type="tel" id="planWhatsapp" placeholder="+60 12 345 6789" autocomplete="tel" />
+                  </div>
+                  <div class="plan-send__field">
+                    <label class="plan-send__field-label">Subscribe to WhatsApp broadcast</label>
+                    <label class="plan-send__radio">
+                      <input type="radio" name="planSubscribe" value="Yes, subscribe to broadcast on whatsapp" />
+                      <span>Yes, subscribe to broadcast on WhatsApp</span>
+                    </label>
+                  </div>
+                </div>
                 <label class="plan-send__label" for="planRemark">A note for Sofina <span>(optional)</span></label>
                 <textarea id="planRemark" class="plan-send__remark" rows="3"
                   placeholder="e.g. I'd like help closing my protection gap — when are you free for a chat?"></textarea>
@@ -557,8 +579,8 @@
             </div>
 
             <footer class="plan-modal__actions">
-              <button type="button" class="plan-btn plan-btn--ghost" id="planPrintBtn">&#x2193; Download PDF</button>
-              <button type="button" class="plan-btn plan-btn--gold" id="planSendBtn">&#x2709; Send to Sofina</button>
+              <button type="button" class="plan-btn plan-btn--ghost" id="planPrintBtn">Download PDF</button>
+              <button type="button" class="plan-btn plan-btn--gold" id="planSendBtn">Send to Sofina</button>
             </footer>
           </div>
         </div>
@@ -567,6 +589,10 @@
         <form name="capy-roadmap" data-netlify="true" netlify-honeypot="bot-field" hidden>
           <input type="hidden" name="form-name" value="capy-roadmap" />
           <p hidden><label>Don't fill this out: <input name="bot-field" /></label></p>
+          <input type="text" name="name" />
+          <input type="email" name="email" />
+          <input type="tel" name="whatsapp" />
+          <input type="text" name="subscribe" />
           <input type="text" name="readiness" />
           <input type="text" name="remark" />
           <textarea name="report"></textarea>
