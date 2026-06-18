@@ -4,12 +4,12 @@
 
    Env (set in Netlify → Site configuration → Environment variables):
      RESEND_API_KEY  (required)  — your Resend API key
-     RESEND_TO       (optional)  — recipient; defaults to Sofina's inbox
 
-   The sender is hardcoded to FROM below (a verified eazylaundry.biz
-   address) and is intentionally not configurable via env. */
+   The recipient (TO) and sender (FROM) are hardcoded below and are
+   intentionally not configurable via env. FROM is a verified
+   eazylaundry.biz address. */
 
-const DEFAULT_TO = "sofinajohari.uwealth@gmail.com";
+const TO = "sofinajohari.uwealth@gmail.com";
 const FROM = "Capy's Quest <roadmap@eazylaundry.biz>";
 const MAX = { short: 200, remark: 2000, report: 20000 };
 
@@ -72,8 +72,6 @@ export default async function handler(req) {
     return jsonResponse(400, { ok: false, error: "Please provide a valid email address" });
   }
 
-  const to = process.env.RESEND_TO || DEFAULT_TO;
-
   const subject = `Capy's Quest roadmap — ${name}${readiness ? ` (${readiness} ready)` : ""}`;
 
   const html = `
@@ -107,7 +105,7 @@ export default async function handler(req) {
       },
       body: JSON.stringify({
         from: FROM,
-        to: [to],
+        to: [TO],
         reply_to: email,
         subject,
         html,

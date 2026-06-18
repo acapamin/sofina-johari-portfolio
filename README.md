@@ -88,7 +88,7 @@ The website features three lead-capture forms:
 - **Submission:** JSON POST to `/api/send-roadmap`, a Netlify Function that emails Sofina via [Resend](https://resend.com)
 - **Validation:** Name, email, and WhatsApp are required — validated client-side and server-side
 - **Files:** `financial-levels.js` (modal wiring + `sendToSofina()`), plan modal in `index.html`, `netlify/functions/send-roadmap.mjs` (Resend email)
-- **Config:** requires only the `RESEND_API_KEY` env var; the sender (`roadmap@eazylaundry.biz`, a verified domain) is hardcoded in `send-roadmap.mjs` — see `.env.example`
+- **Config:** requires only the `RESEND_API_KEY` env var; the recipient (Sofina's inbox) and sender (`roadmap@eazylaundry.biz`, a verified domain) are hardcoded in `send-roadmap.mjs` — see `.env.example`
 
 **See [FORMS_DOCUMENTATION.md](FORMS_DOCUMENTATION.md) for complete field mappings, entry IDs, and validation rules.**
 
@@ -156,7 +156,7 @@ This approach:
 - Reliable for both simple and complex forms
 - No backend server required
 
-The Capy's Quest Roadmap posts a JSON payload (contact details + full text report) to the **`/api/send-roadmap` Netlify Function**, which emails it to Sofina via **Resend**. The sender (`roadmap@eazylaundry.biz`, a verified domain) is hardcoded in `send-roadmap.mjs`, so only `RESEND_API_KEY` is required in the Netlify environment (`RESEND_TO` is an optional recipient override) — see `.env.example`.
+The Capy's Quest Roadmap posts a JSON payload (contact details + full text report) to the **`/api/send-roadmap` Netlify Function**, which emails it to Sofina via **Resend**. The recipient (Sofina's inbox) and sender (`roadmap@eazylaundry.biz`, a verified domain) are both hardcoded in `send-roadmap.mjs`, so `RESEND_API_KEY` is the only variable required in the Netlify environment — see `.env.example`.
 
 ### Validation
 - Client-side validation before submission

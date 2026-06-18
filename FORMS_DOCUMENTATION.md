@@ -128,10 +128,13 @@ Email delivery is handled entirely by the function — **no Netlify Forms / dash
 1. **Resend API key** — create one at https://resend.com/api-keys, using the account that owns the verified `eazylaundry.biz` domain.
 2. **Netlify env var** — in **app.netlify.com → `sofina-johari-portfolio` → Site configuration → Environment variables**, add:
    - `RESEND_API_KEY` (required) = your Resend key — mark as **secret**.
-   - `RESEND_TO` (optional) = recipient; defaults to `sofinajohari.uwealth@gmail.com`.
-3. **Redeploy** so the function picks up the env vars.
+3. **Redeploy** so the function picks up the key.
 
-> ✅ **Sender is hardcoded to a verified domain.** The sender `Capy's Quest <roadmap@eazylaundry.biz>` is set once in `netlify/functions/send-roadmap.mjs` (constant `FROM`) and is **not** configurable via env — there is no `RESEND_FROM` variable. Because `eazylaundry.biz` is verified in Resend, the function delivers to Sofina's gmail (or any address) directly with no per-recipient restriction. The `RESEND_API_KEY` must belong to the same Resend account that owns `eazylaundry.biz`. To change the sender (e.g. switch to another verified domain), edit the `FROM` constant in that one file. The `roadmap@` mailbox does not need to exist; `reply_to` is set to the visitor's email so Sofina's replies reach them.
+> ✅ **Recipient and sender are hardcoded.** Both are set once in `netlify/functions/send-roadmap.mjs` and are **not** configurable via env — there are no `RESEND_TO` / `RESEND_FROM` variables:
+> - `TO` = `sofinajohari.uwealth@gmail.com` (Sofina's inbox)
+> - `FROM` = `Capy's Quest <roadmap@eazylaundry.biz>` (a verified domain)
+>
+> Because `eazylaundry.biz` is verified in Resend, the function delivers to Sofina's gmail directly with no per-recipient restriction. The `RESEND_API_KEY` must belong to the same Resend account that owns `eazylaundry.biz`. To change the recipient or sender, edit the `TO` / `FROM` constants in that one file. The `roadmap@` mailbox does not need to exist; `reply_to` is set to the visitor's email so Sofina's replies reach them.
 
 ### Download PDF
 - File: `financial-levels.js` — `downloadRoadmapPDF()`, lazy-loads **html2canvas** + **jsPDF** from cdnjs on first click.
