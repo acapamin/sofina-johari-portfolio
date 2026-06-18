@@ -1680,7 +1680,7 @@ ul { list-style: none; }
   .journey__hud { top: 0.45rem; left: 0.45rem; right: 0.45rem; }
   .journey__bubble { max-width: min(56%, 20ch); font-size: 0.46rem; padding: 0.3rem 0.45rem; line-height: 1.5; }
   .journey__vibe { left: 0.6rem; right: 0.6rem; bottom: 0.55rem; }
-  .journey__panel { gap: 0.3rem; padding: 0.55rem 0.6rem; box-shadow: 4px 4px 0 rgba(11, 31, 26, 0.15); }
+  .journey__panel { gap: 0.3rem; padding: 0.55rem 0.6rem 3.2rem; box-shadow: 4px 4px 0 rgba(11, 31, 26, 0.15); }
   .journey__panel-eyebrow { font-size: 0.46rem; }
   .journey__panel-title { font-size: 0.6rem; margin-top: -0.3rem; }
   /* Sliders pair up two per row so four inputs stay compact.

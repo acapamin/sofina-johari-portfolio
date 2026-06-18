@@ -1081,18 +1081,19 @@
         }
 
         // --- corner status labels (small pixel scale), clear of the centre
-        // frozen coins text positioned lower to avoid HUD overlap
-        // coins passed positioned above capy at max number for visibility
+        // frozen coins positioned at floor level below all scene elements
+        // coins passed positioned at top for max visibility above HUD
         if (!will) {
-          // bottom-left corner, two lines: frozen / coins
-          var fy = Math.round(groundY - 24);
+          // bottom-left corner at floor level, two lines: frozen / coins
+          var fy = Math.round(groundY + 2);
           ptext(g, "Frozen", 3, fy, "rgba(206,234,255,0.95)", "left", 6);
           ptext(g, "Coins", 3, fy + 8, "rgba(206,234,255,0.95)", "left", 6);
         } else {
-          // top-centre, above capy for max visibility, especially when stacked loved ones
-          var cy = capH * 1.2;
-          ptext(g, "Coins passed", w - 3, cy - 16, "rgba(246,231,189,0.95)", "right", 6);
-          ptext(g, "to loved ones", w - 3, cy - 8, "rgba(246,231,189,0.95)", "right", 6);
+          // top-right, high above HUD bubble and all scene elements
+          // well above capybaras even when stacked at max
+          var ry1 = Math.round(h * 0.12);
+          ptext(g, "Coins passed", w - 3, ry1, "rgba(246,231,189,0.95)", "right", 6);
+          ptext(g, "to loved ones", w - 3, ry1 + 8, "rgba(246,231,189,0.95)", "right", 6);
         }
 
         // --- EPF: a continuous stream of love hearts to the loved ones ------
