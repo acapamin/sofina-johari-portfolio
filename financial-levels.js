@@ -1632,6 +1632,11 @@
     if (!planModal) return;
     currentReport = collectReport();
     planReportEl.innerHTML = renderReportHTML(currentReport);
+    var dateEl = document.getElementById("planModalDate");
+    if (dateEl) {
+      dateEl.textContent = new Date().toLocaleDateString("en-MY",
+        { day: "numeric", month: "long", year: "numeric" });
+    }
     setStatus("", null);
     if (planSendBtn) { planSendBtn.disabled = false; planSendBtn.textContent = "Send to Sofina"; }
     ["planName", "planEmail", "planWhatsapp"].forEach(function (id) {
