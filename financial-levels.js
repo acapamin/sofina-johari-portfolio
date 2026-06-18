@@ -1387,7 +1387,7 @@
   var lastSay = "";
   engine.on("level", function (e) {
     var i = engine.order.indexOf(e.id);
-    tagEl.textContent = "World 1-" + (i + 1);
+    tagEl.textContent = "World 1-" + (i + 1) + " · " + e.def.name;
     titleEl.textContent = e.def.title.split("·")[1].trim();
     // phased levels always open on PHASE 1 (with its own panel title)
     if (e.def.phases) {
@@ -1520,6 +1520,7 @@
       totalScore += sections[0].st.score || 0;
       worlds.push({
         tag: "World 1-" + (i + 1),
+        category: def.name,
         name: def.title.split("·")[1].trim(),
         inputs: describeInputs(def, vals),
         sections: sections
@@ -1549,10 +1550,10 @@
       var tone = primary.power ? primary.power.tone : "gold";
       html += '<section class="plan-world">'
         + '<div class="plan-world__top"><div>'
-        + '<p class="plan-world__tag">' + esc(wld.tag) + '</p>'
+        + '<p class="plan-world__tag">' + esc(wld.tag) + ' · ' + esc(wld.category) + '</p>'
         + '<p class="plan-world__name">' + esc(wld.name) + '</p></div>'
         + '<span class="plan-world__score">' + esc(primary.stat || (primary.score + "%")) + '</span></div>'
-        + '<div class="plan-bar"><div class="plan-bar__fill' + toneClass(tone) + '" style="width:' + p + '%"></div></div>';
+        + '<div class="plan-bar"><span class="plan-bar__label">Power</span><div class="plan-bar__track"><div class="plan-bar__fill' + toneClass(tone) + '" style="width:' + p + '%"></div></div></div>';
 
       html += '<ul class="plan-world__inputs">';
       wld.inputs.forEach(function (r) {

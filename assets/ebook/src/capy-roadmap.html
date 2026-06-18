@@ -77,6 +77,17 @@
   .folio b { font-weight: 700; color: var(--gold-deep); letter-spacing: .1em; }
 
   .content { padding: 18mm 24mm 24mm; height: 100%; display: flex; flex-direction: column; }
+  .summary {
+    text-align: center;
+    padding: 5mm 6mm 6mm;
+    margin-bottom: 6mm;
+    border: 1px solid rgba(201,161,74,.35);
+    border-radius: 3mm;
+    background: rgba(201,161,74,.08);
+  }
+  .summary__label { font-size: 8pt; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; color: var(--gold-deep); }
+  .summary__score { font-family: var(--serif); font-size: 32pt; font-weight: 500; color: var(--ink); line-height: 1; margin: 2mm 0 1mm; }
+  .summary__intro { font-size: 9.5pt; line-height: 1.5; color: var(--muted); max-width: 120mm; margin: 0 auto; }
   .content-head { margin-bottom: 5mm; }
   .content-head h2 { font-family: var(--serif); font-weight: 450; font-size: 24pt; line-height: 1.1; }
   .content-head h2 em { font-style: italic; color: var(--gold-deep); }
@@ -90,7 +101,9 @@
     flex-shrink: 0; font-size: 10pt; font-weight: 700; letter-spacing: .08em;
     background: rgba(201,161,74,.12); color: var(--ink); padding: 2.2mm 4.5mm; border-radius: 2mm;
   }
-  .world__bar { margin-top: 4mm; height: 4mm; background: rgba(11,31,26,.1); border-radius: 2mm; overflow: hidden; }
+  .world__bar { margin-top: 4mm; display: flex; align-items: center; gap: 3mm; }
+  .world__bar-label { font-size: 7.5pt; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; color: var(--gold-deep); white-space: nowrap; }
+  .world__bar-track { flex: 1; height: 4mm; background: rgba(11,31,26,.1); border-radius: 2mm; overflow: hidden; }
   .world__bar-fill { height: 100%; border-radius: 2mm; }
   .world__bar-fill.is-green { background: var(--green-bar); }
   .world__bar-fill.is-red { background: var(--red-bar); }
@@ -145,7 +158,7 @@ function getReport() {
   }
 }
 
-function renderWorldPage(report, wld, pageNum, total) {
+function renderWorldPage(report, wld, pageNum, total, isFirst, isLast) {
   var primary = wld.sections[0].st;
   var pct = clamp(Math.round((primary.power && primary.power.pct) || primary.score || 0), 0, 100);
   var tone = primary.power ? primary.power.tone : "gold";
@@ -153,15 +166,24 @@ function renderWorldPage(report, wld, pageNum, total) {
 
   var html = '<div class="page page--cream">'
     + '<div class="frame"></div>'
-    + '<div class="content">'
-    + '<div class="content-head">'
+    + '<div class="content">';
+
+  if (isFirst) {
+    html += '<div class="summary">'
+      + '<p class="summary__label">Overall Readiness</p>'
+      + '<p class="summary__score">' + esc(report.overall) + '%</p>'
+      + '<p class="summary__intro">A snapshot of your four-world money quest with Capy. Bring this to your session with Sofina.</p>'
+      + '</div>';
+  }
+
+  html += '<div class="content-head">'
     + '<div class="world__top" style="margin-bottom:2mm;">'
-    + '<div><div class="eyebrow"><span></span>' + esc(wld.tag) + '<span></span></div>'
+    + '<div><div class="eyebrow"><span></span>' + esc(wld.tag) + ' · ' + esc(wld.category) + '<span></span></div>'
     + '<h2>' + esc(wld.name) + '</h2></div>'
     + '<span class="world__score">' + statText + '</span></div>'
     + '</div>'
     + '<div class="world">'
-    + '<div class="world__bar"><div class="world__bar-fill ' + toneClass(tone) + '" style="width:' + pct + '%"></div></div>';
+    + '<div class="world__bar"><span class="world__bar-label">Power</span><div class="world__bar-track"><div class="world__bar-fill ' + toneClass(tone) + '" style="width:' + pct + '%"></div></div></div>';
 
   if (wld.inputs && wld.inputs.length) {
     html += '<div class="inputs">';
@@ -180,10 +202,12 @@ function renderWorldPage(report, wld, pageNum, total) {
     html += '</div>';
   });
 
-  html += '<div class="tipbox">'
-    + '<p class="tipbox__label">Next Step</p>'
-    + '<p>Bring this roadmap to your session with Sofina and turn these numbers into a clear, personalised action plan.</p>'
-    + '</div>';
+  if (isLast) {
+    html += '<div class="tipbox">'
+      + '<p class="tipbox__label">Next Step</p>'
+      + '<p>Bring this roadmap to your session with Sofina and turn these numbers into a clear, personalised action plan.</p>'
+      + '</div>';
+  }
 
   html += '</div></div>'
     + '<div class="folio"><b>Capy\'s Quest</b> · Your Money Journey Roadmap · ' + pageNum + ' / ' + total + '</div>'
@@ -202,7 +226,7 @@ function render() {
   var totalPages = report.worlds.length;
   var html = '';
   report.worlds.forEach(function(wld, i) {
-    html += renderWorldPage(report, wld, i + 1, totalPages);
+    html += renderWorldPage(report, wld, i + 1, totalPages, i === 0, i === totalPages - 1);
   });
   app.innerHTML = html;
 }
