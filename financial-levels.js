@@ -1387,7 +1387,7 @@
   var lastSay = "";
   engine.on("level", function (e) {
     var i = engine.order.indexOf(e.id);
-    tagEl.textContent = "World 1-" + (i + 1);
+    tagEl.textContent = "World 1-" + (i + 1) + " · " + e.def.name;
     titleEl.textContent = e.def.title.split("·")[1].trim();
     // phased levels always open on PHASE 1 (with its own panel title)
     if (e.def.phases) {
@@ -1520,6 +1520,7 @@
       totalScore += sections[0].st.score || 0;
       worlds.push({
         tag: "World 1-" + (i + 1),
+        category: def.name,
         name: def.title.split("·")[1].trim(),
         inputs: describeInputs(def, vals),
         sections: sections
@@ -1549,10 +1550,10 @@
       var tone = primary.power ? primary.power.tone : "gold";
       html += '<section class="plan-world">'
         + '<div class="plan-world__top"><div>'
-        + '<p class="plan-world__tag">' + esc(wld.tag) + '</p>'
+        + '<p class="plan-world__tag">' + esc(wld.tag) + ' · ' + esc(wld.category) + '</p>'
         + '<p class="plan-world__name">' + esc(wld.name) + '</p></div>'
         + '<span class="plan-world__score">' + esc(primary.stat || (primary.score + "%")) + '</span></div>'
-        + '<div class="plan-bar"><div class="plan-bar__fill' + toneClass(tone) + '" style="width:' + p + '%"></div></div>';
+        + '<div class="plan-bar"><span class="plan-bar__label">Power</span><div class="plan-bar__track"><div class="plan-bar__fill' + toneClass(tone) + '" style="width:' + p + '%"></div></div><span class="plan-bar__pct">' + p + '%</span></div>';
 
       html += '<ul class="plan-world__inputs">';
       wld.inputs.forEach(function (r) {
@@ -1740,183 +1741,55 @@
     });
   }
 
-  /* ---------- PDF download (html2canvas + jsPDF, lazy-loaded) ----------
-     The PDF body is a pixel-faithful capture of the exact roadmap the user
-     sees on screen (#planReport): same fonts, colours, bars and cards. The
-     capture is sliced across A4 pages at world-card boundaries so nothing
-     gets cut mid-card. A small branded header/footer is added per page.
-     Both libraries are only fetched the first time the button is clicked. */
+  /* ---------- PDF download (Chrome print-to-PDF) ----------
+     We render the report in a dedicated A4 HTML page that re-uses the same
+     self-hosted Fraunces / Instrument Sans fonts and colour system as the
+     ebook. Opening it with ?print=1 auto-triggers the browser print dialog,
+     so the user saves a vector, selectable-text PDF that matches the ebook
+     brand exactly. */
 
-  var JSPDF_CDN = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
-  var H2C_CDN   = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
-
-  function loadScript(src, onload, onerror) {
-    var s = document.createElement("script");
-    s.src = src;
-    s.onload = onload;
-    s.onerror = onerror;
-    document.head.appendChild(s);
-  }
+  var ROADMAP_TEMPLATE = "assets/capy-roadmap/capy-roadmap.html";
 
   function resetPrintBtn() {
     if (planPrintBtn) { planPrintBtn.disabled = false; planPrintBtn.textContent = "Download PDF"; }
   }
 
-  // Lazy-load jsPDF, then html2canvas, then run cb().
-  function loadPdfLibs(cb) {
-    function haveJsPDF() { return window.jspdf && window.jspdf.jsPDF; }
-    function haveH2C()   { return !!window.html2canvas; }
-    function fail() {
-      resetPrintBtn();
-      setStatus("Couldn't load the PDF tools — check your connection and try again.", "err");
-    }
-    function ensureH2C() {
-      if (haveH2C()) { cb(); return; }
-      loadScript(H2C_CDN, cb, fail);
-    }
-    if (haveJsPDF()) { ensureH2C(); return; }
-    loadScript(JSPDF_CDN, ensureH2C, fail);
-  }
-
   function downloadRoadmapPDF(report) {
-    var node = document.getElementById("planReport");
-    // The modal must be open & rendered for an accurate on-screen capture.
-    if (!node || !node.innerHTML.trim()) {
-      node = document.getElementById("planReport");
-      if (node) node.innerHTML = renderReportHTML(report || collectReport());
-    }
-    if (!node) { resetPrintBtn(); return; }
+    var json = JSON.stringify(report);
+    var hash = btoa(encodeURIComponent(json));
+    var url = new URL(ROADMAP_TEMPLATE, window.location.href);
+    url.searchParams.set("download", "1");
+    url.hash = hash;
 
-    var JsPDF = window.jspdf.jsPDF;
-    var doc = new JsPDF({ unit: "mm", format: "a4", compress: true });
-    var PW = doc.internal.pageSize.getWidth();   // 210
-    var PH = doc.internal.pageSize.getHeight();  // 297
-    var ML = 12, MR = 12, MB = 12;
-    var CW = PW - ML - MR;                        // 186
-    var HEADER_H = 24;                            // branded header band (mm)
-    var BODY_TOP = HEADER_H + 6;                  // body starts below header
+    var iframe = document.createElement("iframe");
+    iframe.src = url.toString();
+    iframe.style.cssText = "position:absolute;width:1px;height:1px;left:-9999px;top:-9999px;border:0;";
+    iframe.setAttribute("aria-hidden", "true");
 
-    var INK     = [11,  31,  26];
-    var GOLD    = [201, 161, 74];
-    var CREAM   = [242, 236, 224];
-    var MUTED   = [120, 118, 115];
-    var PAGE_BG = [253, 253, 248];                // = dialog bg (#fffdf8)
-
-    function tc(c) { doc.setTextColor(c[0], c[1], c[2]); }
-    function fc(c) { doc.setFillColor(c[0], c[1], c[2]); }
-
-    function paintPageBg() { fc(PAGE_BG); doc.rect(0, 0, PW, PH, "F"); }
-
-    // Branded header band, drawn on every page so the document stays consistent.
-    function drawHeader() {
-      fc(INK);  doc.rect(0, 0, PW, HEADER_H, "F");
-      fc(GOLD); doc.rect(0, HEADER_H, PW, 1, "F");
-      tc(GOLD); doc.setFont("helvetica", "normal"); doc.setFontSize(7);
-      doc.text("CAPY'S QUEST  by  SOFINA JOHARI", ML, 9);
-      tc(CREAM); doc.setFont("helvetica", "bold"); doc.setFontSize(14);
-      doc.text("YOUR MONEY JOURNEY ROADMAP", ML, 18);
-      var dateStr = new Date().toLocaleDateString("en-MY",
-        { day: "numeric", month: "long", year: "numeric" });
-      tc(GOLD); doc.setFont("helvetica", "normal"); doc.setFontSize(7);
-      doc.text(dateStr, PW - MR, 9, { align: "right" });
-    }
-
-    function finish() {
-      // page-number footers
-      var nPages = doc.internal.getNumberOfPages();
-      for (var p = 1; p <= nPages; p++) {
-        doc.setPage(p);
-        tc(MUTED); doc.setFont("helvetica", "normal"); doc.setFontSize(7);
-        doc.text(String(p) + " / " + String(nPages), PW / 2, PH - 6, { align: "center" });
-      }
-      var blob = doc.output("blob");
-      var a    = document.createElement("a");
-      a.href   = URL.createObjectURL(blob);
-      a.download = "capy-roadmap-sofina.pdf";
-      a.style.display = "none";
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(function () { URL.revokeObjectURL(a.href); document.body.removeChild(a); }, 1000);
+    function cleanup() {
+      if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
       resetPrintBtn();
-      setStatus("", null);
     }
 
-    function fail() {
-      resetPrintBtn();
-      setStatus("Couldn't build the PDF — please try again.", "err");
-    }
+    var timeout = setTimeout(function() {
+      cleanup();
+      setStatus("PDF download is taking longer than expected — please try again.", "err");
+    }, 30000);
 
-    // Wait for web fonts (the pixel font) so the capture matches the screen.
-    var fontsReady = (document.fonts && document.fonts.ready)
-      ? document.fonts.ready : Promise.resolve();
-
-    fontsReady.then(function () {
-      return window.html2canvas(node, {
-        backgroundColor: "#fffdf8",
-        scale: Math.min(2.5, (window.devicePixelRatio || 1) * 1.5),
-        useCORS: true,
-        logging: false,
-        scrollX: 0,
-        scrollY: -window.scrollY
-      });
-    }).then(function (canvas) {
-      var reportW = node.getBoundingClientRect().width;   // CSS px
-      var pxPerCss = canvas.width / reportW;               // capture px per CSS px
-      var mmPerCss = CW / reportW;                         // PDF mm per CSS px
-      var totalCss = canvas.height / pxPerCss;
-
-      // Break candidates: bottom edge of each card, so pages never cut a card.
-      var rTop = node.getBoundingClientRect().top + window.scrollY;
-      var blocks = node.querySelectorAll(".plan-report__head, .plan-world");
-      var breaks = [];
-      Array.prototype.forEach.call(blocks, function (b) {
-        var r = b.getBoundingClientRect();
-        breaks.push((r.top + window.scrollY - rTop) + r.height);
-      });
-      if (!breaks.length || breaks[breaks.length - 1] < totalCss - 1) breaks.push(totalCss);
-
-      var usableMM  = PH - BODY_TOP - MB;
-      var usableCss = usableMM / mmPerCss;                 // body height per page in CSS px
-
-      var startCss = 0;
-      var first = true;
-      var guard = 0;
-      while (startCss < totalCss - 0.5 && guard++ < 200) {
-        var limit = startCss + usableCss;
-        // largest card boundary that fits on this page
-        var endCss = -1;
-        for (var i = 0; i < breaks.length; i++) {
-          if (breaks[i] > startCss + 1 && breaks[i] <= limit + 0.5) endCss = breaks[i];
-        }
-        // a single card taller than one page → hard slice
-        if (endCss < 0) endCss = Math.min(limit, totalCss);
-        endCss = Math.min(endCss, totalCss);
-
-        var sY = Math.max(0, Math.round(startCss * pxPerCss));
-        var sH = Math.min(canvas.height - sY, Math.round((endCss - startCss) * pxPerCss));
-        if (sH <= 0) break;
-
-        var slice = document.createElement("canvas");
-        slice.width  = canvas.width;
-        slice.height = sH;
-        var ctx = slice.getContext("2d");
-        ctx.fillStyle = "#fffdf8";
-        ctx.fillRect(0, 0, slice.width, slice.height);
-        ctx.drawImage(canvas, 0, sY, canvas.width, sH, 0, 0, canvas.width, sH);
-        var img = slice.toDataURL("image/jpeg", 0.92);
-
-        if (!first) doc.addPage();
-        paintPageBg();
-        drawHeader();
-        var hMM = (sH / pxPerCss) * mmPerCss;
-        doc.addImage(img, "JPEG", ML, BODY_TOP, CW, hMM);
-
-        first = false;
-        startCss = endCss;
+    function onMessage(e) {
+      if (!e.data || e.data.type !== "capy-pdf-download") return;
+      clearTimeout(timeout);
+      window.removeEventListener("message", onMessage);
+      cleanup();
+      if (e.data.ok) {
+        setStatus("Roadmap downloaded.", "ok");
+      } else {
+        setStatus("PDF download failed — please try again.", "err");
       }
+    }
 
-      finish();
-    }).catch(fail);
+    window.addEventListener("message", onMessage);
+    document.body.appendChild(iframe);
   }
 
   if (planBtn) planBtn.addEventListener("click", openPlan);
@@ -1925,8 +1798,8 @@
   if (planPrintBtn) planPrintBtn.addEventListener("click", function () {
     if (!currentReport) currentReport = collectReport();
     planPrintBtn.disabled = true;
-    planPrintBtn.textContent = "Generating...";
-    loadPdfLibs(function () { downloadRoadmapPDF(currentReport); });
+    planPrintBtn.textContent = "Generating PDF...";
+    downloadRoadmapPDF(currentReport);
   });
   if (planSendBtn) planSendBtn.addEventListener("click", sendToSofina);
 

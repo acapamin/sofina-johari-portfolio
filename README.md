@@ -90,6 +90,12 @@ The website features three lead-capture forms:
 - **Files:** `financial-levels.js` (modal wiring + `sendToSofina()`), plan modal in `index.html`, `netlify/functions/send-roadmap.mjs` (Resend email)
 - **Config:** requires only the `RESEND_API_KEY` env var; the recipient (Sofina's inbox) and sender (`roadmap@eazylaundry.biz`, a verified domain) are hardcoded in `send-roadmap.mjs` — see `.env.example`
 
+### 4. **Capy's Quest Roadmap — "Download PDF"**
+- **Purpose:** Generates a downloadable A4 PDF of the user's four-world money roadmap
+- **Output:** One page per world, ebook-branded with Fraunces/Instrument Sans typography, dark-green/cream/gold palette, labelled Power bars with percentage values, and toolkit category tags (Cashflow, Protection, Future, Legacy)
+- **Flow:** `financial-levels.js` passes the report to `assets/capy-roadmap/capy-roadmap.html`, which captures each page with html2canvas, assembles a PDF via jsPDF, and auto-downloads it
+- **Files:** `financial-levels.js`, `assets/capy-roadmap/capy-roadmap.html`, shared ebook/Capy fonts in `assets/fonts/`
+
 **See [FORMS_DOCUMENTATION.md](FORMS_DOCUMENTATION.md) for complete field mappings, entry IDs, and validation rules.**
 
 ---
