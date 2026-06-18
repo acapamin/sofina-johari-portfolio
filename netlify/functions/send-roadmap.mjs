@@ -5,11 +5,11 @@
    Env (set in Netlify → Site configuration → Environment variables):
      RESEND_API_KEY  (required)  — your Resend API key
      RESEND_TO       (optional)  — recipient; defaults to Sofina's inbox
-     RESEND_FROM     (optional)  — verified sender; defaults to Resend's
-                                   shared onboarding@resend.dev test sender */
+     RESEND_FROM     (optional)  — sender; defaults to the verified
+                                   eazylaundry.biz address below */
 
 const DEFAULT_TO = "sofinajohari.uwealth@gmail.com";
-const DEFAULT_FROM = "Capy's Quest <onboarding@resend.dev>";
+const DEFAULT_FROM = "Capy's Quest <roadmap@eazylaundry.biz>";
 const MAX = { short: 200, remark: 2000, report: 20000 };
 
 function jsonResponse(status, payload) {

@@ -125,14 +125,14 @@ The website uses three forms with custom modal UI:
 ### Email delivery setup
 Email delivery is handled entirely by the function — **no Netlify Forms / dashboard notification is involved.** One-time setup:
 
-1. **Resend API key** — create one at https://resend.com/api-keys.
+1. **Resend API key** — create one at https://resend.com/api-keys, using the account that owns the verified `eazylaundry.biz` domain.
 2. **Netlify env var** — in **app.netlify.com → `sofina-johari-portfolio` → Site configuration → Environment variables**, add:
    - `RESEND_API_KEY` (required) = your Resend key — mark as **secret**.
    - `RESEND_TO` (optional) = recipient; defaults to `sofinajohari.uwealth@gmail.com`.
-   - `RESEND_FROM` (optional) = sender; defaults to `Capy's Quest <onboarding@resend.dev>`.
+   - `RESEND_FROM` (optional) = sender; **defaults in code** to `Capy's Quest <roadmap@eazylaundry.biz>`, so you normally don't need to set this.
 3. **Redeploy** so the function picks up the env vars.
 
-> ⚠️ **Sender / recipient limits with the default sender.** Resend's shared `onboarding@resend.dev` sender can only deliver to the **email address that owns the Resend account**. To email Sofina at an arbitrary address, **verify a domain** at https://resend.com/domains and set `RESEND_FROM` to an address on that domain (e.g. `roadmap@yourdomain.com`). Until then, test by setting `RESEND_TO` to the Resend account owner's email.
+> ✅ **Sender uses a verified domain.** The default sender `roadmap@eazylaundry.biz` is on a domain verified in Resend, so the function delivers to Sofina's gmail (or any address) directly — no per-recipient restriction. The `RESEND_API_KEY` must belong to the same Resend account that owns the `eazylaundry.biz` domain. If you ever switch domains, verify the new one at https://resend.com/domains and set `RESEND_FROM` to an address on it. The `roadmap@` mailbox does not need to exist; `reply_to` is set to the visitor's email so Sofina's replies reach them.
 
 ### Download PDF
 - File: `financial-levels.js` — `downloadRoadmapPDF()`, lazy-loads **html2canvas** + **jsPDF** from cdnjs on first click.
