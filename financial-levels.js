@@ -265,7 +265,7 @@
     scene: {
       draw: function (g) {
         var ctx = g.ctx, w = g.w, h = g.h;
-        var groundY = h - 14;
+        var groundY = h - 18;
         stars(g, 14, h * 0.4);
 
         // "?" pay block
@@ -278,16 +278,17 @@
         var totalSpend = (g.values.fixed || 0) + (g.values.debt || 0) + (g.values.other || 0);
         var spendCx = w * 0.32, saveCx = w * 0.68;
 
-        // spending pipe (money down the drain); labels hug the left
-        // edge so the coin arc never crosses the text
-        var pw = 18, pipeTop = groundY - 26;
-        pipe(g, spendCx, pipeTop, pw, groundY, "#2e7d4f", "#1b4a2f", "#5cb87a");
-        ptext(g, "SPEND", 3, pipeTop - 12, TEAL, "left");
-        ptext(g, rmShort(totalSpend), 3, pipeTop - 2, TEAL, "left");
+        // spending pipe (money down the drain); labels hug the left edge
+        // gap of 4px between the two pipes where capy stands
+        var pw = 16, pipeGap = 4, pipeTop = groundY - 26;
+        pipe(g, spendCx - pipeGap / 2, pipeTop, pw, groundY, "#2e7d4f", "#1b4a2f", "#5cb87a");
+        ptext(g, "SPEND", 3, pipeTop - 18, TEAL, "left");
+        ptext(g, rmShort(totalSpend), 3, pipeTop - 8, TEAL, "left");
 
         // savings vault filling with coin rows; labels hug the right edge
+        // moved down to avoid overlapping with HUD message box
         var vw = 34, vh = 28;
-        var vx = Math.round(saveCx - vw / 2), vTop = groundY - vh;
+        var vx = Math.round(saveCx - vw / 2), vTop = groundY - vh - 8;
         ctx.fillStyle = "#0a1a14";
         ctx.fillRect(vx, vTop, vw, vh);
         var fillRows = Math.floor(clamp(rate / 0.4, 0, 1) * 4);
@@ -297,8 +298,8 @@
         ctx.fillRect(vx, groundY - 2, vw, 2);
         ctx.fillStyle = GOLD;
         ctx.fillRect(vx - 1, vTop, 4, 2); ctx.fillRect(vx + vw - 3, vTop, 4, 2);
-        ptext(g, "SAVE", w - 3, vTop - 12, GOLD, "right");
-        ptext(g, rmShort(g.m.savings), w - 3, vTop - 2, GOLD, "right");
+        ptext(g, "SAVE", w - 3, vTop - 18, GOLD, "right");
+        ptext(g, rmShort(g.m.savings), w - 3, vTop - 8, GOLD, "right");
 
         // coins spurting from the block (saved coins drop into the
         // left half of the vault, clear of the right-edge labels)
@@ -436,9 +437,9 @@
       });
     }
 
-    // ---- medical-card status: gold card when insured, flashing alert at RM 0 ----
+    // ---- medical-card status: gold card when insured, flashing alert below HUD ----
     if (!noCard) {
-      var kx = Math.round(w * 0.1), ky = 12;
+      var kx = Math.round(w * 0.1), ky = Math.round(h * 0.52);
       ctx.fillStyle = GOLD;
       ctx.fillRect(kx, ky, 16, 11);
       ctx.fillStyle = GOLD_DARK;
@@ -450,7 +451,7 @@
       var blink = g.reduced || (((g.t * 3) | 0) % 2 === 0);
       if (blink) {
         var aw = Math.min(w - 10, 128), ah = 22;
-        var axx = Math.round(w / 2 - aw / 2), ayy = Math.round(h * 0.12);
+        var axx = Math.round(w / 2 - aw / 2), ayy = Math.round(h * 0.52);
         ctx.fillStyle = "rgba(217,106,74,0.94)";
         ctx.fillRect(axx, ayy, aw, ah);
         ctx.fillStyle = "#2a0d08";
@@ -581,7 +582,7 @@
     },
     scene: {
       draw: function (g) {
-        var groundY = g.h - 14;
+        var groundY = g.h - 18;
         stars(g, 12, g.h * 0.35);
         // both defences, always — the form below decides nothing here
         drawCapyDefenses(g, groundY);
@@ -665,7 +666,7 @@
     scene: {
       draw: function (g) {
         var ctx = g.ctx, w = g.w, h = g.h;
-        var groundY = h - 12;
+        var groundY = h - 18;
         var SCALE = 1.3;
         var ratio = clamp(g.m.ratio, 0, SCALE);
         stars(g, 14, h * 0.4);
@@ -858,7 +859,7 @@
     scene: {
       draw: function (g) {
         var ctx = g.ctx, w = g.w, h = g.h;
-        var groundY = h - 14;                  // floor line matches World 1-1
+        var groundY = h - 18;
         var v = g.values;
         var epf = !!v.epf;                     // nominees → a stream of love
         var hibah = !!v.hibah;                 // Hibah → an instant wealth conduit
@@ -1080,16 +1081,18 @@
         }
 
         // --- corner status labels (small pixel scale), clear of the centre
-        // and tucked just under the HUD bubble / stat chip ------------------
+        // frozen coins text positioned lower to avoid HUD overlap
+        // coins passed positioned above capy at max number for visibility
         if (!will) {
-          // top-left corner, mapping to the frozen stash on the left below
-          ptext(g, "Frozen Coins", 3, Math.round(h * 0.34), "rgba(206,234,255,0.95)", "left", 6);
+          // bottom-left corner, two lines: frozen / coins
+          var fy = Math.round(groundY - 24);
+          ptext(g, "Frozen", 3, fy, "rgba(206,234,255,0.95)", "left", 6);
+          ptext(g, "Coins", 3, fy + 8, "rgba(206,234,255,0.95)", "left", 6);
         } else {
-          // top-right corner, sitting above the house + the shining coin pile.
-          // kept short ("passed") so it clears the wider 2-line speech bubble
-          var ry1 = Math.round(h * 0.28);
-          ptext(g, "Coins passed", w - 3, ry1, "rgba(246,231,189,0.95)", "right", 6);
-          ptext(g, "to loved ones", w - 3, ry1 + 8, "rgba(246,231,189,0.95)", "right", 6);
+          // top-centre, above capy for max visibility, especially when stacked loved ones
+          var cy = capH * 1.2;
+          ptext(g, "Coins passed", w - 3, cy - 16, "rgba(246,231,189,0.95)", "right", 6);
+          ptext(g, "to loved ones", w - 3, cy - 8, "rgba(246,231,189,0.95)", "right", 6);
         }
 
         // --- EPF: a continuous stream of love hearts to the loved ones ------
