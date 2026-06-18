@@ -1662,6 +1662,22 @@
     }).join("&");
   }
 
+  function clearFieldError(el) {
+    if (!el) return;
+    el.removeAttribute("aria-invalid");
+    el.classList.remove("is-err");
+  }
+
+  function markFieldError(el) {
+    if (!el) return;
+    el.setAttribute("aria-invalid", "true");
+    el.classList.add("is-err");
+    el.addEventListener("input", function onInput() {
+      clearFieldError(el);
+      el.removeEventListener("input", onInput);
+    });
+  }
+
   function sendToSofina() {
     if (!currentReport) currentReport = collectReport();
 
@@ -1675,7 +1691,14 @@
     var userWhatsapp = whatsappEl ? whatsappEl.value.trim() : "";
     var userSubscribe = subscribeEl ? subscribeEl.value : "";
 
-    if (!userName || !userEmail || !userWhatsapp) {
+    var missing = [];
+    if (!userName) missing.push(nameEl);
+    if (!userEmail) missing.push(emailEl);
+    if (!userWhatsapp) missing.push(whatsappEl);
+
+    if (missing.length) {
+      missing.forEach(markFieldError);
+      missing[0].focus();
       setStatus("Please fill in your name, email, and WhatsApp number.", "err");
       return;
     }

@@ -3120,6 +3120,7 @@ ul { list-style: none; }
 }
 .plan-send__field-input::placeholder { color: var(--text-muted); opacity: 0.7; }
 .plan-send__field-input:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; border-color: var(--gold); }
+.plan-send__field-input[aria-invalid="true"],.plan-send__field-input.is-err { border-color: var(--rust, #d96a4a); background: #fbeae4; }
 .plan-send__radio { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.83rem; color: var(--text); margin-top: 0.15rem; }
 .plan-send__radio input[type="radio"] { width: 16px; height: 16px; accent-color: var(--gold); flex-shrink: 0; }
 .plan-send__label {
