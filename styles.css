@@ -902,6 +902,8 @@ ul { list-style: none; }
 .journey__controls--phased .journey__group-head { padding-bottom: 0.2rem; }
 .journey__controls--phased .journey__toggle { gap: 0.5rem; }
 .journey__controls--phased .journey__toggle-track { width: 36px; height: 20px; }
+.journey__controls--phased .journey__toggle-track::after { width: 12px; height: 12px; }
+.journey__controls--phased .journey__toggle input:checked + .journey__toggle-track::after { transform: translateX(16px); }
 .journey__controls--phased .journey__toggle .journey__control-label {
   font-size: 0.72rem;
   line-height: 1.2;
@@ -3087,6 +3089,39 @@ ul { list-style: none; }
   padding: 0.8rem 0.9rem;
   margin: 0.4rem 0 0.6rem;
 }
+.plan-send__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid var(--border);
+}
+.plan-send__fields-heading {
+  font-family: var(--font-pixel);
+  font-size: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--gold-dark, #7a5a1e);
+  margin-bottom: 0.1rem;
+}
+.plan-send__field { display: flex; flex-direction: column; gap: 0.28rem; }
+.plan-send__field-label { font-size: 0.82rem; font-weight: 600; color: var(--ink); }
+.plan-send__field-label span { color: var(--rust, #d96a4a); font-weight: 400; margin-left: 0.1rem; }
+.plan-send__field-input {
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  padding: 0.48rem 0.6rem;
+  background: #fffdf8;
+  border: 2px solid var(--ink);
+  border-radius: 0;
+  color: var(--ink);
+  appearance: none;
+}
+.plan-send__field-input::placeholder { color: var(--text-muted); opacity: 0.7; }
+.plan-send__field-input:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; border-color: var(--gold); }
+.plan-send__radio { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.83rem; color: var(--text); margin-top: 0.15rem; }
+.plan-send__radio input[type="radio"] { width: 16px; height: 16px; accent-color: var(--gold); flex-shrink: 0; }
 .plan-send__label {
   display: block;
   font-family: var(--font-pixel);

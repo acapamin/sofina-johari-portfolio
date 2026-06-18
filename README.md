@@ -63,11 +63,11 @@ sofina-johari-portfolio/
 
 ## 📝 Forms Overview
 
-The website features two lead-capture forms, both with beautiful custom UI and Google Forms integration:
+The website features three lead-capture forms:
 
 ### 1. **Ebook Gate Form** 
 - **Purpose:** Lead magnet for free financial planning ebook
-- **Fields:** Name, Email, Whatsapp Number, Subscribe to Broadcast
+- **Fields:** Name, Email, WhatsApp Number, Subscribe to Broadcast
 - **Submission:** Triggers PDF download + thank you message
 - **Google Form ID:** `1FAIpQLSdndj7iJ9gYYzYi4qv_tFy7LtqCPICpTmDAcXtC3BbSuAza4w`
 - **Files:** `ebook-gate.js`, ebook modal in `index.html`
@@ -77,6 +77,13 @@ The website features two lead-capture forms, both with beautiful custom UI and G
 - **Fields:** 11 fields covering financial profile, goals, family status, income, investments, takaful, coverage, urgency, readiness, and additional notes
 - **Google Form ID:** `1FAIpQLSfFRnvYgJo-sTMFf8FpwbL0D-wvC45C76EXq3Z62_iNov00sg`
 - **Files:** `contact-form.js`, contact modal in `index.html`
+
+### 3. **Capy's Quest Roadmap — "Send to Sofina"**
+- **Purpose:** Sends the user's Capy's Quest financial roadmap to Sofina with contact details
+- **Fields:** Name, Email, WhatsApp Number, Subscribe to Broadcast, optional note, and the full multi-world financial report
+- **Submission:** Netlify Forms — sent as `capy-roadmap` form data
+- **Validation:** Name, email, and WhatsApp are required before submission
+- **Files:** `financial-levels.js` (modal wiring + `sendToSofina()`), plan modal in `index.html`
 
 **See [FORMS_DOCUMENTATION.md](FORMS_DOCUMENTATION.md) for complete field mappings, entry IDs, and validation rules.**
 
@@ -128,7 +135,7 @@ The website features two lead-capture forms, both with beautiful custom UI and G
 ## 📋 Form Technical Details
 
 ### Submission Method
-Both forms use Google Forms API with `fetch()` and `mode: 'no-cors'`:
+The Ebook Gate and Contact forms use Google Forms API with `fetch()` and `mode: 'no-cors'`:
 ```javascript
 fetch(formEndpoint, {
   method: "POST",
@@ -143,6 +150,8 @@ This approach:
 - Returns opaque response (data still reaches Google Forms)
 - Reliable for both simple and complex forms
 - No backend server required
+
+The Capy's Quest Roadmap uses **Netlify Forms** (standard POST to `/`) with all contact details and the full text report included in the payload. Netlify then emails the submission to Sofina.
 
 ### Validation
 - Client-side validation before submission

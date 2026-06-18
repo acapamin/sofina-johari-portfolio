@@ -468,8 +468,8 @@
     // two progressive input forms, toggled by one retro pixel button. The
     // canvas always shows both defences; only the form + title swap.
     phases: [
-      { title: "The Brick Shield", cta: "Check Health Protection &nbsp;&rarr;" },
-      { title: "The Force Field", cta: "&larr;&nbsp; Back to Life Cover" }
+      { title: "The Brick Shield", cta: "Check Health Protection" },
+      { title: "The Force Field", cta: "Back to Life Cover" }
     ],
     inputs: [
       { key: "income", group: "PHASE 1: LIFE PROTECTION", phase: 0, label: "Monthly income", sub: "(Synced with World 1-1)", min: 1000, max: 30000, step: 100, value: 5000, fmt: "money" },
@@ -1573,29 +1573,36 @@
   }
 
   // ---- render the report as plain text (form payload + mailto body) ----
-  function renderReportText(report, remark) {
+  function renderReportText(report, remark, userName, userEmail, userWhatsapp, userSubscribe) {
     var L = [];
-    L.push("CAPY'S MONEY QUEST — ROADMAP");
-    L.push("Overall readiness: " + report.overall + "%");
-    L.push("================================================");
+    L.push(“CAPY'S MONEY QUEST — ROADMAP”);
+    L.push(“Overall readiness: “ + report.overall + “%”);
+    L.push(“================================================”);
+    L.push(“”);
+    L.push(“CONTACT DETAILS”);
+    L.push(“Name: “ + (userName || “(not provided)”));
+    L.push(“Email: “ + (userEmail || “(not provided)”));
+    L.push(“WhatsApp: “ + (userWhatsapp || “(not provided)”));
+    L.push(“WhatsApp Broadcast: “ + (userSubscribe || “No”));
+    L.push(“================================================”);
     report.worlds.forEach(function (wld) {
-      L.push("");
-      L.push(wld.tag + " · " + wld.name + "   [" + (wld.sections[0].st.stat || "") + "]");
-      L.push("------------------------------------------------");
-      L.push("Your selections:");
-      wld.inputs.forEach(function (r) { L.push("  • " + r.label + ": " + r.value); });
+      L.push(“”);
+      L.push(wld.tag + “ · “ + wld.name + “   [“ + (wld.sections[0].st.stat || “”) + “]”);
+      L.push(“------------------------------------------------”);
+      L.push(“Your selections:”);
+      wld.inputs.forEach(function (r) { L.push(“  • “ + r.label + “: “ + r.value); });
       wld.sections.forEach(function (sec) {
-        L.push("");
-        if (sec.phaseTitle) L.push("[" + sec.phaseTitle + "]");
+        L.push(“”);
+        if (sec.phaseTitle) L.push(“[“ + sec.phaseTitle + “]”);
         L.push(sec.st.headline);
         L.push(sec.st.coach);
-        L.push("Capy says: “" + sec.st.say + "”");
+        L.push(“Capy says: “” + sec.st.say + “””);
       });
     });
-    L.push("");
-    L.push("================================================");
-    L.push("User remark: " + (remark && remark.trim() ? remark.trim() : "(none)"));
-    return L.join("\n");
+    L.push(“”);
+    L.push(“================================================”);
+    L.push(“User remark: “ + (remark && remark.trim() ? remark.trim() : “(none)”));
+    return L.join(“\n”);
   }
 
   /* ---------- modal plumbing ---------- */
@@ -1626,7 +1633,14 @@
     currentReport = collectReport();
     planReportEl.innerHTML = renderReportHTML(currentReport);
     setStatus("", null);
-    if (planSendBtn) { planSendBtn.disabled = false; planSendBtn.innerHTML = "✉ Send to Sofina"; }
+    if (planSendBtn) { planSendBtn.disabled = false; planSendBtn.textContent = "Send to Sofina"; }
+    ["planName", "planEmail", "planWhatsapp"].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.value = "";
+    });
+    var sub = document.querySelector("input[name='planSubscribe']");
+    if (sub) sub.checked = false;
+    if (planRemarkEl) planRemarkEl.value = "";
     lastFocus = document.activeElement;
     planModal.hidden = false;
     document.body.style.overflow = "hidden";
@@ -1650,13 +1664,33 @@
 
   function sendToSofina() {
     if (!currentReport) currentReport = collectReport();
+
+    var nameEl = document.getElementById("planName");
+    var emailEl = document.getElementById("planEmail");
+    var whatsappEl = document.getElementById("planWhatsapp");
+    var subscribeEl = document.querySelector("input[name='planSubscribe']:checked");
+
+    var userName = nameEl ? nameEl.value.trim() : "";
+    var userEmail = emailEl ? emailEl.value.trim() : "";
+    var userWhatsapp = whatsappEl ? whatsappEl.value.trim() : "";
+    var userSubscribe = subscribeEl ? subscribeEl.value : "";
+
+    if (!userName || !userEmail || !userWhatsapp) {
+      setStatus("Please fill in your name, email, and WhatsApp number.", "err");
+      return;
+    }
+
     var remark = planRemarkEl ? planRemarkEl.value : "";
-    var text = renderReportText(currentReport, remark);
+    var text = renderReportText(currentReport, remark, userName, userEmail, userWhatsapp, userSubscribe);
     planSendBtn.disabled = true;
     setStatus("Sending your roadmap…", null);
 
     var payload = encodeForm({
       "form-name": "capy-roadmap",
+      name: userName,
+      email: userEmail,
+      whatsapp: userWhatsapp,
+      subscribe: userSubscribe || "No",
       readiness: currentReport.overall + "%",
       remark: remark || "(none)",
       report: text
@@ -1668,12 +1702,12 @@
       body: payload
     }).then(function (res) {
       if (!res.ok) throw new Error("bad status " + res.status);
-      setStatus("Sent! Sofina will receive your roadmap. ✓", "ok");
-      planSendBtn.innerHTML = "✓ Sent";
+      setStatus("Sent! Sofina will receive your roadmap.", "ok");
+      planSendBtn.textContent = "Sent";
     }).catch(function () {
       setStatus("Submission failed — check your connection and try again.", "err");
       planSendBtn.disabled = false;
-      planSendBtn.innerHTML = "&#x2709; Send to Sofina";
+      planSendBtn.textContent = "Send to Sofina";
     });
   }
 
@@ -1689,7 +1723,7 @@
     s.src = JSPDF_CDN;
     s.onload = cb;
     s.onerror = function () {
-      if (planPrintBtn) { planPrintBtn.disabled = false; planPrintBtn.textContent = "↓ Download PDF"; }
+      if (planPrintBtn) { planPrintBtn.disabled = false; planPrintBtn.textContent = "Download PDF"; }
     };
     document.head.appendChild(s);
   }
@@ -1940,7 +1974,7 @@
 
     if (planPrintBtn) {
       planPrintBtn.disabled = false;
-      planPrintBtn.textContent = "↓ Download PDF";
+      planPrintBtn.textContent = "Download PDF";
     }
   }
 
@@ -1950,7 +1984,7 @@
   if (planPrintBtn) planPrintBtn.addEventListener("click", function () {
     if (!currentReport) currentReport = collectReport();
     planPrintBtn.disabled = true;
-    planPrintBtn.textContent = "Generating…";
+    planPrintBtn.textContent = "Generating...";
     loadJsPDF(function () { downloadRoadmapPDF(currentReport); });
   });
   if (planSendBtn) planSendBtn.addEventListener("click", sendToSofina);
