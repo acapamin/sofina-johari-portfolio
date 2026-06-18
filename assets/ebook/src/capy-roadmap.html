@@ -43,12 +43,6 @@
     position: relative; overflow: hidden;
     page-break-after: always;
   }
-  .page--dark {
-    background:
-      radial-gradient(120% 55% at 50% 72%, rgba(201,161,74,0.13) 0%, transparent 55%),
-      linear-gradient(165deg, #11302a 0%, #0b1f1a 45%, #0a1c16 100%);
-    color: #f2ece0;
-  }
   .page--cream { background: var(--cream); }
   .page:last-child { page-break-after: auto; }
 
@@ -71,36 +65,16 @@
   .eyebrow span:last-child { background: linear-gradient(to left, transparent, rgba(201,161,74,.45)); }
 
   .folio {
-    position: absolute; bottom: 9mm; left: 20mm; right: 20mm;
-    display: flex; justify-content: space-between; align-items: center;
-    font-size: 7pt; font-weight: 600; letter-spacing: .28em; text-transform: uppercase;
+    position: absolute; bottom: 14mm; left: 24mm; right: 24mm;
+    text-align: center;
+    font-size: 8.5pt; font-weight: 600; letter-spacing: .18em; text-transform: uppercase;
+    color: var(--muted);
   }
-  .page--cream .folio { color: rgba(91,107,101,.75); }
-  .page--dark  .folio { color: rgba(224,201,140,.55); }
+  .folio::before {
+    content: ""; display: block; width: 40mm; height: 1px;
+    background: var(--gold); margin: 0 auto 3mm;
+  }
   .folio b { font-weight: 700; color: var(--gold-deep); letter-spacing: .1em; }
-  .page--dark .folio b { color: var(--gold-soft); }
-
-  .cover-inner { position: relative; height: 100%; display: flex; flex-direction: column; padding: 24mm 26mm; }
-  .cover-motif { margin-top: 10mm; text-align: center; }
-  .cover-motif svg { width: 78mm; height: auto; display: inline-block; }
-  .cover-title {
-    margin-top: auto; font-family: var(--serif); font-weight: 450;
-    font-size: 42pt; line-height: 1.05; letter-spacing: -0.015em; color: #f2ece0;
-  }
-  .cover-title em { font-style: italic; color: var(--gold-soft); }
-  .cover-sub { margin-top: 6mm; font-size: 13pt; letter-spacing: .04em; line-height: 1.55; color: rgba(184,196,190,.88); max-width: 118mm; text-align: justify; }
-  .cover-readiness {
-    margin-top: 14mm; padding: 7mm 8mm; border: 1px solid rgba(201,161,74,.35); border-radius: 3mm;
-    display: inline-flex; align-items: center; gap: 6mm; max-width: 100%;
-  }
-  .cover-readiness__label { font-size: 8pt; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; color: var(--gold-soft); }
-  .cover-readiness__value { font-family: var(--serif); font-size: 32pt; font-weight: 500; color: #f2ece0; line-height: 1; }
-  .cover-footer {
-    margin-top: 12mm; padding-top: 7mm; border-top: 1px solid rgba(201,161,74,.35);
-    display: flex; align-items: flex-end; justify-content: space-between; gap: 8mm;
-  }
-  .cover-author { font-family: var(--serif); font-style: italic; font-size: 16pt; letter-spacing: .05em; color: rgba(224,201,140,.95); }
-  .cover-cred { display: block; margin-top: 2mm; font-style: normal; font-family: var(--sans); font-size: 8pt; font-weight: 600; letter-spacing: .26em; text-transform: uppercase; color: rgba(184,196,190,.6); }
 
   .content { padding: 18mm 24mm 24mm; height: 100%; display: flex; flex-direction: column; }
   .content-head { margin-bottom: 5mm; }
@@ -135,7 +109,7 @@
   .commentary__say { margin-top: 2.5mm; font-family: var(--serif); font-style: italic; font-size: 11pt; color: var(--gold-deep); }
 
   .tipbox {
-    margin-top: auto; background: var(--ink); color: var(--cream); border-radius: 3mm;
+    margin-top: auto; margin-bottom: 8mm; background: var(--ink); color: var(--cream); border-radius: 3mm;
     padding: 5mm 6mm;
   }
   .tipbox__label { font-size: 7.5pt; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; color: var(--gold-soft); margin-bottom: 1.5mm; }
@@ -169,73 +143,6 @@ function getReport() {
     console.error("Failed to load report:", e);
     return null;
   }
-}
-
-function formatDate() {
-  return new Date().toLocaleDateString("en-MY", { day: "numeric", month: "long", year: "numeric" });
-}
-
-function renderCover(report) {
-  return '<div class="page page--dark">'
-    + '<div class="frame"></div>'
-    + '<div class="cover-inner">'
-    + '<div class="eyebrow"><span></span>Capy\'s Quest<span></span></div>'
-    + '<div class="cover-motif">'
-    + '<svg viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">'
-    + '<path d="M15 125 Q 60 20, 100 125 T 185 125" fill="none" stroke="rgba(201,161,74,.45)" stroke-width="1.5"/>'
-    + '<path d="M35 125 Q 70 45, 100 125 T 165 125" fill="none" stroke="rgba(201,161,74,.55)" stroke-width="2"/>'
-    + '<path d="M55 125 Q 80 65, 100 125 T 145 125" fill="none" stroke="rgba(201,161,74,.7)" stroke-width="2.5"/>'
-    + '<path d="M75 125 Q 88 85, 100 125 T 125 125" fill="none" stroke="rgba(201,161,74,.85)" stroke-width="3"/>'
-    + '<circle cx="100" cy="125" r="20" fill="url(#sunGrad)"/>'
-    + '<line x1="15" y1="125" x2="185" y2="125" stroke="rgba(201,161,74,.55)" stroke-width="1"/>'
-    + '<circle cx="35" cy="57" r="2.5" fill="rgba(224,201,140,.7)"/>'
-    + '<circle cx="165" cy="57" r="2.5" fill="rgba(224,201,140,.7)"/>'
-    + '<circle cx="100" cy="20" r="3" fill="rgba(224,201,140,.9)"/>'
-    + '<defs><linearGradient id="sunGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#e0c98c"/><stop offset="100%" stop-color="#c9a14a"/></linearGradient></defs>'
-    + '</svg></div>'
-    + '<h1 class="cover-title">Your Money Journey<br/><em>Roadmap</em></h1>'
-    + '<p class="cover-sub">A snapshot of your four-world money quest with Capy. Bring this to your session with Sofina.</p>'
-    + '<div class="cover-readiness">'
-    + '<span class="cover-readiness__label">Overall Readiness</span>'
-    + '<span class="cover-readiness__value">' + esc(report.overall) + '%</span>'
-    + '</div>'
-    + '<div class="cover-footer">'
-    + '<div><span class="cover-author">Dr. Sofina Johari</span><span class="cover-cred">Licensed Financial Planner · Malaysia</span></div>'
-    + '</div>'
-    + '</div>'
-    + '<div class="folio"><span>Capy\'s Quest · Save File</span><span>' + esc(formatDate()) + '</span></div>'
-    + '</div>';
-}
-
-function renderWorld(wld, idx) {
-  var primary = wld.sections[0].st;
-  var pct = clamp(Math.round((primary.power && primary.power.pct) || primary.score || 0), 0, 100);
-  var tone = primary.power ? primary.power.tone : "gold";
-  var html = '<section class="world">'
-    + '<div class="world__top">'
-    + '<div><p class="world__tag">' + esc(wld.tag) + '</p><h3 class="world__name">' + esc(wld.name) + '</h3></div>'
-    + '<span class="world__score">' + esc(primary.stat || (primary.score + "%")) + '</span></div>'
-    + '<div class="world__bar"><div class="world__bar-fill ' + toneClass(tone) + '" style="width:' + pct + '%"></div></div>';
-
-  if (wld.inputs && wld.inputs.length) {
-    html += '<div class="inputs">';
-    wld.inputs.forEach(function(r) {
-      html += '<div class="input-row"><span>' + esc(r.label) + '</span><b>' + esc(r.value) + '</b></div>';
-    });
-    html += '</div>';
-  }
-
-  wld.sections.forEach(function(sec) {
-    html += '<div class="commentary">';
-    if (sec.phaseTitle) html += '<p class="commentary__phase">' + esc(sec.phaseTitle) + '</p>';
-    html += '<p class="commentary__headline">' + esc(sec.st.headline || "") + '</p>'
-      + '<p class="commentary__coach">' + esc(sec.st.coach || "") + '</p>'
-      + '<p class="commentary__say">“' + esc(sec.st.say || "") + '”</p>';
-    html += '</div>';
-  });
-
-  html += '</section>';
-  return html;
 }
 
 function renderWorldPage(report, wld, pageNum, total) {
@@ -279,7 +186,7 @@ function renderWorldPage(report, wld, pageNum, total) {
     + '</div>';
 
   html += '</div></div>'
-    + '<div class="folio"><span><b>Capy\'s Quest</b> · Sofina Johari</span><span>' + pageNum + ' / ' + total + '</span></div>'
+    + '<div class="folio"><b>Capy\'s Quest</b> · Your Money Journey Roadmap · ' + pageNum + ' / ' + total + '</div>'
     + '</div>';
   return html;
 }
@@ -292,17 +199,83 @@ function render() {
     return;
   }
 
-  var totalPages = 1 + report.worlds.length;
-  var html = renderCover(report);
+  var totalPages = report.worlds.length;
+  var html = '';
   report.worlds.forEach(function(wld, i) {
-    html += renderWorldPage(report, wld, i + 2, totalPages);
+    html += renderWorldPage(report, wld, i + 1, totalPages);
   });
   app.innerHTML = html;
 }
 
 render();
 
-if (window.location.search.indexOf("print=1") !== -1) {
+function loadScript(src) {
+  return new Promise(function(resolve, reject) {
+    var s = document.createElement("script");
+    s.src = src;
+    s.onload = resolve;
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+function downloadAsPdf() {
+  var pages = Array.prototype.slice.call(document.querySelectorAll(".page"));
+  if (!pages.length) return;
+
+  Promise.all([
+    loadScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"),
+    loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js")
+  ]).then(function() {
+    return document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
+  }).then(function() {
+    return Promise.all(pages.map(function(page) {
+      return window.html2canvas(page, {
+        backgroundColor: null,
+        scale: 2,
+        useCORS: true,
+        logging: false
+      });
+    }));
+  }).then(function(canvases) {
+    var JsPDF = window.jspdf.jsPDF;
+    var doc = new JsPDF({ unit: "mm", format: "a4", compress: true });
+    var pw = doc.internal.pageSize.getWidth();
+    var ph = doc.internal.pageSize.getHeight();
+
+    canvases.forEach(function(canvas, i) {
+      if (i > 0) doc.addPage();
+      var img = canvas.toDataURL("image/jpeg", 0.92);
+      doc.addImage(img, "JPEG", 0, 0, pw, ph);
+    });
+
+    var blob = doc.output("blob");
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "capy-roadmap-sofina.pdf";
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function() {
+      URL.revokeObjectURL(a.href);
+      document.body.removeChild(a);
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: "capy-pdf-download", ok: true }, "*");
+      }
+    }, 1000);
+  }).catch(function(err) {
+    console.error("PDF generation failed:", err);
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: "capy-pdf-download", ok: false, error: String(err) }, "*");
+    }
+  });
+}
+
+if (window.location.search.indexOf("download=1") !== -1) {
+  window.addEventListener("load", function() {
+    setTimeout(downloadAsPdf, 600);
+  });
+} else if (window.location.search.indexOf("print=1") !== -1) {
   window.addEventListener("load", function() {
     if (document.fonts && document.fonts.ready) {
       document.fonts.ready.then(function() { setTimeout(function() { window.print(); }, 300); });

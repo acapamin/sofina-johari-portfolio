@@ -1753,22 +1753,42 @@
     if (planPrintBtn) { planPrintBtn.disabled = false; planPrintBtn.textContent = "Download PDF"; }
   }
 
-  function openRoadmapForPrint(report) {
+  function downloadRoadmapPDF(report) {
     var json = JSON.stringify(report);
     var hash = btoa(encodeURIComponent(json));
     var url = new URL(ROADMAP_TEMPLATE, window.location.href);
-    url.searchParams.set("print", "1");
+    url.searchParams.set("download", "1");
     url.hash = hash;
 
-    var win = window.open(url.toString(), "capy-roadmap", "width=900,height=1200,scrollbars=yes,resizable=yes");
-    if (!win) {
-      setStatus("Please allow pop-ups to open the PDF.", "err");
+    var iframe = document.createElement("iframe");
+    iframe.src = url.toString();
+    iframe.style.cssText = "position:absolute;width:1px;height:1px;left:-9999px;top:-9999px;border:0;";
+    iframe.setAttribute("aria-hidden", "true");
+
+    function cleanup() {
+      if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
       resetPrintBtn();
-      return;
     }
 
-    resetPrintBtn();
-    setStatus("Save the opened page as PDF from the print dialog.", "ok");
+    var timeout = setTimeout(function() {
+      cleanup();
+      setStatus("PDF download is taking longer than expected — please try again.", "err");
+    }, 30000);
+
+    function onMessage(e) {
+      if (!e.data || e.data.type !== "capy-pdf-download") return;
+      clearTimeout(timeout);
+      window.removeEventListener("message", onMessage);
+      cleanup();
+      if (e.data.ok) {
+        setStatus("Roadmap downloaded.", "ok");
+      } else {
+        setStatus("PDF download failed — please try again.", "err");
+      }
+    }
+
+    window.addEventListener("message", onMessage);
+    document.body.appendChild(iframe);
   }
 
   if (planBtn) planBtn.addEventListener("click", openPlan);
@@ -1777,8 +1797,8 @@
   if (planPrintBtn) planPrintBtn.addEventListener("click", function () {
     if (!currentReport) currentReport = collectReport();
     planPrintBtn.disabled = true;
-    planPrintBtn.textContent = "Opening PDF...";
-    openRoadmapForPrint(currentReport);
+    planPrintBtn.textContent = "Generating PDF...";
+    downloadRoadmapPDF(currentReport);
   });
   if (planSendBtn) planSendBtn.addEventListener("click", sendToSofina);
 
