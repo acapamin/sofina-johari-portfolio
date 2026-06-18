@@ -4,7 +4,7 @@
 The website uses three forms with custom modal UI:
 1. **Ebook Gate Form** - Lead magnet for free financial planning ebook (Google Forms)
 2. **Contact/Website Application Form** - Comprehensive consultation booking form (Google Forms)
-3. **Capy's Quest Roadmap** - "Send to Sofina" from the Capy financial journey (Netlify Forms)
+3. **Capy's Quest Roadmap** - "Send to Sofina" from the Capy financial journey (Netlify Function + Resend email)
 
 ---
 
@@ -95,30 +95,51 @@ The website uses three forms with custom modal UI:
 
 ## Capy's Quest Roadmap — "Send to Sofina"
 
-**Backend:** Netlify Forms (`form-name: capy-roadmap`)
+**Backend:** Netlify Function + **Resend** (`netlify/functions/send-roadmap.mjs`). _This replaced the previous Netlify Forms + dashboard-notification mechanism, which captured submissions but did not reliably email Sofina._
 
 **Location:** Plan modal triggered by "Turn this into a real plan" button in the Your Toolkit section (#tools)
 
 **Trigger:** The "Send to Sofina" button inside the roadmap modal
 
-### Fields (same contact fields as Ebook Gate):
-| Field | Form key | Type | Required | Notes |
+### Fields (JSON body POSTed to `/api/send-roadmap`):
+| Field | JSON key | Type | Required | Notes |
 |-------|----------|------|----------|-------|
-| Name | `name` | Text | ✓ | Full name |
-| Email | `email` | Email | ✓ | Email address |
-| WhatsApp Number | `whatsapp` | Tel | ✓ | Phone number |
-| Subscribe to Broadcast | `subscribe` | Radio | ✗ | "Yes, subscribe to broadcast on whatsapp" or "No" |
-| Readiness | `readiness` | Text | auto | Overall % score across all four worlds |
-| Remark | `remark` | Text | ✗ | Optional note for Sofina |
-| Report | `report` | Textarea | auto | Full plain-text roadmap including contact details and all world commentary |
+| Name | `name` | string | ✓ | Full name |
+| Email | `email` | string | ✓ | Email address (validated server-side too) |
+| WhatsApp Number | `whatsapp` | string | ✓ | Phone number |
+| Subscribe to Broadcast | `subscribe` | string | ✗ | "Yes, subscribe to broadcast on whatsapp" or "No" |
+| Readiness | `readiness` | string | auto | Overall % score across all four worlds |
+| Remark | `remark` | string | ✗ | Optional note for Sofina |
+| Report | `report` | string | auto | Full plain-text roadmap including contact details and all world commentary |
 
 ### Implementation:
-- File: `financial-levels.js` — `sendToSofina()` function and `renderReportText()`
+- Client: `financial-levels.js` — `sendToSofina()` builds the JSON body and POSTs it to `/api/send-roadmap`; `renderReportText()` builds the `report` text.
+- Server: `netlify/functions/send-roadmap.mjs` — validates input, formats an HTML + plain-text email, and sends it via the Resend API. `reply_to` is set to the visitor's email so Sofina can reply directly.
+- Route: `netlify.toml` maps `/api/send-roadmap` → `/.netlify/functions/send-roadmap` (declared before the SPA catch-all).
 - HTML Modal ID: `#planModal`
-- Submission: Standard POST to `/` (Netlify intercepts and emails Sofina)
-- Validation: Name, email, and WhatsApp are validated client-side before submit
-- The `report` field embeds the contact details at the top of the plain-text body, so Sofina sees everything in one place
-- The hidden detection form at the bottom of the tools section registers all field names with Netlify at deploy time
+- Validation: Name, email, and WhatsApp are validated client-side before submit (empty required fields block the POST and are highlighted) **and** re-validated server-side.
+- The `report` text embeds a `CONTACT DETAILS` block at the top, and the email also lists the fields in a table, so Sofina sees everything in one place.
+- Server errors (e.g. Resend rejecting the request) are surfaced inline in the modal so the visitor knows to retry.
+- A honeypot (`bot-field`) is accepted and silently dropped without sending.
+
+### Email delivery setup
+Email delivery is handled entirely by the function — **no Netlify Forms / dashboard notification is involved.** One-time setup:
+
+1. **Resend API key** — create one at https://resend.com/api-keys, using the account that owns the verified `eazylaundry.biz` domain.
+2. **Netlify env var** — in **app.netlify.com → `sofina-johari-portfolio` → Site configuration → Environment variables**, add:
+   - `RESEND_API_KEY` (required) = your Resend key — mark as **secret**.
+3. **Redeploy** so the function picks up the key.
+
+> ✅ **Recipient and sender are hardcoded.** Both are set once in `netlify/functions/send-roadmap.mjs` and are **not** configurable via env — there are no `RESEND_TO` / `RESEND_FROM` variables:
+> - `TO` = `sofinajohari.uwealth@gmail.com` (Sofina's inbox)
+> - `FROM` = `Capy's Quest <roadmap@eazylaundry.biz>` (a verified domain)
+>
+> Because `eazylaundry.biz` is verified in Resend, the function delivers to Sofina's gmail directly with no per-recipient restriction. The `RESEND_API_KEY` must belong to the same Resend account that owns `eazylaundry.biz`. To change the recipient or sender, edit the `TO` / `FROM` constants in that one file. The `roadmap@` mailbox does not need to exist; `reply_to` is set to the visitor's email so Sofina's replies reach them.
+
+### Download PDF
+- File: `financial-levels.js` — `downloadRoadmapPDF()`, lazy-loads **html2canvas** + **jsPDF** from cdnjs on first click.
+- The PDF body is a **pixel-faithful capture of the on-screen `#planReport`** (same fonts, gold badges, colour bars, two-column input grid and commentary), so the downloaded file matches exactly what the user sees in the app.
+- The capture is sliced across A4 pages at world-card boundaries (`.plan-report__head` / `.plan-world`) so a card is never cut mid-page. A branded header band and page-number footer are added to every page.
 
 ### Report text structure:
 ```
@@ -177,11 +198,12 @@ User remark: ...
 ## File Structure
 
 ```
-index.html              - HTML markup for all three modals + Netlify detection form
-styles.css             - CSS for .ebook-modal, .contact-modal, .plan-modal/.plan-send classes
-ebook-gate.js          - Ebook form logic and submission
-contact-form.js        - Contact form logic and submission
-financial-levels.js    - Capy's Quest roadmap modal logic and sendToSofina()
+index.html                        - HTML markup for all three modals
+styles.css                        - CSS for .ebook-modal, .contact-modal, .plan-modal/.plan-send classes
+ebook-gate.js                     - Ebook form logic and submission
+contact-form.js                   - Contact form logic and submission
+financial-levels.js               - Capy's Quest roadmap modal logic, sendToSofina() + PDF
+netlify/functions/send-roadmap.mjs - Sends the "Send to Sofina" roadmap email via Resend
 ```
 
 ---

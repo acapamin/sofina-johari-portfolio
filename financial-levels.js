@@ -1632,6 +1632,11 @@
     if (!planModal) return;
     currentReport = collectReport();
     planReportEl.innerHTML = renderReportHTML(currentReport);
+    var dateEl = document.getElementById("planModalDate");
+    if (dateEl) {
+      dateEl.textContent = new Date().toLocaleDateString("en-MY",
+        { day: "numeric", month: "long", year: "numeric" });
+    }
     setStatus("", null);
     if (planSendBtn) { planSendBtn.disabled = false; planSendBtn.textContent = "Send to Sofina"; }
     ["planName", "planEmail", "planWhatsapp"].forEach(function (id) {
@@ -1655,12 +1660,6 @@
     if (lastFocus && lastFocus.focus) lastFocus.focus();
   }
   function onPlanKey(e) { if (e.key === "Escape") closePlan(); }
-
-  function encodeForm(data) {
-    return Object.keys(data).map(function (k) {
-      return encodeURIComponent(k) + "=" + encodeURIComponent(data[k]);
-    }).join("&");
-  }
 
   function clearFieldError(el) {
     if (!el) return;
@@ -1708,8 +1707,7 @@
     planSendBtn.disabled = true;
     setStatus("Sending your roadmap…", null);
 
-    var payload = encodeForm({
-      "form-name": "capy-roadmap",
+    var payload = JSON.stringify({
       name: userName,
       email: userEmail,
       whatsapp: userWhatsapp,
@@ -1719,286 +1717,206 @@
       report: text
     });
 
-    fetch("/", {
+    // Sends via the Resend-backed Netlify function (see netlify/functions/send-roadmap.mjs).
+    fetch("/api/send-roadmap", {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      headers: { "Content-Type": "application/json" },
       body: payload
     }).then(function (res) {
-      if (!res.ok) throw new Error("bad status " + res.status);
-      setStatus("Sent! Sofina will receive your roadmap.", "ok");
-      planSendBtn.textContent = "Sent";
-    }).catch(function () {
-      setStatus("Submission failed — check your connection and try again.", "err");
+      return res.json().catch(function () { return {}; }).then(function (data) {
+        if (!res.ok || !data.ok) {
+          throw new Error(data && data.error ? data.error : "bad status " + res.status);
+        }
+        setStatus("Sent! Sofina will receive your roadmap.", "ok");
+        planSendBtn.textContent = "Sent";
+      });
+    }).catch(function (err) {
+      setStatus(
+        (err && err.message) ? ("Couldn't send — " + err.message) : "Sending failed — check your connection and try again.",
+        "err"
+      );
       planSendBtn.disabled = false;
       planSendBtn.textContent = "Send to Sofina";
     });
   }
 
-  /* ---------- PDF download (jsPDF, lazy-loaded) ----------
-     Same trigger pattern as the ebook: create an <a download> and click it.
-     jsPDF is only fetched the first time the button is clicked. */
+  /* ---------- PDF download (html2canvas + jsPDF, lazy-loaded) ----------
+     The PDF body is a pixel-faithful capture of the exact roadmap the user
+     sees on screen (#planReport): same fonts, colours, bars and cards. The
+     capture is sliced across A4 pages at world-card boundaries so nothing
+     gets cut mid-card. A small branded header/footer is added per page.
+     Both libraries are only fetched the first time the button is clicked. */
 
   var JSPDF_CDN = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+  var H2C_CDN   = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
 
-  function loadJsPDF(cb) {
-    if (window.jspdf && window.jspdf.jsPDF) { cb(); return; }
+  function loadScript(src, onload, onerror) {
     var s = document.createElement("script");
-    s.src = JSPDF_CDN;
-    s.onload = cb;
-    s.onerror = function () {
-      if (planPrintBtn) { planPrintBtn.disabled = false; planPrintBtn.textContent = "Download PDF"; }
-    };
+    s.src = src;
+    s.onload = onload;
+    s.onerror = onerror;
     document.head.appendChild(s);
   }
 
+  function resetPrintBtn() {
+    if (planPrintBtn) { planPrintBtn.disabled = false; planPrintBtn.textContent = "Download PDF"; }
+  }
+
+  // Lazy-load jsPDF, then html2canvas, then run cb().
+  function loadPdfLibs(cb) {
+    function haveJsPDF() { return window.jspdf && window.jspdf.jsPDF; }
+    function haveH2C()   { return !!window.html2canvas; }
+    function fail() {
+      resetPrintBtn();
+      setStatus("Couldn't load the PDF tools — check your connection and try again.", "err");
+    }
+    function ensureH2C() {
+      if (haveH2C()) { cb(); return; }
+      loadScript(H2C_CDN, cb, fail);
+    }
+    if (haveJsPDF()) { ensureH2C(); return; }
+    loadScript(JSPDF_CDN, ensureH2C, fail);
+  }
+
   function downloadRoadmapPDF(report) {
+    var node = document.getElementById("planReport");
+    // The modal must be open & rendered for an accurate on-screen capture.
+    if (!node || !node.innerHTML.trim()) {
+      node = document.getElementById("planReport");
+      if (node) node.innerHTML = renderReportHTML(report || collectReport());
+    }
+    if (!node) { resetPrintBtn(); return; }
+
     var JsPDF = window.jspdf.jsPDF;
-    var doc = new JsPDF({ unit: "mm", format: "a4" });
+    var doc = new JsPDF({ unit: "mm", format: "a4", compress: true });
     var PW = doc.internal.pageSize.getWidth();   // 210
     var PH = doc.internal.pageSize.getHeight();  // 297
-    var ML = 15, MR = 15, MT = 16, MB = 18;
-    var CW = PW - ML - MR;                       // 180
-    var y = 0;
+    var ML = 12, MR = 12, MB = 12;
+    var CW = PW - ML - MR;                        // 186
+    var HEADER_H = 24;                            // branded header band (mm)
+    var BODY_TOP = HEADER_H + 6;                  // body starts below header
 
-    var INK       = [11,  31,  26];
-    var GOLD      = [201, 161, 74];
-    var GOLD_DK   = [122, 90,  30];
-    var CREAM     = [242, 236, 224];
-    var MUTED     = [110, 118, 115];
-    var GOLD_BG   = [253, 248, 235];
-    var GREEN_BAR = [92,  184, 122];
-    var RED_BAR   = [217, 106, 74];
-    var BORDER    = [210, 202, 185];
+    var INK     = [11,  31,  26];
+    var GOLD    = [201, 161, 74];
+    var CREAM   = [242, 236, 224];
+    var MUTED   = [120, 118, 115];
+    var PAGE_BG = [253, 253, 248];                // = dialog bg (#fffdf8)
 
     function tc(c) { doc.setTextColor(c[0], c[1], c[2]); }
     function fc(c) { doc.setFillColor(c[0], c[1], c[2]); }
-    function dc(c) { doc.setDrawColor(c[0], c[1], c[2]); }
 
-    function checkPage(need) {
-      if (y + need > PH - MB) { doc.addPage(); y = MT; }
+    function paintPageBg() { fc(PAGE_BG); doc.rect(0, 0, PW, PH, "F"); }
+
+    // Branded header band, drawn on every page so the document stays consistent.
+    function drawHeader() {
+      fc(INK);  doc.rect(0, 0, PW, HEADER_H, "F");
+      fc(GOLD); doc.rect(0, HEADER_H, PW, 1, "F");
+      tc(GOLD); doc.setFont("helvetica", "normal"); doc.setFontSize(7);
+      doc.text("CAPY'S QUEST  by  SOFINA JOHARI", ML, 9);
+      tc(CREAM); doc.setFont("helvetica", "bold"); doc.setFontSize(14);
+      doc.text("YOUR MONEY JOURNEY ROADMAP", ML, 18);
+      var dateStr = new Date().toLocaleDateString("en-MY",
+        { day: "numeric", month: "long", year: "numeric" });
+      tc(GOLD); doc.setFont("helvetica", "normal"); doc.setFontSize(7);
+      doc.text(dateStr, PW - MR, 9, { align: "right" });
     }
 
-    /* Strip anything jsPDF base-14 (cp1252) fonts cannot render:
-       emoji replaced with ASCII markers, curly punctuation normalised,
-       everything outside Latin-1 dropped.                             */
-    function clean(str) {
-      if (!str) return "";
-      return String(str)
-        .replace(/•/g, "-")
-        .replace(/[‘’]/g, "'")
-        .replace(/[“”]/g, '"')
-        .replace(/–/g, "-")
-        .replace(/—/g, "--")
-        .replace(/\u{1F6A8}/gu, "[!] ")
-        .replace(/⚡/g,     "[+] ")
-        .replace(/\u{1F9F1}/gu, "[-] ")
-        .replace(/✨/g,     "[*] ")
-        .replace(/[^\x00-\xFF]/g, "")
-        .replace(/\n/g, " ")
-        .replace(/\s{2,}/g, " ")
-        .trim();
-    }
-
-    /* ----------------------------------------------------------------
-       HEADER BAR
-    ---------------------------------------------------------------- */
-    fc(INK);  doc.rect(0, 0, PW, 28, "F");
-    fc(GOLD); doc.rect(0, 28, PW, 1,  "F");
-
-    tc(GOLD); doc.setFont("helvetica", "normal"); doc.setFontSize(7);
-    doc.text("CAPY'S QUEST  by  SOFINA JOHARI", ML, 10);
-
-    tc(CREAM); doc.setFont("helvetica", "bold"); doc.setFontSize(16);
-    doc.text("YOUR MONEY JOURNEY ROADMAP", ML, 21);
-
-    var dateStr = new Date().toLocaleDateString("en-MY",
-      { day: "numeric", month: "long", year: "numeric" });
-    tc(GOLD); doc.setFont("helvetica", "normal"); doc.setFontSize(7);
-    doc.text(dateStr, PW - MR, 10, { align: "right" });
-
-    y = 38;
-
-    /* ----------------------------------------------------------------
-       OVERALL READINESS
-    ---------------------------------------------------------------- */
-    tc(GOLD_DK); doc.setFont("helvetica", "normal"); doc.setFontSize(8);
-    doc.text("OVERALL READINESS", PW / 2, y, { align: "center" });
-    y += 7;
-
-    tc(INK); doc.setFont("helvetica", "bold"); doc.setFontSize(26);
-    doc.text(report.overall + "%", PW / 2, y, { align: "center" });
-    y += 6;
-
-    tc(MUTED); doc.setFont("helvetica", "normal"); doc.setFontSize(8.5);
-    var intro = doc.splitTextToSize(
-      "A snapshot of your four-world money quest with Capy. Bring this to your session with Sofina.",
-      CW * 0.82);
-    doc.text(intro, PW / 2, y, { align: "center" });
-    y += intro.length * 5 + 7;
-
-    dc(BORDER); doc.setLineWidth(0.3); doc.setLineDash([2, 2]);
-    doc.line(ML, y, PW - MR, y); doc.setLineDash([]); y += 9;
-
-    /* ----------------------------------------------------------------
-       INPUT GRID CONSTANTS
-       Two equal columns separated by a fixed gap.
-       Each column: label (wrapping) on the left, value right-aligned.
-    ---------------------------------------------------------------- */
-    var GAP  = 10;                // mm gap between the two columns
-    var COLW = (CW - GAP) / 2;   // each column = 85mm
-    var VALW = 27;                // space reserved for value text
-    var LABW = COLW - VALW - 1;  // label wrap width = 57mm
-    var xL   = ML;                // left label start
-    var xLV  = ML + COLW;        // left value right edge
-    var xR   = ML + COLW + GAP;  // right label start
-    var xRV  = ML + CW;          // right value right edge
-    var LH   = 4.5;               // line-height within multi-line labels
-    var RG   = 3;                 // extra gap after each input row
-
-    /* ----------------------------------------------------------------
-       WORLDS
-    ---------------------------------------------------------------- */
-    report.worlds.forEach(function (wld, wi) {
-      var primary  = wld.sections[0].st;
-      var pct      = clamp(
-        ((primary.power && primary.power.pct != null)
-          ? primary.power.pct : (primary.score || 0)) / 100, 0, 1);
-      var tone     = primary.power ? primary.power.tone : "gold";
-      var barColor = tone === "green" ? GREEN_BAR : tone === "red" ? RED_BAR : GOLD;
-
-      checkPage(35);
-
-      /* gold rule above each world */
-      fc(GOLD); doc.rect(ML - 2, y, CW + 4, 0.9, "F"); y += 4;
-
-      /* world tag (left) + stat badge (right) on same baseline */
-      tc(GOLD); doc.setFont("helvetica", "normal"); doc.setFontSize(7.5);
-      doc.text(wld.tag, ML, y);
-
-      var statText = clean(primary.stat || (primary.score + "%"));
-      doc.setFont("helvetica", "bold"); doc.setFontSize(7.5);
-      var statW = doc.getTextWidth(statText) + 7;
-      fc(GOLD_BG); dc(INK); doc.setLineWidth(0.3);
-      doc.rect(PW - MR - statW, y - 5.5, statW, 7.5, "FD");
-      tc(INK);
-      doc.text(statText, PW - MR - statW / 2, y - 0.5, { align: "center" });
-      y += 5;
-
-      /* world name */
-      tc(INK); doc.setFont("helvetica", "bold"); doc.setFontSize(13);
-      doc.text(clean(wld.name), ML, y); y += 5.5;
-
-      /* power bar */
-      fc([228, 220, 204]); doc.rect(ML, y, CW, 3,    "F");
-      fc(barColor);         doc.rect(ML, y, CW * pct, 3, "F");
-      y += 8;
-
-      /* ---- 2-column inputs: labels wrap to multiple lines ---- */
-      doc.setFontSize(8);
-      for (var i = 0; i < wld.inputs.length; i += 2) {
-        var L = wld.inputs[i];
-        var R = wld.inputs[i + 1] || null;
-
-        var lLines = doc.splitTextToSize(clean(L.label), LABW);
-        var rLines = R ? doc.splitTextToSize(clean(R.label), LABW) : [];
-        var nLines = Math.max(lLines.length, rLines.length, 1);
-        var rowH   = nLines * LH + RG;
-
-        checkPage(rowH + 4);
-
-        /* left label — all wrapped lines */
-        tc(MUTED); doc.setFont("helvetica", "normal");
-        for (var ll = 0; ll < lLines.length; ll++) {
-          doc.text(lLines[ll], xL, y + ll * LH);
-        }
-        /* left value — bold, right-aligned to column edge, on first line */
-        tc(INK); doc.setFont("helvetica", "bold");
-        doc.text(clean(L.value), xLV, y, { align: "right" });
-
-        if (R) {
-          tc(MUTED); doc.setFont("helvetica", "normal");
-          for (var rl = 0; rl < rLines.length; rl++) {
-            doc.text(rLines[rl], xR, y + rl * LH);
-          }
-          tc(INK); doc.setFont("helvetica", "bold");
-          doc.text(clean(R.value), xRV, y, { align: "right" });
-        }
-
-        /* dotted separator below each row */
-        dc(BORDER); doc.setLineWidth(0.2); doc.setLineDash([1, 1.5]);
-        var sepY = y + nLines * LH + 0.5;
-        doc.line(xL,  sepY, xLV - 2, sepY);
-        if (R) doc.line(xR, sepY, xRV, sepY);
-        doc.setLineDash([]); doc.setFont("helvetica", "normal");
-
-        y += rowH;
+    function finish() {
+      // page-number footers
+      var nPages = doc.internal.getNumberOfPages();
+      for (var p = 1; p <= nPages; p++) {
+        doc.setPage(p);
+        tc(MUTED); doc.setFont("helvetica", "normal"); doc.setFontSize(7);
+        doc.text(String(p) + " / " + String(nPages), PW / 2, PH - 6, { align: "center" });
       }
-      y += 5;
+      var blob = doc.output("blob");
+      var a    = document.createElement("a");
+      a.href   = URL.createObjectURL(blob);
+      a.download = "capy-roadmap-sofina.pdf";
+      a.style.display = "none";
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); document.body.removeChild(a); }, 1000);
+      resetPrintBtn();
+      setStatus("", null);
+    }
 
-      /* ---- commentary sections (headline / coach / say) ---- */
-      wld.sections.forEach(function (sec) {
+    function fail() {
+      resetPrintBtn();
+      setStatus("Couldn't build the PDF — please try again.", "err");
+    }
 
-        /* optional phase title (World 1-2 only) */
-        if (sec.phaseTitle) {
-          checkPage(10);
-          tc(GOLD_DK); doc.setFont("helvetica", "bold"); doc.setFontSize(7.5);
-          doc.text(clean(sec.phaseTitle).toUpperCase(), ML, y); y += 5.5;
-        }
+    // Wait for web fonts (the pixel font) so the capture matches the screen.
+    var fontsReady = (document.fonts && document.fonts.ready)
+      ? document.fonts.ready : Promise.resolve();
 
-        /* headline */
-        checkPage(12);
-        tc(INK); doc.setFont("helvetica", "bold"); doc.setFontSize(11);
-        var heads = doc.splitTextToSize(clean(sec.st.headline || ""), CW);
-        doc.text(heads, ML, y); y += heads.length * 6 + 2;
-
-        /* coach text — fully wrapped, no truncation */
-        tc(MUTED); doc.setFont("helvetica", "normal"); doc.setFontSize(8.5);
-        var coachLines = doc.splitTextToSize(clean(sec.st.coach || ""), CW);
-        for (var cl = 0; cl < coachLines.length; cl++) {
-          checkPage(5.5);
-          doc.text(coachLines[cl], ML, y);
-          y += 4.8;
-        }
-        y += 2;
-
-        /* Capy says */
-        checkPage(9);
-        tc(GOLD_DK); doc.setFont("helvetica", "italic"); doc.setFontSize(8.5);
-        doc.text('"' + clean(sec.st.say || "") + '"', ML, y); y += 9;
+    fontsReady.then(function () {
+      return window.html2canvas(node, {
+        backgroundColor: "#fffdf8",
+        scale: Math.min(2.5, (window.devicePixelRatio || 1) * 1.5),
+        useCORS: true,
+        logging: false,
+        scrollX: 0,
+        scrollY: -window.scrollY
       });
+    }).then(function (canvas) {
+      var reportW = node.getBoundingClientRect().width;   // CSS px
+      var pxPerCss = canvas.width / reportW;               // capture px per CSS px
+      var mmPerCss = CW / reportW;                         // PDF mm per CSS px
+      var totalCss = canvas.height / pxPerCss;
 
-      /* separator between worlds (not after last) */
-      if (wi < report.worlds.length - 1) {
-        checkPage(10);
-        dc(BORDER); doc.setLineWidth(0.3); doc.setLineDash([3, 2]);
-        doc.line(ML, y, PW - MR, y); doc.setLineDash([]); y += 9;
+      // Break candidates: bottom edge of each card, so pages never cut a card.
+      var rTop = node.getBoundingClientRect().top + window.scrollY;
+      var blocks = node.querySelectorAll(".plan-report__head, .plan-world");
+      var breaks = [];
+      Array.prototype.forEach.call(blocks, function (b) {
+        var r = b.getBoundingClientRect();
+        breaks.push((r.top + window.scrollY - rTop) + r.height);
+      });
+      if (!breaks.length || breaks[breaks.length - 1] < totalCss - 1) breaks.push(totalCss);
+
+      var usableMM  = PH - BODY_TOP - MB;
+      var usableCss = usableMM / mmPerCss;                 // body height per page in CSS px
+
+      var startCss = 0;
+      var first = true;
+      var guard = 0;
+      while (startCss < totalCss - 0.5 && guard++ < 200) {
+        var limit = startCss + usableCss;
+        // largest card boundary that fits on this page
+        var endCss = -1;
+        for (var i = 0; i < breaks.length; i++) {
+          if (breaks[i] > startCss + 1 && breaks[i] <= limit + 0.5) endCss = breaks[i];
+        }
+        // a single card taller than one page → hard slice
+        if (endCss < 0) endCss = Math.min(limit, totalCss);
+        endCss = Math.min(endCss, totalCss);
+
+        var sY = Math.max(0, Math.round(startCss * pxPerCss));
+        var sH = Math.min(canvas.height - sY, Math.round((endCss - startCss) * pxPerCss));
+        if (sH <= 0) break;
+
+        var slice = document.createElement("canvas");
+        slice.width  = canvas.width;
+        slice.height = sH;
+        var ctx = slice.getContext("2d");
+        ctx.fillStyle = "#fffdf8";
+        ctx.fillRect(0, 0, slice.width, slice.height);
+        ctx.drawImage(canvas, 0, sY, canvas.width, sH, 0, 0, canvas.width, sH);
+        var img = slice.toDataURL("image/jpeg", 0.92);
+
+        if (!first) doc.addPage();
+        paintPageBg();
+        drawHeader();
+        var hMM = (sH / pxPerCss) * mmPerCss;
+        doc.addImage(img, "JPEG", ML, BODY_TOP, CW, hMM);
+
+        first = false;
+        startCss = endCss;
       }
-    });
 
-    /* ----------------------------------------------------------------
-       PAGE FOOTERS — page number only, centred
-    ---------------------------------------------------------------- */
-    var nPages = doc.internal.getNumberOfPages();
-    for (var p = 1; p <= nPages; p++) {
-      doc.setPage(p);
-      tc(MUTED); doc.setFont("helvetica", "normal"); doc.setFontSize(7);
-      doc.text(String(p) + " / " + String(nPages), PW / 2, PH - 8, { align: "center" });
-    }
-
-    /* trigger download — identical to ebook-gate.js triggerDownload() */
-    var blob = doc.output("blob");
-    var a    = document.createElement("a");
-    a.href   = URL.createObjectURL(blob);
-    a.download = "capy-roadmap-sofina.pdf";
-    a.style.display = "none";
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(function () { URL.revokeObjectURL(a.href); document.body.removeChild(a); }, 1000);
-
-    if (planPrintBtn) {
-      planPrintBtn.disabled = false;
-      planPrintBtn.textContent = "Download PDF";
-    }
+      finish();
+    }).catch(fail);
   }
 
   if (planBtn) planBtn.addEventListener("click", openPlan);
@@ -2008,7 +1926,7 @@
     if (!currentReport) currentReport = collectReport();
     planPrintBtn.disabled = true;
     planPrintBtn.textContent = "Generating...";
-    loadJsPDF(function () { downloadRoadmapPDF(currentReport); });
+    loadPdfLibs(function () { downloadRoadmapPDF(currentReport); });
   });
   if (planSendBtn) planSendBtn.addEventListener("click", sendToSofina);
 
