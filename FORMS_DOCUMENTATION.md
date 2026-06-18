@@ -115,10 +115,27 @@ The website uses three forms with custom modal UI:
 ### Implementation:
 - File: `financial-levels.js` — `sendToSofina()` function and `renderReportText()`
 - HTML Modal ID: `#planModal`
-- Submission: Standard POST to `/` (Netlify intercepts and emails Sofina)
-- Validation: Name, email, and WhatsApp are validated client-side before submit
-- The `report` field embeds the contact details at the top of the plain-text body, so Sofina sees everything in one place
+- Submission: AJAX POST to `/` as `application/x-www-form-urlencoded` (Netlify Forms intercepts and stores the submission)
+- Validation: Name, email, and WhatsApp are validated client-side before submit; empty required fields block the POST and are highlighted
+- The `report` field embeds the contact details (`CONTACT DETAILS` block) at the top of the plain-text body, so Sofina sees everything in one place even if the dedicated fields are not shown in the notification template
 - The hidden detection form at the bottom of the tools section registers all field names with Netlify at deploy time
+
+> ⚠️ **Email delivery is NOT automatic.** Netlify Forms only *stores* submissions; it emails Sofina **only if a Form notification is configured in the Netlify dashboard.** See "Email delivery setup" below. Whenever the form's fields or name change, Netlify registers a *new* form and any previously configured notification does **not** carry over — it must be re-added.
+
+### Email delivery setup (one-time, in the Netlify dashboard)
+1. Go to **app.netlify.com → the `sofina-johari-portfolio` project → Forms**.
+2. Confirm the **`capy-roadmap`** form is listed and receiving submissions.
+3. Open **Forms → Settings & usage → Form notifications → Add notification → Email notification**.
+4. **Email to notify:** Sofina's address (e.g. `sofinajohari.uwealth@gmail.com`).
+5. **Form:** select `capy-roadmap` (or "Any form").
+6. Save. Send a test submission from the live site and confirm the email arrives (check the spam folder the first time and mark it "Not spam").
+
+If submissions land in the Netlify **Spam** tab instead of **Verified**, no email is sent — the honeypot (`bot-field`) is already wired to reduce false spam flags.
+
+### Download PDF
+- File: `financial-levels.js` — `downloadRoadmapPDF()`, lazy-loads **html2canvas** + **jsPDF** from cdnjs on first click.
+- The PDF body is a **pixel-faithful capture of the on-screen `#planReport`** (same fonts, gold badges, colour bars, two-column input grid and commentary), so the downloaded file matches exactly what the user sees in the app.
+- The capture is sliced across A4 pages at world-card boundaries (`.plan-report__head` / `.plan-world`) so a card is never cut mid-page. A branded header band and page-number footer are added to every page.
 
 ### Report text structure:
 ```
