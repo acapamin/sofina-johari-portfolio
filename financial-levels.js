@@ -1575,34 +1575,34 @@
   // ---- render the report as plain text (form payload + mailto body) ----
   function renderReportText(report, remark, userName, userEmail, userWhatsapp, userSubscribe) {
     var L = [];
-    L.push(“CAPY'S MONEY QUEST — ROADMAP”);
-    L.push(“Overall readiness: “ + report.overall + “%”);
-    L.push(“================================================”);
-    L.push(“”);
-    L.push(“CONTACT DETAILS”);
-    L.push(“Name: “ + (userName || “(not provided)”));
-    L.push(“Email: “ + (userEmail || “(not provided)”));
-    L.push(“WhatsApp: “ + (userWhatsapp || “(not provided)”));
-    L.push(“WhatsApp Broadcast: “ + (userSubscribe || “No”));
-    L.push(“================================================”);
+    L.push("CAPY'S MONEY QUEST — ROADMAP");
+    L.push("Overall readiness: " + report.overall + "%");
+    L.push("================================================");
+    L.push("");
+    L.push("CONTACT DETAILS");
+    L.push("Name: " + (userName || "(not provided)"));
+    L.push("Email: " + (userEmail || "(not provided)"));
+    L.push("WhatsApp: " + (userWhatsapp || "(not provided)"));
+    L.push("WhatsApp Broadcast: " + (userSubscribe || "No"));
+    L.push("================================================");
     report.worlds.forEach(function (wld) {
-      L.push(“”);
-      L.push(wld.tag + “ · “ + wld.name + “   [“ + (wld.sections[0].st.stat || “”) + “]”);
-      L.push(“------------------------------------------------”);
-      L.push(“Your selections:”);
-      wld.inputs.forEach(function (r) { L.push(“  • “ + r.label + “: “ + r.value); });
+      L.push("");
+      L.push(wld.tag + " · " + wld.name + "   [" + (wld.sections[0].st.stat || "") + "]");
+      L.push("------------------------------------------------");
+      L.push("Your selections:");
+      wld.inputs.forEach(function (r) { L.push("  • " + r.label + ": " + r.value); });
       wld.sections.forEach(function (sec) {
-        L.push(“”);
-        if (sec.phaseTitle) L.push(“[“ + sec.phaseTitle + “]”);
+        L.push("");
+        if (sec.phaseTitle) L.push("[" + sec.phaseTitle + "]");
         L.push(sec.st.headline);
         L.push(sec.st.coach);
-        L.push(“Capy says: “” + sec.st.say + “””);
+        L.push("Capy says: “" + sec.st.say + "”");
       });
     });
-    L.push(“”);
-    L.push(“================================================”);
-    L.push(“User remark: “ + (remark && remark.trim() ? remark.trim() : “(none)”));
-    return L.join(“\n”);
+    L.push("");
+    L.push("================================================");
+    L.push("User remark: " + (remark && remark.trim() ? remark.trim() : "(none)"));
+    return L.join("\n");
   }
 
   /* ---------- modal plumbing ---------- */
