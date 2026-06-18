@@ -129,10 +129,9 @@ Email delivery is handled entirely by the function — **no Netlify Forms / dash
 2. **Netlify env var** — in **app.netlify.com → `sofina-johari-portfolio` → Site configuration → Environment variables**, add:
    - `RESEND_API_KEY` (required) = your Resend key — mark as **secret**.
    - `RESEND_TO` (optional) = recipient; defaults to `sofinajohari.uwealth@gmail.com`.
-   - `RESEND_FROM` (optional) = sender; **defaults in code** to `Capy's Quest <roadmap@eazylaundry.biz>`, so you normally don't need to set this.
 3. **Redeploy** so the function picks up the env vars.
 
-> ✅ **Sender uses a verified domain.** The default sender `roadmap@eazylaundry.biz` is on a domain verified in Resend, so the function delivers to Sofina's gmail (or any address) directly — no per-recipient restriction. The `RESEND_API_KEY` must belong to the same Resend account that owns the `eazylaundry.biz` domain. If you ever switch domains, verify the new one at https://resend.com/domains and set `RESEND_FROM` to an address on it. The `roadmap@` mailbox does not need to exist; `reply_to` is set to the visitor's email so Sofina's replies reach them.
+> ✅ **Sender is hardcoded to a verified domain.** The sender `Capy's Quest <roadmap@eazylaundry.biz>` is set once in `netlify/functions/send-roadmap.mjs` (constant `FROM`) and is **not** configurable via env — there is no `RESEND_FROM` variable. Because `eazylaundry.biz` is verified in Resend, the function delivers to Sofina's gmail (or any address) directly with no per-recipient restriction. The `RESEND_API_KEY` must belong to the same Resend account that owns `eazylaundry.biz`. To change the sender (e.g. switch to another verified domain), edit the `FROM` constant in that one file. The `roadmap@` mailbox does not need to exist; `reply_to` is set to the visitor's email so Sofina's replies reach them.
 
 ### Download PDF
 - File: `financial-levels.js` — `downloadRoadmapPDF()`, lazy-loads **html2canvas** + **jsPDF** from cdnjs on first click.
