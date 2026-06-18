@@ -34,6 +34,10 @@ sofina-johari-portfolio/
 ├── chat.js                    # Amy AI chatbot interface
 ├── ebook-gate.js              # Ebook form & PDF download
 ├── contact-form.js            # Contact/consultation form
+├── netlify/
+│   └── functions/
+│       ├── chat.mjs           # Amy AI chat proxy (OpenRouter)
+│       └── send-roadmap.mjs   # "Send to Sofina" roadmap email (Resend)
 ├── assets/
 │   └── ebook/                 # Ebook resources and generation
 ├── FORMS_DOCUMENTATION.md     # Complete forms reference
@@ -81,9 +85,10 @@ The website features three lead-capture forms:
 ### 3. **Capy's Quest Roadmap — "Send to Sofina"**
 - **Purpose:** Sends the user's Capy's Quest financial roadmap to Sofina with contact details
 - **Fields:** Name, Email, WhatsApp Number, Subscribe to Broadcast, optional note, and the full multi-world financial report
-- **Submission:** Netlify Forms — sent as `capy-roadmap` form data
-- **Validation:** Name, email, and WhatsApp are required before submission
-- **Files:** `financial-levels.js` (modal wiring + `sendToSofina()`), plan modal in `index.html`
+- **Submission:** JSON POST to `/api/send-roadmap`, a Netlify Function that emails Sofina via [Resend](https://resend.com)
+- **Validation:** Name, email, and WhatsApp are required — validated client-side and server-side
+- **Files:** `financial-levels.js` (modal wiring + `sendToSofina()`), plan modal in `index.html`, `netlify/functions/send-roadmap.mjs` (Resend email)
+- **Config:** requires `RESEND_API_KEY` env var (see `.env.example`)
 
 **See [FORMS_DOCUMENTATION.md](FORMS_DOCUMENTATION.md) for complete field mappings, entry IDs, and validation rules.**
 
@@ -151,7 +156,7 @@ This approach:
 - Reliable for both simple and complex forms
 - No backend server required
 
-The Capy's Quest Roadmap uses **Netlify Forms** (standard POST to `/`) with all contact details and the full text report included in the payload. Netlify then emails the submission to Sofina.
+The Capy's Quest Roadmap posts a JSON payload (contact details + full text report) to the **`/api/send-roadmap` Netlify Function**, which emails it to Sofina via **Resend**. Set `RESEND_API_KEY` (and optionally `RESEND_TO` / `RESEND_FROM`) in the Netlify environment — see `.env.example`.
 
 ### Validation
 - Client-side validation before submission

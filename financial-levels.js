@@ -1656,12 +1656,6 @@
   }
   function onPlanKey(e) { if (e.key === "Escape") closePlan(); }
 
-  function encodeForm(data) {
-    return Object.keys(data).map(function (k) {
-      return encodeURIComponent(k) + "=" + encodeURIComponent(data[k]);
-    }).join("&");
-  }
-
   function clearFieldError(el) {
     if (!el) return;
     el.removeAttribute("aria-invalid");
@@ -1708,8 +1702,7 @@
     planSendBtn.disabled = true;
     setStatus("Sending your roadmap…", null);
 
-    var payload = encodeForm({
-      "form-name": "capy-roadmap",
+    var payload = JSON.stringify({
       name: userName,
       email: userEmail,
       whatsapp: userWhatsapp,
@@ -1719,16 +1712,24 @@
       report: text
     });
 
-    fetch("/", {
+    // Sends via the Resend-backed Netlify function (see netlify/functions/send-roadmap.mjs).
+    fetch("/api/send-roadmap", {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      headers: { "Content-Type": "application/json" },
       body: payload
     }).then(function (res) {
-      if (!res.ok) throw new Error("bad status " + res.status);
-      setStatus("Sent! Sofina will receive your roadmap.", "ok");
-      planSendBtn.textContent = "Sent";
-    }).catch(function () {
-      setStatus("Submission failed — check your connection and try again.", "err");
+      return res.json().catch(function () { return {}; }).then(function (data) {
+        if (!res.ok || !data.ok) {
+          throw new Error(data && data.error ? data.error : "bad status " + res.status);
+        }
+        setStatus("Sent! Sofina will receive your roadmap.", "ok");
+        planSendBtn.textContent = "Sent";
+      });
+    }).catch(function (err) {
+      setStatus(
+        (err && err.message) ? ("Couldn't send — " + err.message) : "Sending failed — check your connection and try again.",
+        "err"
+      );
       planSendBtn.disabled = false;
       planSendBtn.textContent = "Send to Sofina";
     });
