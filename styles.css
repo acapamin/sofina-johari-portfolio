@@ -708,85 +708,59 @@ ul { list-style: none; }
   gap: 1rem;
   align-items: stretch;
 }
+/* The stage is now a standardised scene: a conversation bubble on top
+   (Capy speaking the read-out) sitting above Capy himself, who emotes the
+   mood. Same layout for every world — only Capy's reaction + words change. */
 .journey__stage {
   position: relative;
   min-height: 440px;
   border-radius: 0;
   overflow: hidden;
-  background: #0d231c;
+  background: radial-gradient(130% 90% at 50% 0%, #163729 0%, #0d231c 72%);
   border: 3px solid var(--ink);
   box-shadow: 0 0 0 3px var(--gold), 10px 12px 0 rgba(11, 31, 26, 0.2);
-  /* stack the animated scene over Capy's dialogue box */
   display: flex;
   flex-direction: column;
 }
-/* the lit CRT "screen" — Capy's scene lives here; flexes to fill the
-   space left above the dialogue box */
-.journey__scene {
-  position: relative;
-  flex: 1 1 auto;
-  min-height: 260px;
-  overflow: hidden;
-}
-.journey__scene canvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  display: block;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-}
-/* CRT scanlines — kept over the scene only so the dialogue text stays crisp */
-.journey__scene::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.14) 0 1px, transparent 1px 3px);
-}
-/* HUD strip: speech bubble + level stat laid out with flex so they
-   can never overlap each other (or canvas text — there is none now) */
-.journey__hud {
-  position: absolute;
-  top: 0.7rem;
-  left: 0.7rem;
-  right: 0.7rem;
-  z-index: 2;
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  pointer-events: none;
-}
-.journey__stat {
-  flex-shrink: 0;
-  background: rgba(11, 31, 26, 0.85);
-  color: var(--gold-soft);
-  border: 2px solid rgba(201, 161, 74, 0.7);
-  padding: 0.4rem 0.5rem;
-  font-family: var(--font-pixel);
-  font-size: 0.5rem;
-  line-height: 1;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-/* ===== Capy's dialogue box — mood indicator + financial advisor ===== */
-.journey__advisor {
+/* ===== Capy's conversation bubble — holds the message summary ===== */
+.journey__speech {
   position: relative;
   z-index: 3;
-  flex-shrink: 0;
+  flex: 0 1 auto;
+  margin: 0.9rem 0.9rem 0;
+  padding: 0.75rem 0.9rem 0.85rem;
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
-  padding: 0.7rem 0.85rem 0.8rem;
+  gap: 0.5rem;
   background: linear-gradient(180deg, #fffdf8 0%, #f5ecda 100%);
-  border-top: 3px solid var(--gold);
-  box-shadow: inset 0 3px 0 rgba(11, 31, 26, 0.12);
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 rgba(11, 31, 26, 0.35);
 }
-.journey__advisor-tag {
+/* downward tail so the bubble reads as coming from Capy below it */
+.journey__speech::after {
+  content: "";
+  position: absolute;
+  left: 2.2rem;
+  bottom: -15px;
+  width: 0;
+  height: 0;
+  border-left: 11px solid transparent;
+  border-right: 11px solid transparent;
+  border-top: 15px solid var(--ink);
+}
+.journey__speech::before {
+  content: "";
+  position: absolute;
+  left: calc(2.2rem + 3px);
+  bottom: -9px;
+  z-index: 1;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 11px solid #f5ecda;
+}
+.journey__speech-tag {
   display: flex;
   align-items: center;
   gap: 0.55rem;
@@ -810,7 +784,7 @@ ul { list-style: none; }
   line-height: 1;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--gold);
+  color: #8a6a1e;
   position: relative;
   padding-left: 0.85rem;
 }
@@ -842,6 +816,57 @@ ul { list-style: none; }
 @keyframes bubblePop {
   0% { transform: translateY(6px); opacity: 0; }
   100% { transform: none; opacity: 1; }
+}
+
+/* ===== Capy's stage band — the canvas where he reacts ===== */
+.journey__capy {
+  position: relative;
+  flex: 0 0 auto;
+  height: 158px;
+  margin-top: auto;          /* sink Capy to the floor, bubble floats above */
+  overflow: hidden;
+}
+.journey__capy canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+/* CRT scanlines over Capy's stage only — keeps the bubble text crisp */
+.journey__capy::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.14) 0 1px, transparent 1px 3px);
+}
+.journey__hud {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.6rem;
+  right: 0.6rem;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  pointer-events: none;
+}
+.journey__stat {
+  flex-shrink: 0;
+  background: rgba(11, 31, 26, 0.85);
+  color: var(--gold-soft);
+  border: 2px solid rgba(201, 161, 74, 0.7);
+  padding: 0.4rem 0.5rem;
+  font-family: var(--font-pixel);
+  font-size: 0.5rem;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 .journey__vibe {
   position: absolute;
@@ -1771,11 +1796,13 @@ ul { list-style: none; }
     height: auto;
     box-shadow: 0 0 0 3px var(--gold), 5px 6px 0 rgba(11, 31, 26, 0.2);
   }
-  /* keep the canvas window compact; Capy's dialogue box stacks below it */
-  .journey__scene { min-height: 0; height: 178px; flex: 0 0 auto; }
-  .journey__hud { top: 0.45rem; left: 0.45rem; right: 0.45rem; }
-  .journey__vibe { left: 0.6rem; right: 0.6rem; bottom: 0.55rem; }
-  .journey__advisor { gap: 0.3rem; padding: 0.5rem 0.6rem 0.6rem; }
+  /* speech bubble on top, compact Capy stage below */
+  .journey__speech { margin: 0.55rem 0.55rem 0; padding: 0.5rem 0.6rem 0.6rem; gap: 0.3rem; }
+  .journey__speech::after { left: 1.4rem; }
+  .journey__speech::before { left: calc(1.4rem + 3px); }
+  .journey__capy { height: 116px; margin-top: 0.45rem; }
+  .journey__hud { top: 0.4rem; left: 0.45rem; right: 0.45rem; }
+  .journey__vibe { left: 0.6rem; right: 0.6rem; bottom: 0.45rem; }
   .journey__advisor-name { font-size: 0.5rem; padding: 0.22rem 0.4rem; }
   .journey__advisor-mood { font-size: 0.44rem; }
   .journey__bubble { font-size: 0.46rem; line-height: 1.5; }

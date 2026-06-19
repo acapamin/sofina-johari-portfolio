@@ -1114,6 +1114,58 @@
   });
 
   /* ============================================================
+     STANDARDISED SCENE — Capy alone, reacting to the outcome
+     Every world now renders the same way: Capy emotes the mood while
+     the DOM speech bubble carries that world's message summary, so the
+     toolkit reads as Capy reacting and speaking to the user. The bespoke
+     per-world artwork above is kept for reference but no longer drawn.
+     ============================================================ */
+  function moodGlow(mood) {
+    switch (mood) {
+      case "joyful": case "growth": case "happy": return "rgba(92,184,122,0.40)";
+      case "concerned": case "worried":           return "rgba(217,106,74,0.34)";
+      case "serene": case "calm":                  return "rgba(159,216,196,0.34)";
+      default:                                     return "rgba(231,192,105,0.32)";
+    }
+  }
+  var standardScene = {
+    draw: function (g) {
+      var ctx = g.ctx, w = g.w, h = g.h;
+      var groundY = h - Math.max(8, Math.round(h * 0.16));
+
+      // calm 8-bit sky + twinkling stars
+      stars(g, 16, groundY - 4);
+
+      // mood-tinted glow halo behind Capy
+      var mood = (g.state && g.state.mood) || "stable";
+      var capH = clamp(Math.round(h * 0.52), 26, 78);
+      var cx = Math.round(w / 2);
+      var haloY = groundY - capH * 0.5;
+      var halo = ctx.createRadialGradient(cx, haloY, 2, cx, haloY, capH * 1.05);
+      halo.addColorStop(0, moodGlow(mood));
+      halo.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = halo;
+      ctx.fillRect(0, 0, w, h);
+
+      // ground strip with a gold horizon line
+      ctx.fillStyle = "#0a1a14";
+      ctx.fillRect(0, groundY, w, h - groundY);
+      ctx.fillStyle = "rgba(231,192,105,0.55)";
+      ctx.fillRect(0, groundY, w, 1);
+      // a few chunky tufts so the floor isn't bare
+      ctx.fillStyle = "rgba(92,184,122,0.5)";
+      for (var i = 0; i < w; i += 14) {
+        var th = 1 + ((i * 7) % 3);
+        ctx.fillRect(i + 4, groundY - th, 1, th);
+      }
+
+      // Capy, centred, looking toward the user
+      g.mascot.draw(ctx, cx, groundY, capH, { gaze: 0.4 });
+    }
+  };
+  engine.order.forEach(function (id) { engine.levels[id].scene = standardScene; });
+
+  /* ============================================================
      DOM wiring — chips, sliders, coach copy, power meter
      ============================================================ */
 
