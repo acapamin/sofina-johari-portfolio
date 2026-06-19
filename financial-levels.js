@@ -1,30 +1,54 @@
-/* financial-levels.js — the four playable worlds of the 8-bit money
-   quest, plus the DOM wiring between the sliders and the engine.
+/* financial-levels.js — the Four Pillars of your wealth.
+   A premium architectural metaphor that replaces the original 8-bit
+   game. Each "world" (Cashflow, Protection, Future, Legacy) keeps its
+   slider inputs and compute() maths; only the scene renderer changes —
+   a classical colonnade of four pillars whose gold-light fill tracks
+   each pillar's readiness score, with an engraved line-art owl
+   perched on the lintel as the mood messenger.
 
-   Everything renders into the engine's low-resolution buffer, so all
-   coordinates here are chunky internal pixels (~170–230 wide stage).
-   Adding a fifth world is one registerLevel() call — Mascot.js and
-   FinancialEngine.js stay untouched. */
+   Adding a fifth world is still one registerLevel() call — Owl.js and
+   FinancialEngine.js stay untouched. The engine is upgraded to render
+   at full canvas backing resolution (no pixelation) so the line art
+   stays crisp. */
 
 (function () {
   "use strict";
 
   var canvas = document.getElementById("journeyCanvas");
-  if (!canvas || !canvas.getContext || !window.Mascot || !window.FinancialEngine) return;
+  if (!canvas || !canvas.getContext || !window.Owl || !window.FinancialEngine) return;
 
   var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var mascot = new Mascot();
-  var engine = new FinancialEngine({ canvas: canvas, mascot: mascot, reducedMotion: reduced });
+  var owl = new Owl();
+  var engine = new FinancialEngine({ canvas: canvas, mascot: owl, reducedMotion: reduced });
   var money = FinancialEngine.money;
+
+  /* Upgrade the engine to render at the canvas's native CSS pixel
+     resolution with antialiasing, so the colonnade's engraved line-art
+     stays crisp. The render loop, particle system and metric easing
+     are untouched. */
+  engine._resize = function () {
+    var cw = this.canvas.clientWidth || 640;
+    var ch = this.canvas.clientHeight || 420;
+    this.scale = 1;
+    this.w = Math.max(160, Math.floor(cw));
+    this.h = Math.max(160, Math.floor(ch));
+    this.canvas.width = this.w;
+    this.canvas.height = this.h;
+    this.ctx.imageSmoothingEnabled = true;
+    if (this.reduced && this.level) this._renderFrame(0);
+  };
+  engine._resize();
 
   function clamp(v, a, b) { return Math.min(b, Math.max(a, v)); }
   function lerp(a, b, k) { return a + (b - a) * k; }
 
-  /* ---------- 8-bit scene helpers ---------- */
-
-  var PFONT = '"Press Start 2P", "Courier New", monospace';
-  var GOLD = "#e7c069", GOLD_LIGHT = "#f6e7bd", GOLD_DARK = "#7a5a1e";
-  var BRICK = "#16382d", BRICK_DARK = "#0a1a14", TEAL = "#9fd8c4", RED = "#d96a4a";
+  /* ---------- premium palette ---------- */
+  var INK = "#0b1f1a", INK_SOFT = "#12302a";
+  var CREAM = "#f6f1e7", CREAM_DEEP = "#ede5d4";
+  var GOLD = "#c9a14a", GOLD_SOFT = "#e0c98c", GOLD_DEEP = "#7a5a1e";
+  var RUST = "#d07a5e", TEAL = "#9fd8c4";
+  var SERIF = '"Fraunces", Georgia, serif';
+  var SANS = '"Instrument Sans", -apple-system, sans-serif';
 
   function rmShort(v) {
     v = Math.round(v);
@@ -34,163 +58,414 @@
     return "RM" + v;
   }
 
-  function ptext(g, str, x, y, color, align, size) {
-    var ctx = g.ctx;
-    ctx.font = (size || 8) + "px " + PFONT;
-    ctx.fillStyle = color || "rgba(242,236,224,0.9)";
-    ctx.textAlign = align || "center";
-    ctx.fillText(str, Math.round(x), Math.round(y));
-  }
+  /* Cached per-world readiness scores and tones, so all four pillars
+     can render with their live fill heights even when only one is the
+     active world. Seeded with each world's default-computed score and
+     updated on every state event. */
+  var progress = {};
+  var tones = {};
+  var ROMAN = ["I", "II", "III", "IV", "V", "VI"];
 
-  function brickGround(g, topY) {
-    var ctx = g.ctx, w = g.w, h = g.h;
-    topY = Math.round(topY);
-    ctx.fillStyle = BRICK;
-    ctx.fillRect(0, topY, w, h - topY);
-    ctx.fillStyle = BRICK_DARK;
-    var row = 0;
-    for (var y = topY; y < h; y += 6, row++) {
-      ctx.fillRect(0, y, w, 1);
-      for (var x = (row % 2 ? 6 : 0); x < w; x += 12) ctx.fillRect(x, y, 1, 6);
-    }
-    ctx.fillStyle = "rgba(231,192,105,0.9)";
-    ctx.fillRect(0, topY, w, 1);
-  }
-
-  function qBlock(g, x, y, s) {
-    var ctx = g.ctx;
-    x = Math.round(x); y = Math.round(y);
-    var lit = g.reduced || ((g.t * 2) | 0) % 2 === 0;
-    ctx.fillStyle = lit ? GOLD : "#c9a14a";
-    ctx.fillRect(x, y, s, s);
-    ctx.fillStyle = GOLD_DARK;
-    ctx.fillRect(x, y, s, 1); ctx.fillRect(x, y + s - 1, s, 1);
-    ctx.fillRect(x, y, 1, s); ctx.fillRect(x + s - 1, y, 1, s);
-    ctx.fillRect(x + 1, y + 1, 1, 1); ctx.fillRect(x + s - 2, y + 1, 1, 1);
-    ctx.fillRect(x + 1, y + s - 2, 1, 1); ctx.fillRect(x + s - 2, y + s - 2, 1, 1);
-    ctx.font = "8px " + PFONT;
-    ctx.fillStyle = "#3a2a10";
-    ctx.textAlign = "center";
-    ctx.fillText("?", x + s / 2 + 1, y + s - 4);
-  }
-
-  function pipe(g, cx, topY, pw, bottomY, main, dark, light) {
-    var ctx = g.ctx;
-    cx = Math.round(cx); topY = Math.round(topY);
-    var rimH = 6, rimW = pw + 6;
-    var bx = Math.round(cx - pw / 2);
-    ctx.fillStyle = main;
-    ctx.fillRect(bx, topY + rimH, pw, bottomY - topY - rimH);
-    ctx.fillStyle = light;
-    ctx.fillRect(bx + 2, topY + rimH, 3, bottomY - topY - rimH);
-    ctx.fillStyle = dark;
-    ctx.fillRect(bx + pw - 3, topY + rimH, 3, bottomY - topY - rimH);
-    var rx = Math.round(cx - rimW / 2);
-    ctx.fillStyle = main;
-    ctx.fillRect(rx, topY, rimW, rimH);
-    ctx.fillStyle = light;
-    ctx.fillRect(rx, topY, rimW, 2);
-    ctx.fillStyle = dark;
-    ctx.fillRect(rx, topY + rimH - 2, rimW, 2);
-  }
-
-  function coinRow(g, x, y, count) {
-    var ctx = g.ctx;
-    for (var i = 0; i < count; i++) {
-      ctx.fillStyle = GOLD;
-      ctx.fillRect(x + i * 5, y, 4, 4);
-      ctx.fillStyle = GOLD_LIGHT;
-      ctx.fillRect(x + i * 5 + 1, y + 1, 1, 2);
-    }
-  }
-
-  function heart(ctx, x, y, c) {
-    ctx.fillStyle = c;
-    ctx.fillRect(x, y, 2, 1); ctx.fillRect(x + 3, y, 2, 1);
-    ctx.fillRect(x, y + 1, 5, 2);
-    ctx.fillRect(x + 1, y + 3, 3, 1);
-    ctx.fillRect(x + 2, y + 4, 1, 1);
-  }
-
-  function stars(g, count, maxY) {
-    var ctx = g.ctx;
-    for (var i = 0; i < count; i++) {
-      var sx = ((i * 73) % 97) / 97 * g.w;
-      var sy = ((i * 41) % 89) / 89 * maxY;
-      ctx.globalAlpha = 0.15 + 0.5 * Math.abs(Math.sin(g.t * 0.8 + i * 1.3));
-      ctx.fillStyle = "#f6f1e7";
-      ctx.fillRect(Math.round(sx), Math.round(sy), 1, 1);
-    }
-    ctx.globalAlpha = 1;
-  }
-
-  /* World 1-4 · short pyramid of pixel coins. `frozen` paints them frosted
-     blue (locked in probate); otherwise bright gold (cleared for the family).
-     Returns its bounds so the caller can frame it in ice. */
-  function coinStack(g, cx, baseY, frozen) {
-    var ctx = g.ctx;
-    cx = Math.round(cx); baseY = Math.round(baseY);
-    var cs = 5, gap = 1, step = cs + gap, rowsN = 4, cols = 4;
-    var totalW = cols * step - gap;
-    var x0 = cx - Math.round(totalW / 2);
-    for (var r = 0; r < rowsN; r++) {
-      var rowY = baseY - (r + 1) * step;
-      var cN = cols - r;                         // pyramid: each tier loses one coin
-      var rx = x0 + Math.round(r * step / 2);    // …and centres over the one below
-      for (var c = 0; c < cN; c++) {
-        var x = rx + c * step;
-        ctx.fillStyle = frozen ? "#6f93ad" : GOLD;
-        ctx.fillRect(x, rowY, cs, cs);
-        ctx.fillStyle = frozen ? "#bcdcf0" : GOLD_LIGHT;
-        ctx.fillRect(x + 1, rowY + 1, 2, 1);
-        ctx.fillStyle = frozen ? "#46627a" : GOLD_DARK;
-        ctx.fillRect(x, rowY + cs - 1, cs, 1);
-      }
-    }
-    return { x0: x0, w: totalW, top: baseY - rowsN * step };
-  }
-
-  /* World 1-4 · a tiny waiting capybara (a "loved one") outside the home.
-     Deliberately chunky (8×6) so it still reads at mobile canvas sizes. */
-  function miniCapy(g, cx, baseY, faceLeft) {
-    var ctx = g.ctx;
-    cx = Math.round(cx); baseY = Math.round(baseY);
-    var O = "#2b1a10", B = "#b07d46", S = "#8a5d33";
-    var bx = cx - 4, by = baseY - 6;
-    ctx.fillStyle = "rgba(0,0,0,0.3)";
-    ctx.fillRect(cx - 4, baseY, 8, 1);          // shadow
-    ctx.fillStyle = O;
-    ctx.fillRect(bx, by, 8, 6);                 // outline body
-    ctx.fillStyle = B;
-    ctx.fillRect(bx + 1, by + 1, 6, 4);         // fur fill
-    ctx.fillStyle = O;
-    ctx.fillRect(bx + 1, by - 1, 1, 1);         // ears
-    ctx.fillRect(bx + 6, by - 1, 1, 1);
-    ctx.fillRect(bx + 1, baseY - 1, 1, 1);      // legs
-    ctx.fillRect(bx + 6, baseY - 1, 1, 1);
-    ctx.fillStyle = S;                          // snout nub
-    ctx.fillRect(faceLeft ? bx : bx + 7, by + 2, 1, 2);
-    ctx.fillStyle = "#1c1008";                  // eye
-    ctx.fillRect(faceLeft ? bx + 2 : bx + 5, by + 1, 1, 1);
+  function toneColor(tone) {
+    if (tone === "green") return TEAL;
+    if (tone === "red") return RUST;
+    return GOLD;
   }
 
   /* ============================================================
-     WORLD 1-1 — Cashflow: the coin pipes
+     THE COLONNADE — the single shared scene renderer.
+     Every world's scene.draw calls into this; only the highlighted
+     (active) pillar changes. Pillar i maps to engine.order[i].
      ============================================================ */
 
-  function spawnCoin(g, x0, y0, x1, y1) {
-    var T = 0.7, G = 180;
-    g.particles.spawn({
-      x: x0 + (Math.random() - 0.5) * 6, y: y0,
-      vx: (x1 - x0) / T + (Math.random() - 0.5) * 8,
-      vy: (y1 - y0) / T - 0.5 * G * T,
-      g: G, size: 3, life: T, color: GOLD, alpha: 1
+  function drawColonnade(g) {
+    var ctx = g.ctx, w = g.w, h = g.h;
+    var activeIdx = engine.order.indexOf(engine.levelId);
+    if (activeIdx < 0) activeIdx = 0;
+
+    // --- background: deep ink-green wash with a soft top vignette ---
+    var bg = ctx.createLinearGradient(0, 0, 0, h);
+    bg.addColorStop(0, "#0a1f1a");
+    bg.addColorStop(0.55, "#0b2620");
+    bg.addColorStop(1, "#07171210");
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, w, h);
+
+    // faint paper grain via two diagonal hairline passes (cheap)
+    ctx.save();
+    ctx.globalAlpha = 0.05;
+    ctx.strokeStyle = CREAM;
+    ctx.lineWidth = 0.5;
+    for (var i = 0; i < w; i += 7) {
+      ctx.beginPath();
+      ctx.moveTo(i, 0); ctx.lineTo(i + h, h);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // --- geometry ---
+    var padX = Math.max(20, w * 0.06);
+    var stageW = w - padX * 2;
+    var nPillars = engine.order.length;
+    var pillarW = Math.max(38, Math.min(72, stageW * 0.13));
+    var gap = (stageW - pillarW * nPillars) / (nPillars - 1);
+    var pillarTopY = Math.round(h * 0.34);
+    var pillarBotY = Math.round(h * 0.86);
+    var pillarH = pillarBotY - pillarTopY;
+    var lintelH = Math.max(34, h * 0.10);
+    var lintelTopY = pillarTopY - lintelH;
+    var lintelBotY = pillarTopY;
+    var groundY = Math.round(h * 0.91);
+
+    // pillar x centres
+    var centres = [];
+    for (var p = 0; p < nPillars; p++) {
+      centres.push(padX + pillarW / 2 + p * (pillarW + gap));
+    }
+
+    // --- gold motes drifting up inside filled pillars ---
+    if (!g.reduced && g.dt) {
+      engine.order.forEach(function (id, i) {
+        var isActive = i === activeIdx;
+        var st = isActive ? g.state : null;
+        var score = isActive ? (g.state && g.state.score) : progress[id];
+        if (score == null) score = 0;
+        var tone = isActive ? (g.state && g.state.power && g.state.power.tone) : tones[id];
+        if (score < 8) return;
+        var spawnChance = Math.min(0.18, score / 600) * (isActive ? 1.4 : 0.7);
+        if (Math.random() < spawnChance) {
+          var cx = centres[i];
+          var fillTop = pillarBotY - (score / 100) * pillarH;
+          g.particles.spawn({
+            x: cx + (Math.random() - 0.5) * pillarW * 0.55,
+            y: pillarBotY - 2 - Math.random() * 4,
+            vx: (Math.random() - 0.5) * 6,
+            vy: -12 - Math.random() * 18,
+            g: -2,
+            size: 1.4 + Math.random() * 1.4,
+            life: 1.4 + Math.random() * 0.6,
+            color: toneColor(tone) || GOLD_SOFT,
+            alpha: 0.85,
+            update: function (pt) {
+              // fade out as it passes the fill line
+              if (pt.y < fillTop) pt.life = Math.min(pt.life, pt.age + 0.25);
+            }
+          });
+        }
+      });
+    }
+
+    // --- the ground line: a thin cream-deep rule across the stage ---
+    ctx.save();
+    ctx.strokeStyle = "rgba(237,229,212,0.18)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(padX * 0.4, groundY);
+    ctx.lineTo(w - padX * 0.4, groundY);
+    ctx.stroke();
+    ctx.restore();
+
+    // --- draw each pillar (back to front: shaft, fill, capital, base) ---
+    engine.order.forEach(function (id, i) {
+      drawPillar(ctx, centres[i], pillarTopY, pillarBotY, pillarW, {
+        score: (i === activeIdx ? (g.state && g.state.score) : progress[id]) || 0,
+        tone: i === activeIdx ? (g.state && g.state.power && g.state.power.tone) : tones[id],
+        active: i === activeIdx,
+        reduced: g.reduced,
+        t: g.t
+      });
     });
+
+    // --- cracks: ink hairlines that propagate from weak pillars
+    //     (<25% score) up into the lintel above them ---
+    engine.order.forEach(function (id, i) {
+      var score = (i === activeIdx ? (g.state && g.state.score) : progress[id]) || 0;
+      if (score >= 25) return;
+      drawCrack(ctx, centres[i], pillarTopY, lintelTopY, pillarW, score, g.t, g.reduced);
+    });
+
+    // --- the lintel (roof beam) drawn over the pillar tops ---
+    drawLintel(ctx, padX, lintelTopY, stageW, lintelH, w, {
+      activeIdx: activeIdx,
+      weakCount: engine.order.reduce(function (n, id, i) {
+        var sc = (i === activeIdx ? (g.state && g.state.score) : progress[id]) || 0;
+        return n + (sc < 25 ? 1 : 0);
+      }, 0),
+      reduced: g.reduced,
+      t: g.t
+    });
+
+    // --- the owl perched on top of the lintel, slightly above centre ---
+    var owlSize = Math.min(lintelH * 1.05, pillarW * 1.05, h * 0.20);
+    var owlCX = w / 2;
+    var owlPerchY = lintelTopY - 2;
+    owl.draw(ctx, owlCX, owlPerchY, owlSize, {});
+
+    // --- pillar labels + score numerals below the colonnade ---
+    ctx.textAlign = "center";
+    ctx.textBaseline = "alphabetic";
+    engine.order.forEach(function (id, i) {
+      var def = engine.levels[id];
+      var score = (i === activeIdx ? (g.state && g.state.score) : progress[id]) || 0;
+      var isActive = i === activeIdx;
+      var cx = centres[i];
+      var labelY = pillarBotY + Math.max(18, h * 0.055);
+      var scoreY = labelY + Math.max(16, h * 0.045);
+
+      // category name (small caps, sans)
+      ctx.save();
+      ctx.font = "600 " + Math.max(9, Math.round(w * 0.014)) + "px " + SANS;
+      ctx.fillStyle = isActive ? GOLD_SOFT : "rgba(237,229,212,0.62)";
+      ctx.letterSpacing = "0.18em";
+      var name = (def.name || "").toUpperCase();
+      ctx.fillText(name, cx, labelY);
+      ctx.restore();
+
+      // score (Fraunces italic, gold when strong, muted when weak)
+      ctx.save();
+      ctx.font = "italic 500 " + Math.max(15, Math.round(w * 0.024)) + "px " + SERIF;
+      ctx.fillStyle = isActive
+        ? (score >= 75 ? GOLD_SOFT : score < 25 ? "#e39a86" : "rgba(242,236,224,0.92)")
+        : "rgba(224,201,140,0.55)";
+      ctx.fillText(Math.round(score) + "%", cx, scoreY);
+      ctx.restore();
+    });
+
+    // --- the Roman pillar number, engraved at the top of each capital ---
+    ctx.save();
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    engine.order.forEach(function (id, i) {
+      var cx = centres[i];
+      var numY = pillarTopY - lintelH * 0.5;
+      ctx.font = "italic 500 " + Math.max(11, Math.round(w * 0.018)) + "px " + SERIF;
+      ctx.fillStyle = i === activeIdx ? GOLD_SOFT : "rgba(224,201,140,0.45)";
+      ctx.fillText(ROMAN[i] || (i + 1), cx, numY);
+    });
+    ctx.restore();
   }
+
+  /* ---------- a single pillar ---------- */
+  function drawPillar(ctx, cx, topY, botY, width, opts) {
+    var score = clamp(opts.score || 0, 0, 100);
+    var tone = opts.tone;
+    var active = opts.active;
+    var t = opts.t;
+    var reduced = opts.reduced;
+    var fill = toneColor(tone);
+    var x0 = Math.round(cx - width / 2);
+    var x1 = Math.round(cx + width / 2);
+    var w = width;
+    var pillarH = botY - topY;
+
+    // active glow halo behind the pillar
+    if (active) {
+      var halo = ctx.createRadialGradient(cx, (topY + botY) / 2, 2, cx, (topY + botY) / 2, w * 1.4);
+      halo.addColorStop(0, "rgba(201,161,74,0.22)");
+      halo.addColorStop(0.6, "rgba(201,161,74,0.08)");
+      halo.addColorStop(1, "rgba(201,161,74,0)");
+      ctx.save();
+      ctx.fillStyle = halo;
+      ctx.fillRect(x0 - w * 0.6, topY - 8, w * 2.2, pillarH + 16);
+      ctx.restore();
+    }
+
+    // shaft body: cream stone with a soft inner shadow
+    var shaftGrad = ctx.createLinearGradient(x0, 0, x1, 0);
+    shaftGrad.addColorStop(0, "#e8dfca");
+    shaftGrad.addColorStop(0.15, CREAM);
+    shaftGrad.addColorStop(0.55, CREAM);
+    shaftGrad.addColorStop(1, "#d9cfb6");
+    ctx.fillStyle = shaftGrad;
+    ctx.fillRect(x0, topY, w, pillarH);
+
+    // gold-light fill from the base up, height = score%
+    if (score > 0.5) {
+      var fillH = Math.max(2, (score / 100) * pillarH);
+      var fillTop = botY - fillH;
+      var fillGrad = ctx.createLinearGradient(0, botY, 0, fillTop);
+      fillGrad.addColorStop(0, fill);
+      fillGrad.addColorStop(0.7, fill === TEAL ? "#b9e4d4" : (fill === RUST ? "#e8a896" : GOLD_SOFT));
+      fillGrad.addColorStop(1, "rgba(246,231,189,0.85)");
+      ctx.save();
+      ctx.fillStyle = fillGrad;
+      ctx.fillRect(x0 + 2, fillTop, w - 4, fillH);
+      // surface ripple — a soft sine wave along the fill top
+      if (!reduced) {
+        ctx.strokeStyle = "rgba(246,231,189,0.6)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (var rx = x0 + 2; rx <= x1 - 2; rx += 2) {
+          var ry = fillTop + Math.sin(t * 2.2 + rx * 0.18) * 0.9;
+          if (rx === x0 + 2) ctx.moveTo(rx, ry); else ctx.lineTo(rx, ry);
+        }
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // fluting: 3 thin vertical inner channels for a classical look
+    ctx.save();
+    ctx.strokeStyle = "rgba(11,31,26,0.10)";
+    ctx.lineWidth = 0.8;
+    for (var f = -1; f <= 1; f++) {
+      var fx = cx + f * (w * 0.22);
+      ctx.beginPath();
+      ctx.moveTo(Math.round(fx), topY + 2);
+      ctx.lineTo(Math.round(fx), botY - 2);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // pillar outline (thin gold)
+    ctx.save();
+    ctx.strokeStyle = active ? GOLD : "rgba(201,161,74,0.55)";
+    ctx.lineWidth = active ? 2 : 1.2;
+    ctx.strokeRect(x0 + 0.5, topY + 0.5, w - 1, pillarH - 1);
+    ctx.restore();
+
+    // base plinth: a slightly wider block at the bottom
+    var plinthH = Math.max(8, pillarH * 0.06);
+    var plinthOverhang = 4;
+    ctx.fillStyle = CREAM_DEEP;
+    ctx.fillRect(x0 - plinthOverhang, botY - plinthH, w + plinthOverhang * 2, plinthH);
+    ctx.save();
+    ctx.strokeStyle = "rgba(11,31,26,0.30)";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x0 - plinthOverhang + 0.5, botY - plinthH + 0.5, w + plinthOverhang * 2 - 1, plinthH - 1);
+    ctx.restore();
+
+    // capital: a wider block at the top with a thin gold abacus
+    var capH = Math.max(10, pillarH * 0.08);
+    var capOverhang = 6;
+    ctx.fillStyle = CREAM_DEEP;
+    ctx.fillRect(x0 - capOverhang, topY, w + capOverhang * 2, capH);
+    ctx.fillStyle = "rgba(201,161,74,0.85)";
+    ctx.fillRect(x0 - capOverhang, topY, w + capOverhang * 2, 2);
+    ctx.save();
+    ctx.strokeStyle = "rgba(11,31,26,0.30)";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x0 - capOverhang + 0.5, topY + 0.5, w + capOverhang * 2 - 1, capH - 1);
+    ctx.restore();
+  }
+
+  /* ---------- lintel (roof beam) with engraved title ---------- */
+  function drawLintel(ctx, padX, topY, stageW, h, totalW, opts) {
+    var botY = topY + h;
+    var left = padX - 8;
+    var right = padX + stageW + 8;
+    var width = right - left;
+
+    // beam body: cream stone
+    var grad = ctx.createLinearGradient(0, topY, 0, botY);
+    grad.addColorStop(0, CREAM);
+    grad.addColorStop(0.5, "#f1e8d4");
+    grad.addColorStop(1, CREAM_DEEP);
+    ctx.fillStyle = grad;
+    ctx.fillRect(left, topY, width, h);
+
+    // thin gold border
+    ctx.save();
+    ctx.strokeStyle = GOLD;
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(left + 0.5, topY + 0.5, width - 1, h - 1);
+    // inner gold filigree line
+    ctx.strokeStyle = "rgba(201,161,74,0.45)";
+    ctx.lineWidth = 0.8;
+    ctx.strokeRect(left + 4, topY + 4, width - 8, h - 8);
+    ctx.restore();
+
+    // cracks from weak pillars already drawn under the lintel;
+    // tint the beam edge above weak pillars with a rust shadow
+    if (opts.weakCount > 0) {
+      ctx.save();
+      ctx.globalAlpha = Math.min(0.35, 0.10 + opts.weakCount * 0.10);
+      ctx.fillStyle = RUST;
+      ctx.fillRect(left, botY - 2, width, 2);
+      ctx.restore();
+    }
+
+    // engraved title — "YOUR FINANCIAL FOUNDATION"
+    ctx.save();
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    var cy = topY + h * 0.50;
+    var fontSize = Math.max(11, Math.min(20, totalW * 0.024));
+    ctx.font = "500 " + fontSize + "px " + SERIF;
+    // engraved look: shadow offset + gold fill
+    ctx.fillStyle = "rgba(11,31,26,0.30)";
+    ctx.fillText("YOUR FINANCIAL FOUNDATION", totalW / 2 + 0.6, cy + 0.6);
+    ctx.fillStyle = GOLD_DEEP;
+    ctx.fillText("YOUR FINANCIAL FOUNDATION", totalW / 2, cy);
+    ctx.restore();
+
+    // small gold fleuron on each side of the title
+    ctx.save();
+    ctx.fillStyle = GOLD;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = "italic " + Math.max(12, fontSize * 1.1) + "px " + SERIF;
+    var sideGap = Math.min(totalW * 0.18, 110);
+    ctx.fillText("◆", totalW / 2 - sideGap, cy);
+    ctx.fillText("◆", totalW / 2 + sideGap, cy);
+    ctx.restore();
+  }
+
+  /* ---------- hairline cracks from a weak pillar into the lintel ---------- */
+  function drawCrack(ctx, cx, pillarTopY, lintelTopY, pillarW, score, t, reduced) {
+    // lower score → taller, more branches, more visible
+    var severity = clamp((25 - score) / 25, 0, 1);
+    if (severity < 0.02) return;
+    var crackH = (pillarTopY - lintelTopY) * (0.25 + severity * 0.75) + severity * 8;
+    var startX = cx + (Math.random() - 0.5) * pillarW * 0.2;
+    var startY = pillarTopY - 1;
+    var endY = pillarTopY - crackH;
+
+    ctx.save();
+    ctx.strokeStyle = "rgba(11,31,26," + (0.45 + severity * 0.45).toFixed(2) + ")";
+    ctx.lineWidth = 0.9 + severity * 0.6;
+    ctx.lineCap = "round";
+
+    // main jagged crack
+    var segs = 5 + Math.round(severity * 3);
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    var px = startX, py = startY;
+    // deterministic shape from cx so it doesn't wiggle each frame
+    var seed = cx * 0.13;
+    for (var s = 1; s <= segs; s++) {
+      var k = s / segs;
+      var ny = startY - crackH * k;
+      var jitter = (Math.sin(seed + s * 1.7) + Math.cos(seed + s * 2.3)) * (pillarW * 0.10) * (1 - k * 0.4);
+      var nx = cx + jitter;
+      ctx.lineTo(nx, ny);
+      px = nx; py = ny;
+    }
+    ctx.stroke();
+
+    // one short branch for severe cracks
+    if (severity > 0.55) {
+      var branchAt = segs * 0.55;
+      var bx = cx + Math.sin(seed + 4) * pillarW * 0.12;
+      var by = startY - crackH * (branchAt / segs);
+      ctx.beginPath();
+      ctx.moveTo(bx, by);
+      ctx.lineTo(bx + pillarW * 0.18, by - crackH * 0.3);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  /* ============================================================
+     PILLAR I — Cashflow: the coin pipes
+     (Inputs and compute() maths unchanged from the original world.
+      Only the scene renderer is new — all four pillars share the
+      drawColonnade() function above.)
+     ============================================================ */
 
   engine.registerLevel("budget", {
     name: "Cashflow",
-    title: "World 1-1 · The Coin Pipes",
+    title: "Pillar I · The Coin Pipes",
     inputs: [
       { key: "income", group: "INFLOW · The Coin Pool", label: "Monthly Take-Home Pay", min: 1000, max: 20000, step: 100, value: 5000, fmt: "money", base: true },
       { key: "fixed", group: "OUTFLOW · The Drain Pipes & Blocks", label: "Fixed Commitments", sub: "(Rent, Insurance, Utilities, Bills)", min: 0, max: 20000, step: 100, value: 1500, fmt: "money", scaleWith: "income", maxFactor: 1.2 },
@@ -264,215 +539,35 @@
     },
     scene: {
       draw: function (g) {
-        var ctx = g.ctx, w = g.w, h = g.h;
-        var groundY = h - 14;
-        stars(g, 14, h * 0.4);
-
-        // "?" pay block
-        var bs = 14;
-        var bx = w / 2 - bs / 2, by = 8 + (g.reduced ? 0 : Math.round(Math.abs(Math.sin(g.t * 2)) * -2));
-        qBlock(g, bx, by, bs);
-
-        var rate = clamp(g.m.rate, 0, 0.6);
-        var spendShare = clamp(g.m.spendShare, 0, 1.5);
-        var totalSpend = (g.values.fixed || 0) + (g.values.debt || 0) + (g.values.other || 0);
-        var spendCx = w * 0.32, saveCx = w * 0.68;
-
-        // spending pipe (money down the drain); labels hug the left
-        // edge so the coin arc never crosses the text
-        var pw = 18, pipeTop = groundY - 26;
-        pipe(g, spendCx, pipeTop, pw, groundY, "#2e7d4f", "#1b4a2f", "#5cb87a");
-        ptext(g, "SPEND", 3, pipeTop - 12, TEAL, "left");
-        ptext(g, rmShort(totalSpend), 3, pipeTop - 2, TEAL, "left");
-
-        // savings vault filling with coin rows; labels hug the right edge
-        var vw = 34, vh = 28;
-        var vx = Math.round(saveCx - vw / 2), vTop = groundY - vh;
-        ctx.fillStyle = "#0a1a14";
-        ctx.fillRect(vx, vTop, vw, vh);
-        var fillRows = Math.floor(clamp(rate / 0.4, 0, 1) * 4);
-        for (var r = 0; r < fillRows; r++) coinRow(g, vx + 4, groundY - 7 - r * 5, 6);
-        ctx.fillStyle = GOLD_DARK;
-        ctx.fillRect(vx, vTop, 2, vh); ctx.fillRect(vx + vw - 2, vTop, 2, vh);
-        ctx.fillRect(vx, groundY - 2, vw, 2);
-        ctx.fillStyle = GOLD;
-        ctx.fillRect(vx - 1, vTop, 4, 2); ctx.fillRect(vx + vw - 3, vTop, 4, 2);
-        ptext(g, "SAVE", w - 3, vTop - 12, GOLD, "right");
-        ptext(g, rmShort(g.m.savings), w - 3, vTop - 2, GOLD, "right");
-
-        // coins spurting from the block (saved coins drop into the
-        // left half of the vault, clear of the right-edge labels)
-        if (!g.reduced && g.dt) {
-          if (Math.random() < Math.min(0.8, spendShare * 0.45)) spawnCoin(g, w / 2, by + bs, spendCx, pipeTop);
-          if (rate > 0.01 && Math.random() < Math.min(0.8, rate * 2)) spawnCoin(g, w / 2, by + bs, saveCx - 8, vTop);
-          if (spendShare > 1 && Math.random() < 0.3) {
-            g.particles.spawn({
-              x: spendCx + (Math.random() - 0.5) * pw, y: pipeTop + 4,
-              vx: (Math.random() - 0.5) * 14, vy: -20, g: 90,
-              size: 2, life: 0.9, color: RED, alpha: 0.9
-            });
-          }
-        }
-
-        brickGround(g, groundY);
-        mascot.draw(ctx, w / 2, groundY, Math.min(h * 0.26, 40), { gaze: rate >= 0.05 ? 0.5 : -0.5 });
+        drawColonnade(g);
       }
     }
   });
 
   /* ============================================================
-     WORLD 1-2 — Protection: the brick shield
+     PILLAR II — Protection: the brick shield
      ============================================================ */
 
-  /* shared global money state — World 1-1 and World 1-2 read & write the
-     SAME income, so moving the slider in one world moves it in the other.
-     (World 1-2 now models liabilities explicitly via its own mortgage /
-     non-mortgage sliders, so it no longer borrows World 1-1's debt figure.) */
+  /* shared global money state — Pillar I and Pillar II read & write the
+     SAME income, so moving the slider in one pillar moves it in the other.
+     (Pillar II now models liabilities explicitly via its own mortgage /
+     non-mortgage sliders, so it no longer borrows Pillar I's debt figure.) */
   var GLOBAL = { income: 5000, debt: 800 };
   var insurancePhase = 0;                 // 0 = Brick Shield form · 1 = Force Field form
 
-  var shieldRef = { ratio: 1, x: 0 };
   var FULL_MED = 1000000;                  // RM 1M annual limit = a maxed force field
-
-  /* Unified Capy scene — BOTH defences are drawn on the same canvas at all
-     times, regardless of which input form (phase) is on screen below:
-       • the brick wall in front of Capy  = Life cover / Phase-1 target
-       • the force-field dome around Capy = Medical-card limit / RM 1M
-     Toggling phases only swaps the form UI underneath, never this graphic. */
-  function drawCapyDefenses(g, groundY) {
-    var ctx = g.ctx, w = g.w, h = g.h;
-    var lifeRatio = clamp(g.m.ratio, 0, 1.2);
-    var fieldRatio = clamp(g.m.forcefield, 0, 1.2);
-    var noCard = !g.values.medlimit;          // RM 0 limit = no medical card at all
-
-    var capH = Math.min(h * 0.26, 40);
-    var capX = Math.round(w * 0.4);
-    var cy = Math.round(groundY - capH * 0.55);
-
-    // ---- FORCE FIELD: pixel dome around Capy (drawn first, behind Capy) ----
-    var R = Math.min(w * 0.24, 28);
-    var segs = 22;
-    var litF = Math.round(clamp(fieldRatio, 0, 1) * segs);
-    var lowF = fieldRatio < 0.5;
-    var flickF = (lowF || noCard) && !g.reduced ? (((g.t * 8) | 0) % 2 === 0) : true;
-    var ffColor = noCard ? RED : fieldRatio >= 1 ? TEAL : fieldRatio >= 0.5 ? GOLD : "#d99a4a";
-    for (var i = 0; i < segs; i++) {
-      var ang = (i / segs) * Math.PI * 2 - Math.PI / 2;
-      var px = capX + Math.cos(ang) * R;
-      var py = cy + Math.sin(ang) * R * 0.95;
-      if (!noCard && i < litF && flickF) {
-        ctx.fillStyle = ffColor;
-        ctx.fillRect(Math.round(px - 1), Math.round(py - 1), 2, 2);
-      } else {
-        ctx.fillStyle = "rgba(159,216,196,0.16)";
-        ctx.fillRect(Math.round(px), Math.round(py), 1, 1);
-      }
-    }
-    if (!noCard && fieldRatio >= 1 && !g.reduced && Math.random() < 0.12) {
-      var sa = Math.random() * Math.PI * 2;
-      g.particles.spawn({
-        x: capX + Math.cos(sa) * R, y: cy + Math.sin(sa) * R * 0.95,
-        vx: 0, vy: -6, size: 1, life: 0.7, color: GOLD_LIGHT, alpha: 0.9
-      });
-    }
-
-    brickGround(g, groundY);
-    mascot.draw(ctx, capX, groundY, capH, { gaze: 0.6 });
-
-    // ---- BRICK SHIELD: vertical wall in front of Capy (lit = life cover) ----
-    var bsz = 8;
-    var wallX = Math.round(w * 0.66);
-    var rows = 5, cols = 2;
-    var lit = Math.round(clamp(lifeRatio, 0, 1) * rows * cols);
-    shieldRef.ratio = lifeRatio;
-    shieldRef.x = wallX;
-    var flicker = lifeRatio < 0.45 && !g.reduced ? (((g.t * 9) | 0) % 3 !== 0) : true;
-    var idx = 0;
-    for (var r = 0; r < rows; r++) {
-      for (var c = 0; c < cols; c++) {
-        var bx = wallX + c * bsz;
-        var by = groundY - (r + 1) * bsz;
-        if (idx < lit && flicker) {
-          ctx.fillStyle = GOLD;
-          ctx.fillRect(bx, by, bsz, bsz);
-          ctx.fillStyle = GOLD_LIGHT;
-          ctx.fillRect(bx + 1, by + 1, 2, 1);
-          ctx.fillStyle = GOLD_DARK;
-          ctx.fillRect(bx, by + bsz - 1, bsz, 1);
-          ctx.fillRect(bx + bsz - 1, by, 1, bsz);
-        } else {
-          ctx.strokeStyle = "rgba(231,192,105,0.25)";
-          ctx.strokeRect(bx + 0.5, by + 0.5, bsz - 1, bsz - 1);
-        }
-        idx++;
-      }
-    }
-    if (lifeRatio >= 1 && !g.reduced && Math.random() < 0.1) {
-      g.particles.spawn({
-        x: wallX + Math.random() * bsz * 2, y: groundY - Math.random() * bsz * rows,
-        vx: 0, vy: -8, size: 1, life: 0.8, color: GOLD_LIGHT, alpha: 0.9
-      });
-    }
-
-    // incoming "life happens" hazards bounce off a strong wall, slip a weak one
-    if (!g.reduced && g.dt && Math.random() < 0.06) {
-      g.particles.spawn({
-        x: w + 6,
-        y: h * 0.25 + Math.random() * (groundY - h * 0.32),
-        vx: -(28 + Math.random() * 22), vy: 0,
-        size: 3, life: 10, color: "rgba(242,236,224,0.6)", alpha: 0.9,
-        update: function (p) {
-          if (p.resolved || p.x > shieldRef.x + bsz * 2 + 2) return;
-          p.resolved = true;
-          if (Math.random() < Math.min(1, shieldRef.ratio)) {
-            p.vx = 40 + Math.random() * 25;   // bounced off the wall
-            p.vy = -30 - Math.random() * 20;
-            p.g = 100; p.color = GOLD_LIGHT; p.size = 2; p.life = p.age + 0.6;
-          } else {
-            p.color = RED;                     // slipped through the gap
-            p.life = p.age + 0.7;
-          }
-        }
-      });
-    }
-
-    // ---- medical-card status: gold card when insured, flashing alert at RM 0 ----
-    if (!noCard) {
-      var kx = Math.round(w * 0.1), ky = 12;
-      ctx.fillStyle = GOLD;
-      ctx.fillRect(kx, ky, 16, 11);
-      ctx.fillStyle = GOLD_DARK;
-      ctx.fillRect(kx, ky, 16, 1); ctx.fillRect(kx, ky + 10, 16, 1);
-      ctx.fillStyle = "#2e7d4f";
-      ctx.fillRect(kx + 6, ky + 2, 4, 7);
-      ctx.fillRect(kx + 3, ky + 4, 10, 3);
-    } else {
-      var blink = g.reduced || (((g.t * 3) | 0) % 2 === 0);
-      if (blink) {
-        var aw = Math.min(w - 10, 128), ah = 22;
-        var axx = Math.round(w / 2 - aw / 2), ayy = Math.round(h * 0.12);
-        ctx.fillStyle = "rgba(217,106,74,0.94)";
-        ctx.fillRect(axx, ayy, aw, ah);
-        ctx.fillStyle = "#2a0d08";
-        ctx.fillRect(axx, ayy, aw, 1); ctx.fillRect(axx, ayy + ah - 1, aw, 1);
-        ctx.fillRect(axx, ayy, 1, ah); ctx.fillRect(axx + aw - 1, ayy, 1, ah);
-        ptext(g, "CRITICAL RISK", w / 2, ayy + 9, "#fff3e6", "center");
-        ptext(g, "NO MED CARD", w / 2, ayy + 18, "#fff3e6", "center");
-      }
-    }
-  }
 
   engine.registerLevel("insurance", {
     name: "Protection",
-    title: "World 1-2 · The Brick Shield",
-    // two progressive input forms, toggled by one retro pixel button. The
-    // canvas always shows both defences; only the form + title swap.
+    title: "Pillar II · The Brick Shield",
+    // two progressive input forms, toggled by one elegant button. The
+    // colonnade always shows all four pillars; only the form + title swap.
     phases: [
       { title: "The Brick Shield", cta: "Check Health Protection" },
       { title: "The Force Field", cta: "Back to Life Cover" }
     ],
     inputs: [
-      { key: "income", group: "PHASE 1: LIFE PROTECTION", phase: 0, label: "Monthly income", sub: "(Synced with World 1-1)", min: 1000, max: 30000, step: 100, value: 5000, fmt: "money" },
+      { key: "income", group: "PHASE 1: LIFE PROTECTION", phase: 0, label: "Monthly income", sub: "(Synced with Pillar I)", min: 1000, max: 30000, step: 100, value: 5000, fmt: "money" },
       { key: "mortgage", group: "PHASE 1: LIFE PROTECTION", phase: 0, label: "Outstanding mortgage debt", min: 0, max: 1500000, step: 10000, value: 300000, fmt: "money" },
       { key: "mrta", group: "PHASE 1: LIFE PROTECTION", phase: 0, label: "My mortgage is covered by MRTA / MLTA", type: "toggle", value: 0 },
       { key: "nonmortgage", group: "PHASE 1: LIFE PROTECTION", phase: 0, label: "Outstanding non-mortgage debt", sub: "(Car, cards, PTPTN)", min: 0, max: 500000, step: 5000, value: 50000, fmt: "money" },
@@ -581,21 +676,18 @@
     },
     scene: {
       draw: function (g) {
-        var groundY = g.h - 14;
-        stars(g, 12, g.h * 0.35);
-        // both defences, always — the form below decides nothing here
-        drawCapyDefenses(g, groundY);
+        drawColonnade(g);
       }
     }
   });
 
   /* ============================================================
-     WORLD 1-3 — Future: the flagpole climb
+     PILLAR III — Future: the flagpole climb
      ============================================================ */
 
   engine.registerLevel("retirement", {
     name: "Future",
-    title: "World 1-3 · The Flagpole Climb",
+    title: "Pillar III · The Flagpole Climb",
     inputs: [
       { key: "age", label: "Age today", min: 20, max: 60, step: 1, value: 30, fmt: "age" },
       { key: "retireAge", label: "Retirement age", min: 40, max: 70, step: 1, value: 60, fmt: "age" },
@@ -664,118 +756,19 @@
     },
     scene: {
       draw: function (g) {
-        var ctx = g.ctx, w = g.w, h = g.h;
-        var groundY = h - 12;
-        var SCALE = 1.3;
-        var ratio = clamp(g.m.ratio, 0, SCALE);
-        stars(g, 14, h * 0.4);
-
-        // staircase: a "money mound" launchpad (step 0) sized by current stash,
-        // then climbing steps rising to the projected-pot height
-        var nSteps = 8;
-        var stairX0 = Math.round(w * 0.1);
-        var poleX = Math.round(w * 0.86);
-        var stairSpan = poleX - stairX0;
-        var maxClimb = groundY - 22;
-        var goalClimb = maxClimb / SCALE;               // height of the GOAL line
-        var climb = maxClimb * (ratio / SCALE);         // projected-pot height
-        var startR = clamp(g.m.startRatio == null ? 0 : g.m.startRatio, 0, 1);
-        var launchH = Math.min(climb, goalClimb * startR);  // stash's share of the goal
-        var ea = Math.exp(2) - 1;
-        var tops = [];
-        for (var i = 0; i < nSteps; i++) {
-          var sh;
-          if (i === 0) {
-            sh = launchH;                               // the launchpad foundation
-          } else {
-            var f = (Math.exp(2 * i / (nSteps - 1)) - 1) / ea;   // 0→1 across climbing steps
-            sh = launchH + (climb - launchH) * f;
-          }
-          sh = Math.max(2, Math.round(sh));
-          tops.push(groundY - sh);
-          var x = stairX0 + Math.round(i * stairSpan / nSteps);
-          var xw = stairX0 + Math.round((i + 1) * stairSpan / nSteps) - x;
-          if (i === 0 && launchH > 6) {
-            // thick golden money-mound foundation, with coin texture
-            ctx.fillStyle = "#c9a14a";
-            ctx.fillRect(x, groundY - sh, xw, sh);
-            for (var cyy = groundY - sh + 3; cyy < groundY - 2; cyy += 5) {
-              for (var cxx = x + 2; cxx < x + xw - 2; cxx += 5) {
-                ctx.fillStyle = GOLD_LIGHT;
-                ctx.fillRect(cxx, cyy, 2, 2);
-              }
-            }
-            ctx.fillStyle = GOLD_DARK;
-            ctx.fillRect(x + xw - 1, groundY - sh, 1, sh);
-            ctx.fillStyle = GOLD;
-            ctx.fillRect(x, groundY - sh, xw, 1);
-          } else {
-            ctx.fillStyle = BRICK;
-            ctx.fillRect(x, groundY - sh, xw, sh);
-            ctx.fillStyle = BRICK_DARK;
-            for (var yy = groundY - sh + 4; yy < groundY; yy += 5) ctx.fillRect(x, yy, xw, 1);
-            ctx.fillRect(x + xw - 1, groundY - sh, 1, sh);
-            ctx.fillStyle = GOLD;
-            ctx.fillRect(x, groundY - sh, xw, 1);
-          }
-        }
-
-        // goal line
-        var goalY = Math.round(groundY - maxClimb / SCALE);
-        ctx.fillStyle = "rgba(231,192,105,0.5)";
-        for (var dx2 = stairX0; dx2 < w * 0.9; dx2 += 6) ctx.fillRect(dx2, goalY, 3, 1);
-        ptext(g, "GOAL", stairX0 + 2, goalY - 4, "rgba(231,192,105,0.8)", "left");
-
-        // flagpole — the flag rises with the funding ratio
-        var poleTop = goalY - 6;
-        ctx.fillStyle = "#8aa89c";
-        ctx.fillRect(poleX, poleTop, 2, groundY - poleTop);
-        ctx.fillStyle = GOLD_LIGHT;
-        ctx.fillRect(poleX - 1, poleTop - 3, 4, 3);
-        var flagY = Math.round(lerp(groundY - 10, poleTop + 2, clamp(ratio, 0, 1)));
-        ctx.fillStyle = ratio >= 1 ? GOLD : "#c9a14a";
-        ctx.fillRect(poleX - 9, flagY, 9, 4);
-        ctx.fillRect(poleX - 6, flagY + 4, 6, 2);
-
-        // fireworks when the goal is beaten
-        if (ratio >= 1 && !g.reduced && Math.random() < 0.05) {
-          var fx2 = poleX - 10 + Math.random() * 20, fy2 = poleTop - 4 - Math.random() * 10;
-          for (var s2 = 0; s2 < 8; s2++) {
-            var ang = (s2 / 8) * Math.PI * 2;
-            g.particles.spawn({
-              x: fx2, y: fy2,
-              vx: Math.cos(ang) * 20, vy: Math.sin(ang) * 20,
-              size: 1, life: 0.7, color: s2 % 2 ? GOLD_LIGHT : TEAL, alpha: 1
-            });
-          }
-        }
-
-        brickGround(g, groundY);
-
-        // Capy climbs the staircase on a loop — standard horizontal motion.
-        // The launchpad foundation (step 0) is what lifts the start tier; the
-        // Capy's left↔right position no longer tracks the stash.
-        var p = g.reduced ? 0.6 : (g.t * 0.07) % 1;
-        var stepIdx = Math.min(nSteps - 1, Math.floor(p * nSteps));
-        var capX = stairX0 + p * stairSpan;
-        var capY = tops[stepIdx];
-        mascot.draw(ctx, capX, capY, Math.min(h * 0.2, 32), { walk: g.t * 6, gaze: 0.8 });
+        drawColonnade(g);
       }
     }
   });
 
   /* ============================================================
-     WORLD 1-4 — Legacy: the map home
-     (handled gently — a calm night scene, never an alarmed mascot)
+     PILLAR IV — Legacy: the map home
+     (handled gently — the owl leans calm, never alarmed)
      ============================================================ */
-
-  // tracks the Will toggle so the frozen-coins stash can SLIDE through the
-  // gate (rather than teleport) the moment the Will is written
-  var legacyCoins = { will: false, t0: -1 };
 
   engine.registerLevel("legacy", {
     name: "Legacy",
-    title: "World 1-4 · THE WILLOW GATE",
+    title: "Pillar IV · The Willow Gate",
     inputs: [
       { key: "loved", label: "Loved ones", min: 1, max: 8, step: 1, value: 3, fmt: "people" },
       {
@@ -857,258 +850,7 @@
     },
     scene: {
       draw: function (g) {
-        var ctx = g.ctx, w = g.w, h = g.h;
-        var groundY = h - 14;                  // floor line matches World 1-1
-        var v = g.values;
-        var epf = !!v.epf;                     // nominees → a stream of love
-        var hibah = !!v.hibah;                 // Hibah → an instant wealth conduit
-        var will = !!v.will;                   // Will → the coins clear the gate
-        var loved = Math.max(1, Math.round(v.loved || 1));
-
-        stars(g, 22, h * 0.5);
-
-        // pixel moon — low enough to clear the HUD bubble/stat strip on top
-        var moonX = Math.round(w * 0.40), moonY = Math.round(h * 0.26);
-        ctx.fillStyle = "rgba(246,231,189,0.8)";
-        ctx.fillRect(moonX, moonY, 7, 7);
-        ctx.fillRect(moonX - 2, moonY + 2, 11, 3);
-        ctx.fillStyle = "rgba(201,161,74,0.4)";
-        ctx.fillRect(moonX + 2, moonY + 3, 2, 2);
-
-        // --- anchors: Capy (left) · Willow archway (centre) · home (right) ---
-        var capH = Math.min(h * 0.26, 30);
-        var capX = Math.round(w * 0.12);
-        var capChestY = Math.round(groundY - capH * 0.45);
-
-        var gateX = Math.round(w * 0.45);
-        var gateH = Math.min(h * 0.52, 52);                 // taller, prominent arch
-        var gateTop = Math.round(groundY - gateH);
-        var openHalf = Math.max(7, Math.round(w * 0.05));   // half the doorway
-        var pillarW = 4;
-        var springY = Math.round(gateTop + gateH * 0.34);   // arch springline
-
-        // home scaled down ~12% to free room for the coin piles + capybaras
-        var houseW = Math.round(Math.min(w * 0.19, 28));
-        var houseH = Math.round(Math.min(h * 0.35, 30));
-        var houseCX = Math.round(w * 0.85);
-        var houseBaseY = groundY;                           // sits low on the ground
-
-        // waiting loved-ones cluster, just in front of (left of) the home
-        var clusterRight = houseCX - Math.round(houseW / 2) - 3;
-        var clusterCX = clusterRight - 8;
-
-        // flight path: Capy's chest → the waiting capybaras, through the gate
-        var sx = capX + 5, sy = capChestY;
-        var ex = clusterCX, ey = groundY - 5;
-        function px(t) { return sx + (ex - sx) * t; }
-        function py(t) { return sy + (ey - sy) * t; }
-
-        // --- thin grass ground (structures sit on top) ---------------------
-        ctx.fillStyle = BRICK;
-        ctx.fillRect(0, groundY, w, h - groundY);
-        ctx.fillStyle = "rgba(159,216,196,0.5)";
-        ctx.fillRect(0, groundY, w, 1);
-
-        // --- the cleared path (gold once a Will is written, else faint) -----
-        if (will) {
-          for (var bt = 0.04; bt < 0.99; bt += 0.045) {
-            var bx = Math.round(px(bt)), by = Math.round(py(bt));
-            ctx.fillStyle = GOLD;
-            ctx.fillRect(bx, by + 5, 3, 2);
-            ctx.fillStyle = GOLD_DARK;
-            ctx.fillRect(bx, by + 7, 1, 2);
-          }
-        } else {
-          for (var dt2 = 0.06; dt2 < 0.96; dt2 += 0.09) {
-            ctx.fillStyle = "rgba(242,236,224,0.20)";
-            ctx.fillRect(Math.round(px(dt2)), Math.round(py(dt2)) + 5, 1, 1);
-          }
-        }
-
-        // --- HIBAH: a glowing teal conduit + fast motes (instant transfer) --
-        if (hibah) {
-          for (var ct = 0.02; ct < 1; ct += 0.025) {
-            var cx2 = Math.round(px(ct)), cy2 = Math.round(py(ct));
-            var pulse = (Math.sin(g.t * 6 - ct * 12) + 1) / 2;
-            ctx.fillStyle = "rgba(159,216,196," + (0.22 + pulse * 0.5).toFixed(2) + ")";
-            ctx.fillRect(cx2, cy2 + 1, 2, 2);
-          }
-          var motes = g.reduced ? 3 : 5;
-          for (var m2 = 0; m2 < motes; m2++) {
-            var mt = g.reduced ? (m2 / motes) : ((g.t * 0.9 + m2 / motes) % 1);
-            var mx = Math.round(px(mt)), my = Math.round(py(mt));
-            ctx.fillStyle = TEAL;
-            ctx.fillRect(mx, my, 3, 3);
-            ctx.fillStyle = GOLD_LIGHT;
-            ctx.fillRect(mx + 1, my + 1, 1, 1);
-          }
-        }
-
-        // --- the WILLOW GATE: a vintage stone archway -----------------------
-        var lit = will;
-        var stone = lit ? GOLD : "rgba(231,192,105,0.34)";
-        var stoneHi = lit ? GOLD_LIGHT : "rgba(246,231,189,0.32)";
-        var stoneLo = lit ? GOLD_DARK : "rgba(122,90,30,0.42)";
-        var lpx = gateX - openHalf - pillarW;   // left pillar
-        var rpx = gateX + openHalf;             // right pillar
-        var pillarBot = groundY - 2;
-        ctx.fillStyle = stone;
-        ctx.fillRect(lpx, springY, pillarW, pillarBot - springY);
-        ctx.fillRect(rpx, springY, pillarW, pillarBot - springY);
-        ctx.fillStyle = stoneHi;                // lit left edge
-        ctx.fillRect(lpx, springY, 1, pillarBot - springY);
-        ctx.fillRect(rpx, springY, 1, pillarBot - springY);
-        ctx.fillStyle = stoneLo;                // shaded right edge + seams
-        ctx.fillRect(lpx + pillarW - 1, springY, 1, pillarBot - springY);
-        ctx.fillRect(rpx + pillarW - 1, springY, 1, pillarBot - springY);
-        for (var sy2 = springY + 5; sy2 < pillarBot; sy2 += 6) {
-          ctx.fillRect(lpx, sy2, pillarW, 1);
-          ctx.fillRect(rpx, sy2, pillarW, 1);
-        }
-        ctx.fillStyle = stone;                  // chunky base plinths → reads as a gate
-        ctx.fillRect(lpx - 1, pillarBot, pillarW + 2, 2);
-        ctx.fillRect(rpx - 1, pillarBot, pillarW + 2, 2);
-        // the arch ring — stepped voussoir blocks curving over the doorway
-        var rC = openHalf + pillarW / 2;
-        var archVR = springY - gateTop;
-        var steps = 8;
-        for (var a = 0; a <= steps; a++) {
-          var ang = Math.PI * (a / steps);
-          var ox = gateX - Math.cos(ang) * rC;
-          var oy = springY - Math.sin(ang) * archVR;
-          ctx.fillStyle = stone;
-          ctx.fillRect(Math.round(ox - pillarW / 2), Math.round(oy), pillarW, 5);
-          ctx.fillStyle = stoneHi;
-          ctx.fillRect(Math.round(ox - pillarW / 2), Math.round(oy), pillarW, 1);
-        }
-        // drooping willow strands from the archway underside
-        ctx.fillStyle = lit ? "rgba(159,216,196,0.85)" : "rgba(159,216,196,0.32)";
-        for (var s = 0; s < 5; s++) {
-          var wx = gateX - openHalf + 1 + s * Math.round((openHalf * 2 - 2) / 4);
-          var sway = g.reduced ? 0 : Math.round(Math.sin(g.t * 1.4 + s) * 1);
-          ctx.fillRect(wx + sway, springY + 1, 1, 5 + (s % 2) * 4);
-        }
-
-        // --- the family HOME (right, larger, sitting low) -------------------
-        var hx0 = houseCX - Math.round(houseW / 2);
-        var bodyTop = houseBaseY - Math.round(houseH * 0.6);
-        ctx.fillStyle = "#d8b86a";
-        ctx.fillRect(hx0, bodyTop, houseW, houseBaseY - bodyTop);
-        ctx.fillStyle = GOLD_DARK;
-        ctx.fillRect(hx0, bodyTop, houseW, 1);
-        ctx.fillRect(hx0, houseBaseY - 1, houseW, 1);
-        var roofH = Math.round(houseH * 0.42);
-        var roofTopY = bodyTop - roofH;
-        var halfW = Math.round(houseW / 2) + 1;
-        for (var ry = 0; ry <= roofH; ry++) {
-          var ww = Math.round(halfW * 2 * (ry / roofH)) + 1;
-          ctx.fillStyle = "#b5894a";
-          ctx.fillRect(houseCX - Math.round(ww / 2), roofTopY + ry, ww, 1);
-        }
-        ctx.fillStyle = "#7a5a1e";              // chimney
-        ctx.fillRect(hx0 + houseW - 5, roofTopY + 2, 3, roofH - 2);
-        var winGlow = will ? "rgba(246,231,189,0.95)" : "rgba(246,231,189,0.55)";
-        var dwW = Math.max(3, Math.round(houseW * 0.26));
-        var dwH = Math.round(houseH * 0.4);
-        ctx.fillStyle = "#5a3d1e";              // doorway
-        ctx.fillRect(houseCX - Math.round(dwW / 2), houseBaseY - dwH, dwW, dwH);
-        ctx.fillStyle = winGlow;               // lit windows
-        ctx.fillRect(hx0 + 2, bodyTop + 3, 3, 3);
-        ctx.fillRect(hx0 + houseW - 5, bodyTop + 3, 3, 3);
-
-        // --- waiting loved ones: small capybaras in front of the home -------
-        for (var i = 0; i < loved; i++) {
-          var rowIdx = i >= 4 ? 1 : 0;          // wrap to a back row past 4
-          var colIdx = rowIdx ? i - 4 : i;
-          var mcx = clusterRight - colIdx * 8 - rowIdx * 4;
-          var mby = groundY - rowIdx * 3;
-          miniCapy(g, mcx, mby, true);
-        }
-
-        // --- the FROZEN COINS mechanic: the Will SLIDES the stash through ---
-        var fcXL = Math.round(w * 0.30);          // locked, on Capy's side
-        var fcXR = Math.round(w * 0.63);          // cleared, on the family's side
-        // detect the Will toggle flipping → start the slide (or re-freeze)
-        if (will && !legacyCoins.will) legacyCoins.t0 = g.t;
-        if (!will) legacyCoins.t0 = -1;
-        legacyCoins.will = will;
-        var MOVE = 0.9;                            // slide duration (seconds)
-        var moveP = !will ? 0
-          : (g.reduced || legacyCoins.t0 < 0) ? 1
-          : clamp((g.t - legacyCoins.t0) / MOVE, 0, 1);
-
-        if (!will) {
-          // locked on the Capy's (left) side, encased in frosted ice
-          var st = coinStack(g, fcXL, groundY, true);
-          var shim = g.reduced ? 0.5 : 0.30 + 0.3 * ((Math.sin(g.t * 2) + 1) / 2);
-          ctx.fillStyle = "rgba(206,234,255," + shim.toFixed(2) + ")";
-          ctx.fillRect(st.x0 - 2, st.top - 2, st.w + 4, 1);
-          ctx.fillRect(st.x0 - 2, groundY - 1, st.w + 4, 1);
-          ctx.fillRect(st.x0 - 2, st.top - 2, 1, groundY - st.top + 1);
-          ctx.fillRect(st.x0 + st.w + 1, st.top - 2, 1, groundY - st.top + 1);
-          if (!g.reduced) {
-            for (var fp = 0; fp < 5; fp++) {
-              var fy = st.top + ((g.t * 6 + fp * 5) % (groundY - st.top));
-              ctx.fillStyle = "rgba(224,242,255,0.5)";
-              ctx.fillRect(st.x0 + (fp * 4) % st.w, Math.round(fy), 1, 1);
-            }
-          }
-        } else if (moveP < 1) {
-          // IN TRANSIT: the icy stash flies horizontally through the arch centre
-          var mx2 = Math.round(fcXL + (fcXR - fcXL) * moveP);
-          var lift = Math.round(Math.sin(moveP * Math.PI) * gateH * 0.4);
-          coinStack(g, mx2, groundY - lift, true);
-          if (!g.reduced && Math.random() < 0.6) {   // frost trail behind them
-            g.particles.spawn({
-              x: mx2 - 8, y: groundY - lift - 6, vx: -5, vy: -2,
-              size: 1, life: 0.5, color: "rgba(188,220,240,0.9)", alpha: 0.85
-            });
-          }
-        } else {
-          // ARRIVED: coins land on the family's side and shine, freshly unlocked
-          var st2 = coinStack(g, fcXR, groundY, false);
-          var twk = (Math.sin(g.t * 5) + 1) / 2;
-          ctx.fillStyle = "rgba(246,231,189," + (0.4 + twk * 0.6).toFixed(2) + ")";
-          ctx.fillRect(fcXR - 2, st2.top - 3, 5, 1);   // sparkle cross on the cap
-          ctx.fillRect(fcXR, st2.top - 5, 1, 5);
-          if (!g.reduced && Math.random() < 0.5) {
-            g.particles.spawn({
-              x: fcXR + (Math.random() - 0.5) * 14, y: groundY - 4 - Math.random() * 12,
-              vx: 0, vy: -6, size: 1, life: 0.7, color: GOLD_LIGHT, alpha: 1
-            });
-          }
-        }
-
-        // --- corner status labels (small pixel scale), clear of the centre
-        // and tucked just under the HUD bubble / stat chip ------------------
-        if (!will) {
-          // top-left corner, mapping to the frozen stash on the left below
-          ptext(g, "Frozen Coins", 3, Math.round(h * 0.34), "rgba(206,234,255,0.95)", "left", 6);
-        } else {
-          // top-right corner, sitting above the house + the shining coin pile.
-          // kept short ("passed") so it clears the wider 2-line speech bubble
-          var ry1 = Math.round(h * 0.28);
-          ptext(g, "Coins passed", w - 3, ry1, "rgba(246,231,189,0.95)", "right", 6);
-          ptext(g, "to loved ones", w - 3, ry1 + 8, "rgba(246,231,189,0.95)", "right", 6);
-        }
-
-        // --- EPF: a continuous stream of love hearts to the loved ones ------
-        if (epf) {
-          var nH = Math.min(6, 3 + loved);
-          for (var k = 0; k < nH; k++) {
-            var t = g.reduced ? (0.2 + 0.7 * (k / nH)) : ((g.t * 0.45 + k / nH) % 1);
-            heart(ctx, Math.round(px(t) - 2), Math.round(py(t) - 1), RED);
-            if (t > 0.93 && !g.reduced && Math.random() < 0.25) {
-              g.particles.spawn({
-                x: ex, y: ey, vx: (Math.random() - 0.5) * 5, vy: -3,
-                size: 1, life: 0.6, color: GOLD_LIGHT, alpha: 0.9
-              });
-            }
-          }
-        }
-
-        // --- Capy, drawn last so it always reads on top --------------------
-        mascot.draw(ctx, capX, groundY, capH, { gaze: 0.8 });
+        drawColonnade(g);
       }
     }
   });
@@ -1129,7 +871,6 @@
   var vibePctEl = document.getElementById("journeyVibePct");
   var vibeBoxEl = document.querySelector(".journey__vibe");
 
-  var progress = {};
   var chips = {};
 
   engine.order.forEach(function (id, i) {
@@ -1139,7 +880,7 @@
     b.type = "button";
     b.setAttribute("role", "tab");
     b.innerHTML =
-      '<span class="journey__chip-num">' + (i + 1) + "</span>" +
+      '<span class="journey__chip-num">' + (ROMAN[i] || (i + 1)) + "</span>" +
       "<span>" + def.name + "</span>" +
       '<span class="journey__chip-dot" aria-hidden="true"></span>';
     b.addEventListener("click", function () { engine.start(id); });
@@ -1259,7 +1000,7 @@
         return;
       }
 
-      // legacy keys: full-width, thumb-friendly toggles (World 1-2 switch
+      // legacy keys: full-width, thumb-friendly toggles (Pillar II switch
       // format) inside one tight container with a section header
       if (inp.type === "keyrow") {
         var keys = document.createElement("div");
@@ -1322,8 +1063,8 @@
       var id = "jin-" + inp.key;
       var subHtml = inp.sub ? '<span class="journey__control-sub">' + inp.sub + "</span>" : "";
       var theMax = inp.scaleWith ? dynMax(inp) : inp.max;
-      // income & debt are shared world state — seed the slider from GLOBAL so
-      // a value set in World 1-1 shows up here (and vice-versa). Every other
+      // income & debt are shared pillar state — seed the slider from GLOBAL so
+      // a value set in Pillar I shows up here (and vice-versa). Every other
       // slider seeds from the live engine value, so a phase toggle (which
       // rebuilds this panel) never loses what the user has already dialled in.
       var globalKey = inp.key === "income" || inp.key === "debt";
@@ -1387,7 +1128,7 @@
   var lastSay = "";
   engine.on("level", function (e) {
     var i = engine.order.indexOf(e.id);
-    tagEl.textContent = "World 1-" + (i + 1) + " · " + e.def.name;
+    tagEl.textContent = "Pillar " + (ROMAN[i] || (i + 1)) + " · " + e.def.name;
     titleEl.textContent = e.def.title.split("·")[1].trim();
     // phased levels always open on PHASE 1 (with its own panel title)
     if (e.def.phases) {
@@ -1402,7 +1143,7 @@
   });
 
   engine.on("state", function (s) {
-    // remember the live inputs for the active world so the cross-world
+    // remember the live inputs for the active pillar so the cross-pillar
     // roadmap report can replay every selection, even after switching tabs
     if (engine.levelId) {
       var snap = worldValues[engine.levelId] || (worldValues[engine.levelId] = {});
@@ -1420,6 +1161,7 @@
       bubbleEl.classList.add("is-pop");
     }
     progress[engine.levelId] = s.score || 0;
+    if (s.power) tones[engine.levelId] = s.power.tone;
 
     if (s.power) {
       // a level can drive the POWER bar directly (Cashflow ties it to
@@ -1449,8 +1191,8 @@
   });
 
   /* ============================================================
-     CROSS-WORLD ROADMAP — the "Turn this into a real plan" popup
-     Compiles all four worlds (titles, every selection, readiness
+     CROSS-PILLAR ROADMAP — the "Turn this into a real plan" popup
+     Compiles all four pillars (titles, every selection, readiness
      scores and the exact dynamic commentary) into a printable report
      and a Send-to-Sofina submission.
      ============================================================ */
@@ -1471,7 +1213,15 @@
     });
     return vals;
   }
-  engine.order.forEach(function (id) { worldValues[id] = seedDefaults(engine.levels[id]); });
+  engine.order.forEach(function (id) {
+    var def = engine.levels[id];
+    worldValues[id] = seedDefaults(def);
+    // seed progress + tones with each pillar's default-computed score so
+    // all four pillars render with their baseline fill on first paint
+    var st = def.compute(seedDefaults(def));
+    progress[id] = (st && st.score) || 0;
+    if (st && st.power) tones[id] = st.power.tone;
+  });
 
   // human-readable list of every slider / toggle selection in a world
   function describeInputs(def, vals) {
@@ -1519,7 +1269,7 @@
       // overall readiness for a world = its primary (first) section score
       totalScore += sections[0].st.score || 0;
       worlds.push({
-        tag: "World 1-" + (i + 1),
+        tag: "Pillar " + (ROMAN[i] || (i + 1)),
         category: def.name,
         name: def.title.split("·")[1].trim(),
         inputs: describeInputs(def, vals),
@@ -1541,7 +1291,7 @@
   function renderReportHTML(report) {
     var html = '<div class="plan-report__head">'
       + '<p class="plan-report__overall">Overall readiness <b>' + report.overall + '%</b></p>'
-      + '<p class="plan-report__intro">A snapshot of your four-world money quest with Capy. '
+      + '<p class="plan-report__intro">A snapshot of your Four Pillars with Capy the owl. '
       + 'Bring this to your session with Sofina.</p></div>';
 
     report.worlds.forEach(function (wld) {
@@ -1576,7 +1326,7 @@
   // ---- render the report as plain text (form payload + mailto body) ----
   function renderReportText(report, remark, userName, userEmail, userWhatsapp, userSubscribe) {
     var L = [];
-    L.push("CAPY'S MONEY QUEST — ROADMAP");
+    L.push("YOUR FINANCIAL FOUNDATION — ROADMAP");
     L.push("Overall readiness: " + report.overall + "%");
     L.push("================================================");
     L.push("");
@@ -1597,7 +1347,7 @@
         if (sec.phaseTitle) L.push("[" + sec.phaseTitle + "]");
         L.push(sec.st.headline);
         L.push(sec.st.coach);
-        L.push("Capy says: “" + sec.st.say + "”");
+        L.push("Capy the owl says: “" + sec.st.say + "”");
       });
     });
     L.push("");

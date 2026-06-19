@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Your Money Journey Roadmap — Capy's Quest</title>
+<title>Your Financial Foundation Roadmap — Sofina Johari</title>
 <style>
   @font-face { font-family:'Fraunces'; font-style:normal; font-weight:300; font-display:block; src:url('../fonts/Fraunces-300.ttf') format('truetype'); }
   @font-face { font-family:'Fraunces'; font-style:normal; font-weight:400; font-display:block; src:url('../fonts/Fraunces-400.ttf') format('truetype'); }
@@ -131,6 +131,15 @@
   .tipbox__label { font-size: 7.5pt; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; color: var(--gold-soft); margin-bottom: 1.5mm; }
   .tipbox p { font-size: 9pt; line-height: 1.6; color: rgba(246,241,231,.92); }
 
+  /* engraved owl crest — a small heraldic mark on the summary page */
+  .crest {
+    display: block; margin: 0 auto 3mm; width: 18mm; height: 18mm;
+  }
+  .crest circle, .crest path, .circle-outline { fill: none; stroke: var(--gold); stroke-width: 0.4mm; stroke-linecap: round; stroke-linejoin: round; }
+  .crest .iris { fill: var(--gold-soft); stroke: none; }
+  .crest .pupil { fill: var(--ink); stroke: none; }
+  .crest .beak { fill: var(--gold-deep); stroke: none; }
+
   @media print {
     body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   }
@@ -173,9 +182,20 @@ function renderWorldPage(report, wld, pageNum, total, isFirst, isLast) {
 
   if (isFirst) {
     html += '<div class="summary">'
+      + '<svg class="crest" viewBox="0 0 60 60" aria-hidden="true">'
+      + '<circle cx="30" cy="26" r="14" class="circle-outline"/>'
+      + '<path d="M21 16 L17 8 L24 14 Z" class="circle-outline"/>'
+      + '<path d="M39 16 L43 8 L36 14 Z" class="circle-outline"/>'
+      + '<circle cx="25" cy="25" r="3.2" class="iris"/>'
+      + '<circle cx="35" cy="25" r="3.2" class="iris"/>'
+      + '<circle cx="25" cy="25" r="1.5" class="pupil"/>'
+      + '<circle cx="35" cy="25" r="1.5" class="pupil"/>'
+      + '<path d="M28 30 L30 34 L32 30 Z" class="beak"/>'
+      + '<path d="M19 32 Q30 44 41 32" class="circle-outline"/>'
+      + '</svg>'
       + '<p class="summary__label">Overall Readiness</p>'
       + '<p class="summary__score">' + esc(report.overall) + '%</p>'
-      + '<p class="summary__intro">A snapshot of your four-world money quest with Capy. Bring this to your session with Sofina.</p>'
+      + '<p class="summary__intro">A snapshot of your Four Pillars with Capy the owl. Bring this to your session with Sofina.</p>'
       + '</div>';
   }
 
@@ -213,7 +233,7 @@ function renderWorldPage(report, wld, pageNum, total, isFirst, isLast) {
   }
 
   html += '</div></div>'
-    + '<div class="folio"><b>Capy\'s Quest</b> · Your Money Journey Roadmap · ' + pageNum + ' / ' + total + '</div>'
+    + '<div class="folio"><b>Your Financial Foundation</b> · Roadmap by Sofina Johari · ' + pageNum + ' / ' + total + '</div>'
     + '</div>';
   return html;
 }

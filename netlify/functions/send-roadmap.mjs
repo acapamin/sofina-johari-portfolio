@@ -1,4 +1,4 @@
-/* Capy's Quest "Send to Sofina" — emails the roadmap to Sofina via Resend.
+/* "Send to Sofina" — emails the Financial Foundation roadmap to Sofina via Resend.
    Replaces the old Netlify Forms notification. The client POSTs JSON; this
    function validates it, formats an email, and hands it to Resend.
 
@@ -10,7 +10,7 @@
    eazylaundry.biz address. */
 
 const TO = "sofinajohari.uwealth@gmail.com";
-const FROM = "Capy's Quest <roadmap@eazylaundry.biz>";
+const FROM = "Financial Foundation <roadmap@eazylaundry.biz>";
 const MAX = { short: 200, remark: 2000, report: 20000 };
 
 function jsonResponse(status, payload) {
@@ -72,12 +72,12 @@ export default async function handler(req) {
     return jsonResponse(400, { ok: false, error: "Please provide a valid email address" });
   }
 
-  const subject = `Capy's Quest roadmap — ${name}${readiness ? ` (${readiness} ready)` : ""}`;
+  const subject = `Financial Foundation roadmap — ${name}${readiness ? ` (${readiness} ready)` : ""}`;
 
   const html = `
     <div style="font-family:Arial,Helvetica,sans-serif;color:#0b1f1a;line-height:1.5">
-      <h2 style="margin:0 0 4px">New Capy's Quest roadmap</h2>
-      <p style="margin:0 0 16px;color:#5b6b65">A visitor sent their money-journey roadmap from the website.</p>
+      <h2 style="margin:0 0 4px">New Financial Foundation roadmap</h2>
+      <p style="margin:0 0 16px;color:#5b6b65">A visitor sent their Four Pillars roadmap from the website.</p>
       <table style="border-collapse:collapse;margin-bottom:16px">
         <tr><td style="padding:2px 12px 2px 0;color:#5b6b65">Name</td><td><b>${escapeHtml(name)}</b></td></tr>
         <tr><td style="padding:2px 12px 2px 0;color:#5b6b65">Email</td><td><a href="mailto:${escapeHtml(email)}">${escapeHtml(email)}</a></td></tr>
@@ -90,7 +90,7 @@ export default async function handler(req) {
     </div>`;
 
   const text =
-    `New Capy's Quest roadmap\n\n` +
+    `New Financial Foundation roadmap\n\n` +
     `Name: ${name}\nEmail: ${email}\nWhatsApp: ${whatsapp}\n` +
     `Broadcast: ${subscribe}\nReadiness: ${readiness}\nNote: ${remark || "(none)"}\n\n` +
     `${"=".repeat(48)}\n${report}`;

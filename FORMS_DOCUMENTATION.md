@@ -4,7 +4,7 @@
 The website uses three forms with custom modal UI:
 1. **Ebook Gate Form** - Lead magnet for free financial planning ebook (Google Forms)
 2. **Contact/Website Application Form** - Comprehensive consultation booking form (Google Forms)
-3. **Capy's Quest Roadmap** - "Send to Sofina" from the Capy financial journey (Netlify Function + Resend email)
+3. **Financial Foundation Roadmap** - "Send to Sofina" from the Four Pillars toolkit (Netlify Function + Resend email)
 
 ---
 
@@ -93,7 +93,7 @@ The website uses three forms with custom modal UI:
 
 ---
 
-## Capy's Quest Roadmap — "Send to Sofina"
+## Financial Foundation Roadmap — "Send to Sofina"
 
 **Backend:** Netlify Function + **Resend** (`netlify/functions/send-roadmap.mjs`). _This replaced the previous Netlify Forms + dashboard-notification mechanism, which captured submissions but did not reliably email Sofina._
 
@@ -108,9 +108,9 @@ The website uses three forms with custom modal UI:
 | Email | `email` | string | ✓ | Email address (validated server-side too) |
 | WhatsApp Number | `whatsapp` | string | ✓ | Phone number |
 | Subscribe to Broadcast | `subscribe` | string | ✗ | "Yes, subscribe to broadcast on whatsapp" or "No" |
-| Readiness | `readiness` | string | auto | Overall % score across all four worlds |
+| Readiness | `readiness` | string | auto | Overall % score across all four pillars |
 | Remark | `remark` | string | ✗ | Optional note for Sofina |
-| Report | `report` | string | auto | Full plain-text roadmap including contact details and all world commentary |
+| Report | `report` | string | auto | Full plain-text roadmap including contact details and all pillar commentary |
 
 ### Implementation:
 - Client: `financial-levels.js` — `sendToSofina()` builds the JSON body and POSTs it to `/api/send-roadmap`; `renderReportText()` builds the `report` text.
@@ -132,20 +132,20 @@ Email delivery is handled entirely by the function — **no Netlify Forms / dash
 
 > ✅ **Recipient and sender are hardcoded.** Both are set once in `netlify/functions/send-roadmap.mjs` and are **not** configurable via env — there are no `RESEND_TO` / `RESEND_FROM` variables:
 > - `TO` = `sofinajohari.uwealth@gmail.com` (Sofina's inbox)
-> - `FROM` = `Capy's Quest <roadmap@eazylaundry.biz>` (a verified domain)
+> - `FROM` = `Financial Foundation <roadmap@eazylaundry.biz>` (a verified domain)
 >
 > Because `eazylaundry.biz` is verified in Resend, the function delivers to Sofina's gmail directly with no per-recipient restriction. The `RESEND_API_KEY` must belong to the same Resend account that owns `eazylaundry.biz`. To change the recipient or sender, edit the `TO` / `FROM` constants in that one file. The `roadmap@` mailbox does not need to exist; `reply_to` is set to the visitor's email so Sofina's replies reach them.
 
 ### Download PDF
 - File: `financial-levels.js` — `downloadRoadmapPDF()` opens a hidden iframe to `assets/capy-roadmap/capy-roadmap.html` with the report data encoded in the URL hash.
 - The template renders an A4 ebook-branded PDF using the shared self-hosted **Fraunces** and **Instrument Sans** fonts in `assets/fonts/` and the same colour palette as the main ebook.
-- Each world gets its own page. The first page includes the overall readiness summary; the last page includes the "Next Step" CTA.
+- Each pillar gets its own page. The first page includes the overall readiness summary and an engraved owl crest; the last page includes the "Next Step" CTA.
 - The template loads **html2canvas** + **jsPDF** from cdnjs, captures each page, assembles a PDF blob, and triggers an automatic download via `<a download>`, matching the ebook's instant-download UX.
-- Each world shows its toolkit category (Cashflow, Protection, Future, Legacy), a left-aligned world title/theme, and a labelled "Power" progress bar with its percentage value, consistent with the in-app toolkit.
+- Each pillar shows its toolkit category (Cashflow, Protection, Future, Legacy), a left-aligned pillar title/theme, and a labelled "Power" progress bar with its percentage value, consistent with the in-app toolkit.
 
 ### Report text structure:
 ```
-CAPY'S MONEY QUEST — ROADMAP
+YOUR FINANCIAL FOUNDATION — ROADMAP
 Overall readiness: XX%
 ================================================
 
@@ -156,16 +156,16 @@ WhatsApp: ...
 WhatsApp Broadcast: ...
 ================================================
 
-World 1-1 · The Coin Pipes   [+RMXXX]
+Pillar I · The Coin Pipes   [+RMXXX]
 ...inputs and commentary...
 
-World 1-2 · The Brick Shield   [SHIELD XX%]
+Pillar II · The Brick Shield   [SHIELD XX%]
 ...inputs and commentary (both phases)...
 
-World 1-3 · The Flagpole Climb   [GOAL XX%]
+Pillar III · The Flagpole Climb   [GOAL XX%]
 ...
 
-World 1-4 · THE WILLOW GATE   [READY XX%]
+Pillar IV · The Willow Gate   [READY XX%]
 ...
 
 ================================================
@@ -204,7 +204,7 @@ index.html                        - HTML markup for all three modals
 styles.css                        - CSS for .ebook-modal, .contact-modal, .plan-modal/.plan-send classes
 ebook-gate.js                     - Ebook form logic and submission
 contact-form.js                   - Contact form logic and submission
-financial-levels.js               - Capy's Quest roadmap modal logic, sendToSofina() + PDF
+financial-levels.js               - Financial Foundation roadmap modal logic, sendToSofina() + PDF
 netlify/functions/send-roadmap.mjs - Sends the "Send to Sofina" roadmap email via Resend
 ```
 

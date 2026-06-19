@@ -10,7 +10,7 @@
 
    The engine owns the render loop, input → state recomputation,
    metric easing and particles — so adding a new financial level
-   never requires changes to Mascot.js or to other levels:
+   never requires changes to Owl.js or to other levels:
 
      engine.registerLevel('zakat', { inputs, compute, scene });
 */

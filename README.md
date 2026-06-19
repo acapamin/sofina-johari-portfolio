@@ -27,9 +27,9 @@ sofina-johari-portfolio/
 ├── index.html                 # Main HTML document
 ├── styles.css                 # All styling (variables, modals, responsive)
 ├── main.js                    # Core interactions (nav, scroll, animations)
-├── Mascot.js                  # Capy mascot rendering (Three.js)
-├── FinancialEngine.js         # Financial calculation logic
-├── financial-levels.js        # Interactive levels/stages
+├── Owl.js                     # Capy the owl mascot — engraved line-art canvas renderer
+├── FinancialEngine.js         # Financial calculation logic + render loop
+├── financial-levels.js        # Four Pillars colonnade scenes + DOM wiring + roadmap modal
 ├── carousel.js                # Services, testimonials, videos carousels
 ├── chat.js                    # Amy AI chatbot interface
 ├── ebook-gate.js              # Ebook form & PDF download
@@ -55,9 +55,8 @@ sofina-johari-portfolio/
 - **Text Muted:** `#5b6b65` — Secondary text color
 
 ### Typography
-- **Display Font:** Fraunces (serif) — headings, titles
-- **Body Font:** Instrument Sans (sans-serif) — body text
-- **Pixel Font:** Press Start 2P — retro elements (Capy)
+- **Display Font:** Fraunces (serif) — headings, titles, pillar scores, owl speech scroll
+- **Body Font:** Instrument Sans (sans-serif) — body text, sliders, panel labels
 
 ### Spacing
 - Uses `clamp()` for fluid, responsive spacing
@@ -82,17 +81,17 @@ The website features three lead-capture forms:
 - **Google Form ID:** `1FAIpQLSfFRnvYgJo-sTMFf8FpwbL0D-wvC45C76EXq3Z62_iNov00sg`
 - **Files:** `contact-form.js`, contact modal in `index.html`
 
-### 3. **Capy's Quest Roadmap — "Send to Sofina"**
-- **Purpose:** Sends the user's Capy's Quest financial roadmap to Sofina with contact details
-- **Fields:** Name, Email, WhatsApp Number, Subscribe to Broadcast, optional note, and the full multi-world financial report
+### 3. **Financial Foundation Roadmap — "Send to Sofina"**
+- **Purpose:** Sends the user's Four Pillars financial roadmap to Sofina with contact details
+- **Fields:** Name, Email, WhatsApp Number, Subscribe to Broadcast, optional note, and the full four-pillar financial report
 - **Submission:** JSON POST to `/api/send-roadmap`, a Netlify Function that emails Sofina via [Resend](https://resend.com)
 - **Validation:** Name, email, and WhatsApp are required — validated client-side and server-side
 - **Files:** `financial-levels.js` (modal wiring + `sendToSofina()`), plan modal in `index.html`, `netlify/functions/send-roadmap.mjs` (Resend email)
 - **Config:** requires only the `RESEND_API_KEY` env var; the recipient (Sofina's inbox) and sender (`roadmap@eazylaundry.biz`, a verified domain) are hardcoded in `send-roadmap.mjs` — see `.env.example`
 
-### 4. **Capy's Quest Roadmap — "Download PDF"**
-- **Purpose:** Generates a downloadable A4 PDF of the user's four-world money roadmap
-- **Output:** One page per world, ebook-branded with Fraunces/Instrument Sans typography, dark-green/cream/gold palette, labelled Power bars with percentage values, and toolkit category tags (Cashflow, Protection, Future, Legacy)
+### 4. **Financial Foundation Roadmap — "Download PDF"**
+- **Purpose:** Generates a downloadable A4 PDF of the user's Four Pillars money roadmap
+- **Output:** One page per pillar, ebook-branded with Fraunces/Instrument Sans typography, dark-green/cream/gold palette, labelled Power bars with percentage values, an engraved owl crest, and toolkit category tags (Cashflow, Protection, Future, Legacy)
 - **Flow:** `financial-levels.js` passes the report to `assets/capy-roadmap/capy-roadmap.html`, which captures each page with html2canvas, assembles a PDF via jsPDF, and auto-downloads it
 - **Files:** `financial-levels.js`, `assets/capy-roadmap/capy-roadmap.html`, shared ebook/Capy fonts in `assets/fonts/`
 
@@ -104,7 +103,7 @@ The website features three lead-capture forms:
 
 ### Interactive Elements
 - **Animated Hero Canvas** — Particle effects background
-- **Capy Financial Journey** — Interactive 8-bit financial simulator with sliders
+- **Capy the Owl · Four Pillars** — Interactive financial colonnade with sliders; an engraved line-art owl perched on the lintel reacts to your numbers
 - **Carousels** — Services, testimonials, and videos with keyboard support
 - **Amy Chatbot** — AI assistant for instant financial questions
 - **Urgency Scale Slider** — 1-10 scale input in contact form
@@ -136,7 +135,7 @@ The website features three lead-capture forms:
 - **HTML5** — Semantic markup
 - **CSS3** — Variables, Grid, Flexbox, animations
 - **Vanilla JavaScript** — No framework dependencies
-- **Three.js** — 3D rendering (Mascot)
+- **Canvas 2D** — Owl mascot + colonnade rendering (line-art, antialiased)
 - **GSAP** — Animation library
 - **Google Forms** — Backend for form submissions
 - **Netlify** — Hosting & CDN
@@ -162,7 +161,7 @@ This approach:
 - Reliable for both simple and complex forms
 - No backend server required
 
-The Capy's Quest Roadmap posts a JSON payload (contact details + full text report) to the **`/api/send-roadmap` Netlify Function**, which emails it to Sofina via **Resend**. The recipient (Sofina's inbox) and sender (`roadmap@eazylaundry.biz`, a verified domain) are both hardcoded in `send-roadmap.mjs`, so `RESEND_API_KEY` is the only variable required in the Netlify environment — see `.env.example`.
+The Financial Foundation Roadmap posts a JSON payload (contact details + full text report) to the **`/api/send-roadmap` Netlify Function**, which emails it to Sofina via **Resend**. The recipient (Sofina's inbox) and sender (`roadmap@eazylaundry.biz`, a verified domain) are both hardcoded in `send-roadmap.mjs`, so `RESEND_API_KEY` is the only variable required in the Netlify environment — see `.env.example`.
 
 ### Validation
 - Client-side validation before submission
@@ -292,7 +291,7 @@ Forms submit directly to Google Forms. Set up tracking:
 - [FORMS_DOCUMENTATION.md](FORMS_DOCUMENTATION.md) — Complete forms reference with entry IDs
 - [Google Forms API](https://developers.google.com/forms) — Official documentation
 - [GSAP Animation Library](https://greensock.com/gsap/) — Scroll triggers, animations
-- [Three.js Documentation](https://threejs.org/docs/) — 3D rendering
+- [MDN Canvas API](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API) — Owl mascot + colonnade rendering
 - [Web Accessibility](https://www.w3.org/WAI/ARIA/apg/) — ARIA best practices
 
 ---

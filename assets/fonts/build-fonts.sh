@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Rebuild the static font instances used by the ebook (ebook/src/book.html)
-# and the Capy's Quest roadmap PDF (capy-roadmap/capy-roadmap.html).
+# and the Financial Foundation roadmap PDF (capy-roadmap/capy-roadmap.html).
 #
 # WHY: Fraunces and Instrument Sans are *variable* fonts on Google Fonts.
 # When Chromium's Skia/PDF backend prints a page that uses a variable font,

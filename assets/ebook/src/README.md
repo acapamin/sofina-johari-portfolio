@@ -5,7 +5,7 @@
 ## Fonts
 
 The book uses **self-hosted static instances** of Fraunces and Instrument Sans
-(in `../../fonts/`), shared with the Capy's Quest roadmap PDF and wired up with `@font-face` at the top of `book.html`.
+(in `../../fonts/`), shared with the Financial Foundation roadmap PDF and wired up with `@font-face` at the top of `book.html`.
 
 Do **not** switch back to the Google Fonts `<link>` (the variable fonts). When
 Chromium prints a variable font to PDF it embeds every glyph as a Type3
