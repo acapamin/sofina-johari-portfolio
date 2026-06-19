@@ -20,11 +20,7 @@
   function clamp(v, a, b) { return Math.min(b, Math.max(a, v)); }
   function lerp(a, b, k) { return a + (b - a) * k; }
 
-  /* ---------- 8-bit scene helpers ---------- */
-
-  var PFONT = '"Press Start 2P", "Courier New", monospace';
-  var GOLD = "#e7c069", GOLD_LIGHT = "#f6e7bd", GOLD_DARK = "#7a5a1e";
-  var BRICK = "#16382d", BRICK_DARK = "#0a1a14", TEAL = "#9fd8c4", RED = "#d96a4a";
+  /* ---------- shared soft-3D scene helpers ---------- */
 
   function rmShort(v) {
     v = Math.round(v);
@@ -34,159 +30,72 @@
     return "RM" + v;
   }
 
-  function ptext(g, str, x, y, color, align, size) {
-    var ctx = g.ctx;
-    ctx.font = (size || 8) + "px " + PFONT;
-    ctx.fillStyle = color || "rgba(242,236,224,0.9)";
-    ctx.textAlign = align || "center";
-    ctx.fillText(str, Math.round(x), Math.round(y));
+  /* ---------- shared soft-3D scene builders ----------
+     World frame: ground at y=0, camera looks at ~(0,2.7,0); visible
+     roughly x∈[-6.5,6.5], y∈[0,8.5]. The single Capy instance is shared,
+     so addCapy() just re-parents it into the active stage each level. */
+
+  function addCapy(g, x, y, z, scale) {
+    var c = g.mascot.object3d;
+    c.scale.setScalar(scale || 1.5);
+    c.position.set(x || 0, y || 0, z || 0);
+    c.rotation.set(0, 0, 0);
+    c.visible = true;
+    g.mascot.setWalk(0);
+    g.mascot.setGaze(0);
+    g.group.add(c);
+    return c;
   }
 
-  function brickGround(g, topY) {
-    var ctx = g.ctx, w = g.w, h = g.h;
-    topY = Math.round(topY);
-    ctx.fillStyle = BRICK;
-    ctx.fillRect(0, topY, w, h - topY);
-    ctx.fillStyle = BRICK_DARK;
-    var row = 0;
-    for (var y = topY; y < h; y += 6, row++) {
-      ctx.fillRect(0, y, w, 1);
-      for (var x = (row % 2 ? 6 : 0); x < w; x += 12) ctx.fillRect(x, y, 1, 6);
-    }
-    ctx.fillStyle = "rgba(231,192,105,0.9)";
-    ctx.fillRect(0, topY, w, 1);
+  // a soft rounded platform that grounds each world
+  function softGround(g, color, radius) {
+    var T = g.THREE;
+    var disc = new T.Mesh(
+      new T.CylinderGeometry(radius || 7.5, (radius || 7.5) * 1.04, 0.6, 48),
+      g.kit.soft(color, { roughness: 0.96 })
+    );
+    disc.position.y = -0.3;
+    disc.receiveShadow = true;
+    g.group.add(disc);
+    return disc;
   }
 
-  function qBlock(g, x, y, s) {
-    var ctx = g.ctx;
-    x = Math.round(x); y = Math.round(y);
-    var lit = g.reduced || ((g.t * 2) | 0) % 2 === 0;
-    ctx.fillStyle = lit ? GOLD : "#c9a14a";
-    ctx.fillRect(x, y, s, s);
-    ctx.fillStyle = GOLD_DARK;
-    ctx.fillRect(x, y, s, 1); ctx.fillRect(x, y + s - 1, s, 1);
-    ctx.fillRect(x, y, 1, s); ctx.fillRect(x + s - 1, y, 1, s);
-    ctx.fillRect(x + 1, y + 1, 1, 1); ctx.fillRect(x + s - 2, y + 1, 1, 1);
-    ctx.fillRect(x + 1, y + s - 2, 1, 1); ctx.fillRect(x + s - 2, y + s - 2, 1, 1);
-    ctx.font = "8px " + PFONT;
-    ctx.fillStyle = "#3a2a10";
-    ctx.textAlign = "center";
-    ctx.fillText("?", x + s / 2 + 1, y + s - 4);
+  // a ballistic coin/spark that arcs from (x0,y0) to (x1,y1) over ~0.7s
+  function spawnArc(g, x0, y0, x1, y1, color) {
+    var T = 0.7, grav = -9.0;
+    g.particles.spawn({
+      x: x0 + (Math.random() - 0.5) * 0.4, y: y0, z: (Math.random() - 0.5) * 0.3,
+      vx: (x1 - x0) / T,
+      vy: (y1 - y0) / T - 0.5 * grav * T,
+      vz: 0, g: grav, size: 0.34, life: T, color: color, spin: 5
+    });
   }
 
-  function pipe(g, cx, topY, pw, bottomY, main, dark, light) {
-    var ctx = g.ctx;
-    cx = Math.round(cx); topY = Math.round(topY);
-    var rimH = 6, rimW = pw + 6;
-    var bx = Math.round(cx - pw / 2);
-    ctx.fillStyle = main;
-    ctx.fillRect(bx, topY + rimH, pw, bottomY - topY - rimH);
-    ctx.fillStyle = light;
-    ctx.fillRect(bx + 2, topY + rimH, 3, bottomY - topY - rimH);
-    ctx.fillStyle = dark;
-    ctx.fillRect(bx + pw - 3, topY + rimH, 3, bottomY - topY - rimH);
-    var rx = Math.round(cx - rimW / 2);
-    ctx.fillStyle = main;
-    ctx.fillRect(rx, topY, rimW, rimH);
-    ctx.fillStyle = light;
-    ctx.fillRect(rx, topY, rimW, 2);
-    ctx.fillStyle = dark;
-    ctx.fillRect(rx, topY + rimH - 2, rimW, 2);
-  }
-
-  function coinRow(g, x, y, count) {
-    var ctx = g.ctx;
-    for (var i = 0; i < count; i++) {
-      ctx.fillStyle = GOLD;
-      ctx.fillRect(x + i * 5, y, 4, 4);
-      ctx.fillStyle = GOLD_LIGHT;
-      ctx.fillRect(x + i * 5 + 1, y + 1, 1, 2);
-    }
-  }
-
-  function heart(ctx, x, y, c) {
-    ctx.fillStyle = c;
-    ctx.fillRect(x, y, 2, 1); ctx.fillRect(x + 3, y, 2, 1);
-    ctx.fillRect(x, y + 1, 5, 2);
-    ctx.fillRect(x + 1, y + 3, 3, 1);
-    ctx.fillRect(x + 2, y + 4, 1, 1);
-  }
-
-  function stars(g, count, maxY) {
-    var ctx = g.ctx;
-    for (var i = 0; i < count; i++) {
-      var sx = ((i * 73) % 97) / 97 * g.w;
-      var sy = ((i * 41) % 89) / 89 * maxY;
-      ctx.globalAlpha = 0.15 + 0.5 * Math.abs(Math.sin(g.t * 0.8 + i * 1.3));
-      ctx.fillStyle = "#f6f1e7";
-      ctx.fillRect(Math.round(sx), Math.round(sy), 1, 1);
-    }
-    ctx.globalAlpha = 1;
-  }
-
-  /* World 1-4 · short pyramid of pixel coins. `frozen` paints them frosted
-     blue (locked in probate); otherwise bright gold (cleared for the family).
-     Returns its bounds so the caller can frame it in ice. */
-  function coinStack(g, cx, baseY, frozen) {
-    var ctx = g.ctx;
-    cx = Math.round(cx); baseY = Math.round(baseY);
-    var cs = 5, gap = 1, step = cs + gap, rowsN = 4, cols = 4;
-    var totalW = cols * step - gap;
-    var x0 = cx - Math.round(totalW / 2);
-    for (var r = 0; r < rowsN; r++) {
-      var rowY = baseY - (r + 1) * step;
-      var cN = cols - r;                         // pyramid: each tier loses one coin
-      var rx = x0 + Math.round(r * step / 2);    // …and centres over the one below
-      for (var c = 0; c < cN; c++) {
-        var x = rx + c * step;
-        ctx.fillStyle = frozen ? "#6f93ad" : GOLD;
-        ctx.fillRect(x, rowY, cs, cs);
-        ctx.fillStyle = frozen ? "#bcdcf0" : GOLD_LIGHT;
-        ctx.fillRect(x + 1, rowY + 1, 2, 1);
-        ctx.fillStyle = frozen ? "#46627a" : GOLD_DARK;
-        ctx.fillRect(x, rowY + cs - 1, cs, 1);
-      }
-    }
-    return { x0: x0, w: totalW, top: baseY - rowsN * step };
-  }
-
-  /* World 1-4 · a tiny waiting capybara (a "loved one") outside the home.
-     Deliberately chunky (8×6) so it still reads at mobile canvas sizes. */
-  function miniCapy(g, cx, baseY, faceLeft) {
-    var ctx = g.ctx;
-    cx = Math.round(cx); baseY = Math.round(baseY);
-    var O = "#2b1a10", B = "#b07d46", S = "#8a5d33";
-    var bx = cx - 4, by = baseY - 6;
-    ctx.fillStyle = "rgba(0,0,0,0.3)";
-    ctx.fillRect(cx - 4, baseY, 8, 1);          // shadow
-    ctx.fillStyle = O;
-    ctx.fillRect(bx, by, 8, 6);                 // outline body
-    ctx.fillStyle = B;
-    ctx.fillRect(bx + 1, by + 1, 6, 4);         // fur fill
-    ctx.fillStyle = O;
-    ctx.fillRect(bx + 1, by - 1, 1, 1);         // ears
-    ctx.fillRect(bx + 6, by - 1, 1, 1);
-    ctx.fillRect(bx + 1, baseY - 1, 1, 1);      // legs
-    ctx.fillRect(bx + 6, baseY - 1, 1, 1);
-    ctx.fillStyle = S;                          // snout nub
-    ctx.fillRect(faceLeft ? bx : bx + 7, by + 2, 1, 2);
-    ctx.fillStyle = "#1c1008";                  // eye
-    ctx.fillRect(faceLeft ? bx + 2 : bx + 5, by + 1, 1, 1);
+  // a tiny chibi capybara for the "loved ones" crowd in World 1-4
+  function makeMiniCapy(g) {
+    var T = g.THREE;
+    var grp = new T.Group();
+    var bodyMat = g.kit.soft(0xc89a68);
+    var body = new T.Mesh(new T.SphereGeometry(0.34, 14, 12), bodyMat);
+    body.scale.set(1.15, 0.9, 1); body.position.y = 0.32; body.castShadow = true;
+    grp.add(body);
+    var head = new T.Mesh(new T.SphereGeometry(0.22, 12, 10), bodyMat);
+    head.position.set(0.28, 0.5, 0); grp.add(head);
+    [-1, 1].forEach(function (s) {
+      var ear = new T.Mesh(new T.SphereGeometry(0.06, 8, 6), g.kit.soft(0x8f6238));
+      ear.position.set(0.2, 0.66, 0.12 * s); grp.add(ear);
+    });
+    var eyeMat = g.kit.soft(0x2b1a10, { roughness: 0.4 });
+    [-1, 1].forEach(function (s) {
+      var e = new T.Mesh(new T.SphereGeometry(0.035, 8, 8), eyeMat);
+      e.position.set(0.42, 0.52, 0.09 * s); grp.add(e);
+    });
+    return grp;
   }
 
   /* ============================================================
      WORLD 1-1 — Cashflow: the coin pipes
      ============================================================ */
-
-  function spawnCoin(g, x0, y0, x1, y1) {
-    var T = 0.7, G = 180;
-    g.particles.spawn({
-      x: x0 + (Math.random() - 0.5) * 6, y: y0,
-      vx: (x1 - x0) / T + (Math.random() - 0.5) * 8,
-      vy: (y1 - y0) / T - 0.5 * G * T,
-      g: G, size: 3, life: T, color: GOLD, alpha: 1
-    });
-  }
 
   engine.registerLevel("budget", {
     name: "Cashflow",
@@ -263,59 +172,93 @@
       };
     },
     scene: {
-      draw: function (g) {
-        var ctx = g.ctx, w = g.w, h = g.h;
-        var groundY = h - 14;
-        stars(g, 14, h * 0.4);
+      bg: ["#bfe7f2", "#e9f7ec"],
+      build: function (g) {
+        var T = g.THREE, c = g.colors;
+        softGround(g, 0xd9f0e4, 7.5);
+        var capy = addCapy(g, 0, 0, 0, 1.55);
+        capy.rotation.y = -0.6;   // turn the cute face toward the camera
 
-        // "?" pay block
-        var bs = 14;
-        var bx = w / 2 - bs / 2, by = 8 + (g.reduced ? 0 : Math.round(Math.abs(Math.sin(g.t * 2)) * -2));
-        qBlock(g, bx, by, bs);
+        // floating "?" pay block above Capy
+        var block = new T.Mesh(
+          new T.BoxGeometry(1.5, 1.5, 1.5),
+          g.kit.soft(c.gold, { emissive: c.goldDark, emissiveIntensity: 0.25 })
+        );
+        block.position.set(0, 5.4, -0.5); block.castShadow = true;
+        g.group.add(block); g.store.block = block;
+        var q = g.kit.label("?", { size: 1.0, color: "#7a5410", halo: false });
+        q.position.set(0, 5.4, 0.78); g.group.add(q);
 
-        var rate = clamp(g.m.rate, 0, 0.6);
-        var spendShare = clamp(g.m.spendShare, 0, 1.5);
-        var totalSpend = (g.values.fixed || 0) + (g.values.debt || 0) + (g.values.other || 0);
-        var spendCx = w * 0.32, saveCx = w * 0.68;
+        // SPEND drain pipe (left)
+        var pipe = new T.Mesh(
+          new T.CylinderGeometry(0.72, 0.94, 2.4, 20),
+          g.kit.soft(0x6fcf97, { emissive: 0x2e7d4f, emissiveIntensity: 0.12 })
+        );
+        pipe.position.set(-3.7, 1.2, 0); pipe.castShadow = true; g.group.add(pipe);
+        var rim = new T.Mesh(new T.TorusGeometry(0.82, 0.16, 10, 22), g.kit.soft(0x9be3b8));
+        rim.position.set(-3.7, 2.4, 0); rim.rotation.x = Math.PI / 2; g.group.add(rim);
+        var sl = g.kit.label("SPEND", { size: 0.55, color: "#1b5e3a" });
+        sl.position.set(-3.7, 3.25, 0); g.group.add(sl);
 
-        // spending pipe (money down the drain); labels hug the left
-        // edge so the coin arc never crosses the text
-        var pw = 18, pipeTop = groundY - 26;
-        pipe(g, spendCx, pipeTop, pw, groundY, "#2e7d4f", "#1b4a2f", "#5cb87a");
-        ptext(g, "SPEND", 3, pipeTop - 12, TEAL, "left");
-        ptext(g, rmShort(totalSpend), 3, pipeTop - 2, TEAL, "left");
+        // SAVE jar (right): translucent glass with a gold fill that grows
+        var jarMat = new T.MeshPhysicalMaterial({
+          color: 0xffffff, roughness: 0.1, metalness: 0, transmission: 0.85,
+          transparent: true, opacity: 0.38, thickness: 0.5
+        });
+        var jar = new T.Mesh(new T.CylinderGeometry(0.95, 0.95, 2.6, 24, 1, true), jarMat);
+        jar.position.set(3.7, 1.4, 0); g.group.add(jar);
+        var base = new T.Mesh(new T.CylinderGeometry(0.97, 0.97, 0.2, 24),
+          g.kit.soft(0xbfe0f2, { transparent: true, opacity: 0.6 }));
+        base.position.set(3.7, 0.2, 0); g.group.add(base);
+        var fill = new T.Mesh(new T.CylinderGeometry(0.86, 0.86, 1, 24),
+          g.kit.glossy(c.gold, { emissive: c.goldDark, emissiveIntensity: 0.2 }));
+        fill.position.set(3.7, 0.3, 0); fill.scale.y = 0.02; g.group.add(fill);
+        g.store.fill = fill;
+        var vl = g.kit.label("SAVE", { size: 0.55, color: "#9a6b15" });
+        vl.position.set(3.7, 3.35, 0); g.group.add(vl);
 
-        // savings vault filling with coin rows; labels hug the right edge
-        var vw = 34, vh = 28;
-        var vx = Math.round(saveCx - vw / 2), vTop = groundY - vh;
-        ctx.fillStyle = "#0a1a14";
-        ctx.fillRect(vx, vTop, vw, vh);
-        var fillRows = Math.floor(clamp(rate / 0.4, 0, 1) * 4);
-        for (var r = 0; r < fillRows; r++) coinRow(g, vx + 4, groundY - 7 - r * 5, 6);
-        ctx.fillStyle = GOLD_DARK;
-        ctx.fillRect(vx, vTop, 2, vh); ctx.fillRect(vx + vw - 2, vTop, 2, vh);
-        ctx.fillRect(vx, groundY - 2, vw, 2);
-        ctx.fillStyle = GOLD;
-        ctx.fillRect(vx - 1, vTop, 4, 2); ctx.fillRect(vx + vw - 3, vTop, 4, 2);
-        ptext(g, "SAVE", w - 3, vTop - 12, GOLD, "right");
-        ptext(g, rmShort(g.m.savings), w - 3, vTop - 2, GOLD, "right");
+        // soft drifting bokeh
+        g.store.bokeh = [];
+        for (var i = 0; i < 6; i++) {
+          var b = g.kit.glow(i % 2 ? c.mint : c.goldLight, 0.9 + Math.random());
+          b.position.set((Math.random() - 0.5) * 11, 1 + Math.random() * 6, -2 - Math.random() * 3);
+          b.material.opacity = 0.16; g.group.add(b); g.store.bokeh.push(b);
+        }
+        g.store.coinT = 0;
+      },
+      update: function (g) {
+        var c = g.colors, dt = g.dt || 0.016;
+        var rate = g.clamp(g.m.rate || 0, 0, 0.6);
+        var spendShare = g.clamp(g.m.spendShare == null ? 1 : g.m.spendShare, 0, 1.5);
 
-        // coins spurting from the block (saved coins drop into the
-        // left half of the vault, clear of the right-edge labels)
+        if (g.store.block) {
+          g.store.block.position.y = 5.4 + Math.sin(g.t * 2) * 0.18;
+          g.store.block.rotation.y = Math.sin(g.t * 0.8) * 0.25;
+        }
+        if (g.store.fill) {
+          var target = Math.max(0.02, g.clamp(rate / 0.4, 0, 1) * 2.4);
+          var fy = g.store.fill.scale.y;
+          fy += (target - fy) * (1 - Math.exp(-dt * 4));
+          g.store.fill.scale.y = fy;
+          g.store.fill.position.y = 0.3 + fy / 2 - 0.5;
+        }
         if (!g.reduced && g.dt) {
-          if (Math.random() < Math.min(0.8, spendShare * 0.45)) spawnCoin(g, w / 2, by + bs, spendCx, pipeTop);
-          if (rate > 0.01 && Math.random() < Math.min(0.8, rate * 2)) spawnCoin(g, w / 2, by + bs, saveCx - 8, vTop);
-          if (spendShare > 1 && Math.random() < 0.3) {
-            g.particles.spawn({
-              x: spendCx + (Math.random() - 0.5) * pw, y: pipeTop + 4,
-              vx: (Math.random() - 0.5) * 14, vy: -20, g: 90,
-              size: 2, life: 0.9, color: RED, alpha: 0.9
-            });
+          g.store.coinT += dt;
+          while (g.store.coinT > 0.12) {
+            g.store.coinT -= 0.12;
+            var toSave = Math.random() < g.clamp(rate * 2, 0, 0.85);
+            spawnArc(g, 0, 4.7, toSave ? 3.7 : -3.7, toSave ? 1.6 : 2.3, toSave ? c.gold : 0x8fe0b0);
+          }
+          if (spendShare > 1 && Math.random() < 0.25) {
+            g.particles.spawn({ x: -3.7, y: 2.4, z: 0, vx: (Math.random() - 0.5) * 1.2, vy: 1.8, vz: 0, g: -3, size: 0.28, life: 0.9, color: c.rust, alpha: 0.9 });
           }
         }
-
-        brickGround(g, groundY);
-        mascot.draw(ctx, w / 2, groundY, Math.min(h * 0.26, 40), { gaze: rate >= 0.05 ? 0.5 : -0.5 });
+        g.mascot.setGaze(rate >= 0.05 ? 0.7 : -0.7);
+        if (g.store.bokeh) for (var i = 0; i < g.store.bokeh.length; i++) {
+          var b = g.store.bokeh[i];
+          b.position.y += Math.sin(g.t * 0.6 + i) * 0.004;
+          b.position.x += Math.cos(g.t * 0.4 + i) * 0.003;
+        }
       }
     }
   });
@@ -331,136 +274,7 @@
   var GLOBAL = { income: 5000, debt: 800 };
   var insurancePhase = 0;                 // 0 = Brick Shield form · 1 = Force Field form
 
-  var shieldRef = { ratio: 1, x: 0 };
   var FULL_MED = 1000000;                  // RM 1M annual limit = a maxed force field
-
-  /* Unified Capy scene — BOTH defences are drawn on the same canvas at all
-     times, regardless of which input form (phase) is on screen below:
-       • the brick wall in front of Capy  = Life cover / Phase-1 target
-       • the force-field dome around Capy = Medical-card limit / RM 1M
-     Toggling phases only swaps the form UI underneath, never this graphic. */
-  function drawCapyDefenses(g, groundY) {
-    var ctx = g.ctx, w = g.w, h = g.h;
-    var lifeRatio = clamp(g.m.ratio, 0, 1.2);
-    var fieldRatio = clamp(g.m.forcefield, 0, 1.2);
-    var noCard = !g.values.medlimit;          // RM 0 limit = no medical card at all
-
-    var capH = Math.min(h * 0.26, 40);
-    var capX = Math.round(w * 0.4);
-    var cy = Math.round(groundY - capH * 0.55);
-
-    // ---- FORCE FIELD: pixel dome around Capy (drawn first, behind Capy) ----
-    var R = Math.min(w * 0.24, 28);
-    var segs = 22;
-    var litF = Math.round(clamp(fieldRatio, 0, 1) * segs);
-    var lowF = fieldRatio < 0.5;
-    var flickF = (lowF || noCard) && !g.reduced ? (((g.t * 8) | 0) % 2 === 0) : true;
-    var ffColor = noCard ? RED : fieldRatio >= 1 ? TEAL : fieldRatio >= 0.5 ? GOLD : "#d99a4a";
-    for (var i = 0; i < segs; i++) {
-      var ang = (i / segs) * Math.PI * 2 - Math.PI / 2;
-      var px = capX + Math.cos(ang) * R;
-      var py = cy + Math.sin(ang) * R * 0.95;
-      if (!noCard && i < litF && flickF) {
-        ctx.fillStyle = ffColor;
-        ctx.fillRect(Math.round(px - 1), Math.round(py - 1), 2, 2);
-      } else {
-        ctx.fillStyle = "rgba(159,216,196,0.16)";
-        ctx.fillRect(Math.round(px), Math.round(py), 1, 1);
-      }
-    }
-    if (!noCard && fieldRatio >= 1 && !g.reduced && Math.random() < 0.12) {
-      var sa = Math.random() * Math.PI * 2;
-      g.particles.spawn({
-        x: capX + Math.cos(sa) * R, y: cy + Math.sin(sa) * R * 0.95,
-        vx: 0, vy: -6, size: 1, life: 0.7, color: GOLD_LIGHT, alpha: 0.9
-      });
-    }
-
-    brickGround(g, groundY);
-    mascot.draw(ctx, capX, groundY, capH, { gaze: 0.6 });
-
-    // ---- BRICK SHIELD: vertical wall in front of Capy (lit = life cover) ----
-    var bsz = 8;
-    var wallX = Math.round(w * 0.66);
-    var rows = 5, cols = 2;
-    var lit = Math.round(clamp(lifeRatio, 0, 1) * rows * cols);
-    shieldRef.ratio = lifeRatio;
-    shieldRef.x = wallX;
-    var flicker = lifeRatio < 0.45 && !g.reduced ? (((g.t * 9) | 0) % 3 !== 0) : true;
-    var idx = 0;
-    for (var r = 0; r < rows; r++) {
-      for (var c = 0; c < cols; c++) {
-        var bx = wallX + c * bsz;
-        var by = groundY - (r + 1) * bsz;
-        if (idx < lit && flicker) {
-          ctx.fillStyle = GOLD;
-          ctx.fillRect(bx, by, bsz, bsz);
-          ctx.fillStyle = GOLD_LIGHT;
-          ctx.fillRect(bx + 1, by + 1, 2, 1);
-          ctx.fillStyle = GOLD_DARK;
-          ctx.fillRect(bx, by + bsz - 1, bsz, 1);
-          ctx.fillRect(bx + bsz - 1, by, 1, bsz);
-        } else {
-          ctx.strokeStyle = "rgba(231,192,105,0.25)";
-          ctx.strokeRect(bx + 0.5, by + 0.5, bsz - 1, bsz - 1);
-        }
-        idx++;
-      }
-    }
-    if (lifeRatio >= 1 && !g.reduced && Math.random() < 0.1) {
-      g.particles.spawn({
-        x: wallX + Math.random() * bsz * 2, y: groundY - Math.random() * bsz * rows,
-        vx: 0, vy: -8, size: 1, life: 0.8, color: GOLD_LIGHT, alpha: 0.9
-      });
-    }
-
-    // incoming "life happens" hazards bounce off a strong wall, slip a weak one
-    if (!g.reduced && g.dt && Math.random() < 0.06) {
-      g.particles.spawn({
-        x: w + 6,
-        y: h * 0.25 + Math.random() * (groundY - h * 0.32),
-        vx: -(28 + Math.random() * 22), vy: 0,
-        size: 3, life: 10, color: "rgba(242,236,224,0.6)", alpha: 0.9,
-        update: function (p) {
-          if (p.resolved || p.x > shieldRef.x + bsz * 2 + 2) return;
-          p.resolved = true;
-          if (Math.random() < Math.min(1, shieldRef.ratio)) {
-            p.vx = 40 + Math.random() * 25;   // bounced off the wall
-            p.vy = -30 - Math.random() * 20;
-            p.g = 100; p.color = GOLD_LIGHT; p.size = 2; p.life = p.age + 0.6;
-          } else {
-            p.color = RED;                     // slipped through the gap
-            p.life = p.age + 0.7;
-          }
-        }
-      });
-    }
-
-    // ---- medical-card status: gold card when insured, flashing alert at RM 0 ----
-    if (!noCard) {
-      var kx = Math.round(w * 0.1), ky = 12;
-      ctx.fillStyle = GOLD;
-      ctx.fillRect(kx, ky, 16, 11);
-      ctx.fillStyle = GOLD_DARK;
-      ctx.fillRect(kx, ky, 16, 1); ctx.fillRect(kx, ky + 10, 16, 1);
-      ctx.fillStyle = "#2e7d4f";
-      ctx.fillRect(kx + 6, ky + 2, 4, 7);
-      ctx.fillRect(kx + 3, ky + 4, 10, 3);
-    } else {
-      var blink = g.reduced || (((g.t * 3) | 0) % 2 === 0);
-      if (blink) {
-        var aw = Math.min(w - 10, 128), ah = 22;
-        var axx = Math.round(w / 2 - aw / 2), ayy = Math.round(h * 0.12);
-        ctx.fillStyle = "rgba(217,106,74,0.94)";
-        ctx.fillRect(axx, ayy, aw, ah);
-        ctx.fillStyle = "#2a0d08";
-        ctx.fillRect(axx, ayy, aw, 1); ctx.fillRect(axx, ayy + ah - 1, aw, 1);
-        ctx.fillRect(axx, ayy, 1, ah); ctx.fillRect(axx + aw - 1, ayy, 1, ah);
-        ptext(g, "CRITICAL RISK", w / 2, ayy + 9, "#fff3e6", "center");
-        ptext(g, "NO MED CARD", w / 2, ayy + 18, "#fff3e6", "center");
-      }
-    }
-  }
 
   engine.registerLevel("insurance", {
     name: "Protection",
@@ -580,11 +394,104 @@
       };
     },
     scene: {
-      draw: function (g) {
-        var groundY = g.h - 14;
-        stars(g, 12, g.h * 0.35);
-        // both defences, always — the form below decides nothing here
-        drawCapyDefenses(g, groundY);
+      bg: ["#cdbff0", "#dff1ec"],
+      build: function (g) {
+        var T = g.THREE, c = g.colors;
+        softGround(g, 0xe3ddf5, 7.5);
+        var capy = addCapy(g, -1.6, 0, 0, 1.5);
+        capy.rotation.y = -0.5;   // face the viewer over the shield
+
+        // force-field dome around Capy (medical card / RM1M)
+        var dome = new T.Mesh(
+          new T.SphereGeometry(2.0, 28, 20),
+          new T.MeshPhysicalMaterial({ color: c.teal, roughness: 0.15, metalness: 0, transmission: 0.6, transparent: true, opacity: 0.22, emissive: c.teal, emissiveIntensity: 0.25, side: T.DoubleSide })
+        );
+        dome.position.set(-1.6, 1.6, 0); g.group.add(dome); g.store.dome = dome;
+        var wire = new T.Mesh(new T.SphereGeometry(2.04, 16, 12),
+          new T.MeshBasicMaterial({ color: c.teal, wireframe: true, transparent: true, opacity: 0.12 }));
+        wire.position.copy(dome.position); g.group.add(wire); g.store.wire = wire;
+
+        // brick shield wall (life cover)
+        g.store.bricks = [];
+        var bw = 0.86, bh = 0.66, rows = 5, cols = 2, wallX = 2.3;
+        for (var r = 0; r < rows; r++) for (var col = 0; col < cols; col++) {
+          var brick = new T.Mesh(new T.BoxGeometry(bw, bh, 0.7),
+            g.kit.soft(c.gold, { emissive: c.goldDark, emissiveIntensity: 0.2 }));
+          brick.position.set(wallX + col * (bw + 0.08), bh / 2 + r * (bh + 0.08), 0);
+          brick.castShadow = true; g.group.add(brick); g.store.bricks.push(brick);
+        }
+        var bl = g.kit.label("SHIELD", { size: 0.5, color: "#9a6b15" });
+        bl.position.set(2.75, 4.2, 0); g.group.add(bl);
+
+        // medical card (gold) hovering top-left
+        var card = new T.Group();
+        card.add(new T.Mesh(new T.BoxGeometry(1.4, 0.9, 0.08), g.kit.glossy(c.gold)));
+        var cv = new T.Mesh(new T.BoxGeometry(0.16, 0.5, 0.1), g.kit.soft(0x2e7d4f));
+        var ch = new T.Mesh(new T.BoxGeometry(0.5, 0.16, 0.1), g.kit.soft(0x2e7d4f));
+        cv.position.z = ch.position.z = 0.05; card.add(cv, ch);
+        card.position.set(-4.4, 4.6, 0); card.rotation.set(-0.1, 0.3, 0.05);
+        g.group.add(card); g.store.card = card;
+
+        var alert = g.kit.label("⚠ NO MED CARD", { size: 0.62, color: "#fff0ea" });
+        alert.position.set(0, 6.4, 0); alert.visible = false; g.group.add(alert);
+        g.store.alert = alert;
+        g.store.hazT = 0;
+      },
+      update: function (g) {
+        var c = g.colors, dt = g.dt || 0.016;
+        var ratio = g.clamp(g.m.ratio || 0, 0, 1.2);
+        var field = g.clamp(g.m.forcefield || 0, 0, 1.2);
+        var noCard = !g.values.medlimit;
+
+        if (g.store.dome) {
+          var dm = g.store.dome.material;
+          var col = noCard ? c.rust : field >= 1 ? c.teal : field >= 0.5 ? c.gold : 0xe0a04a;
+          dm.color.set(col); dm.emissive.set(col);
+          dm.opacity = noCard ? 0.1 + (Math.sin(g.t * 8) * 0.5 + 0.5) * 0.08 : 0.14 + field * 0.3;
+          g.store.dome.scale.setScalar(1 + Math.sin(g.t * 2) * 0.02);
+          g.store.wire.material.color.set(col);
+          g.store.wire.material.opacity = noCard ? 0.05 : 0.06 + field * 0.14;
+          g.store.wire.rotation.y += dt * 0.3;
+        }
+        if (g.store.bricks) {
+          var n = g.store.bricks.length, lit = Math.round(g.clamp(ratio, 0, 1) * n);
+          var weak = ratio < 0.45;
+          for (var i = 0; i < n; i++) {
+            var b = g.store.bricks[i], m = b.material;
+            if (i < lit && (!weak || g.reduced || ((g.t * 6) | 0) % 3 !== 0)) {
+              m.color.set(c.gold); m.emissiveIntensity = 0.25; m.transparent = false; m.opacity = 1; b.scale.setScalar(1);
+            } else {
+              m.color.set(0x6b5a3a); m.emissiveIntensity = 0; m.transparent = true; m.opacity = 0.25; b.scale.setScalar(0.9);
+            }
+          }
+        }
+        if (g.store.card) {
+          g.store.card.visible = !noCard;
+          if (!noCard) { g.store.card.position.y = 4.6 + Math.sin(g.t * 1.6) * 0.12; g.store.card.rotation.y = 0.3 + Math.sin(g.t * 0.8) * 0.15; }
+        }
+        if (g.store.alert) g.store.alert.visible = noCard && (g.reduced || ((g.t * 3) | 0) % 2 === 0);
+
+        if (!g.reduced && g.dt) {
+          g.store.hazT += dt;
+          if (g.store.hazT > 0.5) {
+            g.store.hazT = 0;
+            g.particles.spawn({
+              x: 7, y: 1.4 + Math.random() * 2.6, z: 0, vx: -3.4, vy: 0, vz: 0,
+              size: 0.4, life: 6, color: 0xf0ece0, alpha: 0.85,
+              update: function (p) {
+                if (p.resolved || p.sprite.position.x > 3.6) return;
+                p.resolved = true;
+                if (Math.random() < Math.min(1, ratio)) { p.vx = 4.5; p.vy = 4; p.g = -9; p.sprite.material.color.set(c.goldLight); p.life = p.age + 0.7; }
+                else { p.sprite.material.color.set(c.rust); p.vx = -1.5; p.life = p.age + 0.8; }
+              }
+            });
+          }
+          if (field >= 1 && Math.random() < 0.2) {
+            var a = Math.random() * Math.PI * 2;
+            g.particles.spawn({ x: -1.6 + Math.cos(a) * 2, y: 1.6 + Math.sin(a) * 1.6, z: 0, vx: 0, vy: 0.6, vz: 0, size: 0.2, life: 0.7, color: c.goldLight, additive: true });
+          }
+        }
+        g.mascot.setGaze(0.5);
       }
     }
   });
@@ -663,103 +570,77 @@
       };
     },
     scene: {
-      draw: function (g) {
-        var ctx = g.ctx, w = g.w, h = g.h;
-        var groundY = h - 12;
-        var SCALE = 1.3;
-        var ratio = clamp(g.m.ratio, 0, SCALE);
-        stars(g, 14, h * 0.4);
+      bg: ["#ffe7c2", "#e9f6ef"],
+      build: function (g) {
+        var T = g.THREE, c = g.colors;
+        softGround(g, 0xeaf3d9, 8);
+        addCapy(g, 0, 0, 0, 1.4);
 
-        // staircase: a "money mound" launchpad (step 0) sized by current stash,
-        // then climbing steps rising to the projected-pot height
-        var nSteps = 8;
-        var stairX0 = Math.round(w * 0.1);
-        var poleX = Math.round(w * 0.86);
-        var stairSpan = poleX - stairX0;
-        var maxClimb = groundY - 22;
-        var goalClimb = maxClimb / SCALE;               // height of the GOAL line
-        var climb = maxClimb * (ratio / SCALE);         // projected-pot height
-        var startR = clamp(g.m.startRatio == null ? 0 : g.m.startRatio, 0, 1);
-        var launchH = Math.min(climb, goalClimb * startR);  // stash's share of the goal
-        var ea = Math.exp(2) - 1;
-        var tops = [];
+        var nSteps = 8; g.store.nSteps = nSteps;
+        g.store.x0 = -5.2; g.store.x1 = 4.4; g.store.maxClimb = 6.2;
+        var span = g.store.x1 - g.store.x0, stepW = span / nSteps;
+        g.store.steps = [];
         for (var i = 0; i < nSteps; i++) {
-          var sh;
-          if (i === 0) {
-            sh = launchH;                               // the launchpad foundation
-          } else {
-            var f = (Math.exp(2 * i / (nSteps - 1)) - 1) / ea;   // 0→1 across climbing steps
-            sh = launchH + (climb - launchH) * f;
-          }
-          sh = Math.max(2, Math.round(sh));
-          tops.push(groundY - sh);
-          var x = stairX0 + Math.round(i * stairSpan / nSteps);
-          var xw = stairX0 + Math.round((i + 1) * stairSpan / nSteps) - x;
-          if (i === 0 && launchH > 6) {
-            // thick golden money-mound foundation, with coin texture
-            ctx.fillStyle = "#c9a14a";
-            ctx.fillRect(x, groundY - sh, xw, sh);
-            for (var cyy = groundY - sh + 3; cyy < groundY - 2; cyy += 5) {
-              for (var cxx = x + 2; cxx < x + xw - 2; cxx += 5) {
-                ctx.fillStyle = GOLD_LIGHT;
-                ctx.fillRect(cxx, cyy, 2, 2);
-              }
+          var mound = i === 0;
+          var step = new T.Mesh(new T.BoxGeometry(stepW * 0.92, 1, 1.4),
+            mound ? g.kit.glossy(c.gold, { emissive: c.goldDark, emissiveIntensity: 0.2 })
+                  : g.kit.soft(0x8fd0b6, { emissive: 0x2e6b52, emissiveIntensity: 0.08 }));
+          step.position.set(g.store.x0 + i * stepW + stepW / 2, 0.5, 0);
+          step.castShadow = true; step.receiveShadow = true;
+          g.group.add(step); g.store.steps.push(step);
+        }
+        // flag pole + flag
+        var poleH = g.store.maxClimb + 1.4;
+        g.store.poleX = g.store.x1 + 0.5;
+        var pole = new T.Mesh(new T.CylinderGeometry(0.08, 0.08, poleH, 12), g.kit.glossy(0x9fb4ab));
+        pole.position.set(g.store.poleX, poleH / 2, 0); g.group.add(pole);
+        var ball = new T.Mesh(new T.SphereGeometry(0.16, 12, 12), g.kit.glossy(c.goldLight));
+        ball.position.set(g.store.poleX, poleH, 0); g.group.add(ball);
+        var flag = new T.Mesh(new T.PlaneGeometry(0.9, 0.6),
+          g.kit.soft(c.gold, { side: T.DoubleSide, emissive: c.goldDark, emissiveIntensity: 0.2 }));
+        flag.position.set(g.store.poleX - 0.45, 2, 0); g.group.add(flag); g.store.flag = flag;
+        var goal = g.kit.label("GOAL", { size: 0.5, color: "#9a6b15" });
+        goal.position.set(g.store.x0 + 0.6, g.store.maxClimb / 1.3 + 0.5, 0);
+        g.group.add(goal); g.store.goal = goal;
+        g.store.fwT = 0;
+      },
+      update: function (g) {
+        var c = g.colors, dt = g.dt || 0.016, SCALE = 1.3;
+        var ratio = g.clamp(g.m.ratio || 0, 0, SCALE);
+        var startR = g.clamp(g.m.startRatio == null ? 0 : g.m.startRatio, 0, 1);
+        var nSteps = g.store.nSteps, maxClimb = g.store.maxClimb;
+        var goalClimb = maxClimb / SCALE, climb = maxClimb * (ratio / SCALE);
+        var launchH = Math.min(climb, goalClimb * startR), ea = Math.exp(2) - 1, tops = [];
+        for (var i = 0; i < nSteps; i++) {
+          var sh = i === 0 ? launchH : launchH + (climb - launchH) * ((Math.exp(2 * i / (nSteps - 1)) - 1) / ea);
+          sh = Math.max(0.4, sh);
+          var step = g.store.steps[i], cy = step.scale.y;
+          cy += (sh - cy) * (1 - Math.exp(-dt * 4));
+          step.scale.y = cy; step.position.y = cy / 2; tops.push(cy);
+        }
+        if (g.store.goal) g.store.goal.position.y = goalClimb + 0.5;
+        if (g.store.flag) {
+          var fy = g.lerp(1.2, maxClimb + 0.6, g.clamp(ratio, 0, 1));
+          g.store.flag.position.y += (fy - g.store.flag.position.y) * (1 - Math.exp(-dt * 4));
+          g.store.flag.position.x = g.store.poleX - 0.45 + Math.sin(g.t * 3) * 0.04;
+          g.store.flag.material.color.set(ratio >= 1 ? c.gold : 0xcdb06a);
+        }
+        var p = g.reduced ? 0.6 : (g.t * 0.06) % 1;
+        var idx = Math.min(nSteps - 1, Math.floor(p * nSteps));
+        g.mascot.object3d.position.set(g.store.x0 + p * (g.store.x1 - g.store.x0), tops[idx], 0);
+        g.mascot.setWalk(g.reduced ? 0 : g.t * 7);
+        g.mascot.setGaze(0.6);
+        if (ratio >= 1 && !g.reduced) {
+          g.store.fwT += dt;
+          if (g.store.fwT > 0.5) {
+            g.store.fwT = 0;
+            var fx = g.store.poleX - 1 + Math.random() * 2, fyy = maxClimb + 1 + Math.random() * 0.6;
+            for (var s = 0; s < 10; s++) {
+              var a = (s / 10) * Math.PI * 2;
+              g.particles.spawn({ x: fx, y: fyy, z: 0, vx: Math.cos(a) * 3, vy: Math.sin(a) * 3, vz: 0, g: -3, size: 0.22, life: 0.9, color: s % 2 ? c.goldLight : c.teal, additive: true });
             }
-            ctx.fillStyle = GOLD_DARK;
-            ctx.fillRect(x + xw - 1, groundY - sh, 1, sh);
-            ctx.fillStyle = GOLD;
-            ctx.fillRect(x, groundY - sh, xw, 1);
-          } else {
-            ctx.fillStyle = BRICK;
-            ctx.fillRect(x, groundY - sh, xw, sh);
-            ctx.fillStyle = BRICK_DARK;
-            for (var yy = groundY - sh + 4; yy < groundY; yy += 5) ctx.fillRect(x, yy, xw, 1);
-            ctx.fillRect(x + xw - 1, groundY - sh, 1, sh);
-            ctx.fillStyle = GOLD;
-            ctx.fillRect(x, groundY - sh, xw, 1);
           }
         }
-
-        // goal line
-        var goalY = Math.round(groundY - maxClimb / SCALE);
-        ctx.fillStyle = "rgba(231,192,105,0.5)";
-        for (var dx2 = stairX0; dx2 < w * 0.9; dx2 += 6) ctx.fillRect(dx2, goalY, 3, 1);
-        ptext(g, "GOAL", stairX0 + 2, goalY - 4, "rgba(231,192,105,0.8)", "left");
-
-        // flagpole — the flag rises with the funding ratio
-        var poleTop = goalY - 6;
-        ctx.fillStyle = "#8aa89c";
-        ctx.fillRect(poleX, poleTop, 2, groundY - poleTop);
-        ctx.fillStyle = GOLD_LIGHT;
-        ctx.fillRect(poleX - 1, poleTop - 3, 4, 3);
-        var flagY = Math.round(lerp(groundY - 10, poleTop + 2, clamp(ratio, 0, 1)));
-        ctx.fillStyle = ratio >= 1 ? GOLD : "#c9a14a";
-        ctx.fillRect(poleX - 9, flagY, 9, 4);
-        ctx.fillRect(poleX - 6, flagY + 4, 6, 2);
-
-        // fireworks when the goal is beaten
-        if (ratio >= 1 && !g.reduced && Math.random() < 0.05) {
-          var fx2 = poleX - 10 + Math.random() * 20, fy2 = poleTop - 4 - Math.random() * 10;
-          for (var s2 = 0; s2 < 8; s2++) {
-            var ang = (s2 / 8) * Math.PI * 2;
-            g.particles.spawn({
-              x: fx2, y: fy2,
-              vx: Math.cos(ang) * 20, vy: Math.sin(ang) * 20,
-              size: 1, life: 0.7, color: s2 % 2 ? GOLD_LIGHT : TEAL, alpha: 1
-            });
-          }
-        }
-
-        brickGround(g, groundY);
-
-        // Capy climbs the staircase on a loop — standard horizontal motion.
-        // The launchpad foundation (step 0) is what lifts the start tier; the
-        // Capy's left↔right position no longer tracks the stash.
-        var p = g.reduced ? 0.6 : (g.t * 0.07) % 1;
-        var stepIdx = Math.min(nSteps - 1, Math.floor(p * nSteps));
-        var capX = stairX0 + p * stairSpan;
-        var capY = tops[stepIdx];
-        mascot.draw(ctx, capX, capY, Math.min(h * 0.2, 32), { walk: g.t * 6, gaze: 0.8 });
       }
     }
   });
@@ -768,10 +649,6 @@
      WORLD 1-4 — Legacy: the map home
      (handled gently — a calm night scene, never an alarmed mascot)
      ============================================================ */
-
-  // tracks the Will toggle so the frozen-coins stash can SLIDE through the
-  // gate (rather than teleport) the moment the Will is written
-  var legacyCoins = { will: false, t0: -1 };
 
   engine.registerLevel("legacy", {
     name: "Legacy",
@@ -856,259 +733,129 @@
       };
     },
     scene: {
-      draw: function (g) {
-        var ctx = g.ctx, w = g.w, h = g.h;
-        var groundY = h - 14;                  // floor line matches World 1-1
-        var v = g.values;
-        var epf = !!v.epf;                     // nominees → a stream of love
-        var hibah = !!v.hibah;                 // Hibah → an instant wealth conduit
-        var will = !!v.will;                   // Will → the coins clear the gate
+      bg: ["#3a2f5e", "#5e7a73"],
+      build: function (g) {
+        var T = g.THREE, c = g.colors;
+        softGround(g, 0x46506a, 8);
+        var capy = addCapy(g, -4.2, 0, 0, 1.4); capy.rotation.y = -0.35;
+
+        // moon + soft glow
+        var moon = g.kit.glow(0xfff3d0, 3.2); moon.position.set(-1.5, 6.4, -4); moon.material.opacity = 0.5; g.group.add(moon);
+        var moonBall = new T.Mesh(new T.SphereGeometry(0.7, 20, 16),
+          g.kit.soft(0xf6e7bd, { emissive: 0xf6e7bd, emissiveIntensity: 0.5 }));
+        moonBall.position.set(-1.5, 6.4, -4); g.group.add(moonBall);
+
+        // star field
+        g.store.stars = [];
+        for (var i = 0; i < 26; i++) {
+          var st = g.kit.glow(0xffffff, 0.25 + Math.random() * 0.2);
+          st.position.set((Math.random() - 0.5) * 13, 3 + Math.random() * 4.5, -3 - Math.random() * 2);
+          st.material.opacity = 0.5; g.group.add(st); g.store.stars.push(st);
+        }
+
+        // Willow gate: two pillars + a stepped arch ring
+        var gate = new T.Group(); g.store.gateMats = [];
+        function gmat() { var m = g.kit.soft(0xb9a888); g.store.gateMats.push(m); return m; }
+        var gx = 1.4, pillarH = 3.6;
+        [-1, 1].forEach(function (s) {
+          var pil = new T.Mesh(new T.BoxGeometry(0.5, pillarH, 0.5), gmat());
+          pil.position.set(s * gx, pillarH / 2, 0); pil.castShadow = true; gate.add(pil);
+        });
+        var ringN = 9;
+        for (var a = 0; a <= ringN; a++) {
+          var ang = Math.PI * (a / ringN);
+          var vb = new T.Mesh(new T.BoxGeometry(0.5, 0.5, 0.5), gmat());
+          vb.position.set(-Math.cos(ang) * gx, pillarH + Math.sin(ang) * 1.1, 0);
+          vb.rotation.z = ang; gate.add(vb);
+        }
+        g.group.add(gate);
+
+        // willow strands hanging from the arch
+        g.store.willows = [];
+        for (var s2 = 0; s2 < 6; s2++) {
+          var wv = new T.Mesh(new T.CylinderGeometry(0.03, 0.03, 0.9, 5),
+            g.kit.soft(c.teal, { transparent: true, opacity: 0.7 }));
+          wv.position.set(-1.1 + s2 * 0.44, pillarH + 0.55, 0.1); g.group.add(wv); g.store.willows.push(wv);
+        }
+
+        // family home (right)
+        var home = new T.Group();
+        var body = new T.Mesh(new T.BoxGeometry(1.9, 1.7, 1.6), g.kit.soft(0xd8b86a));
+        body.position.y = 0.85; body.castShadow = true; home.add(body);
+        var roof = new T.Mesh(new T.ConeGeometry(1.55, 1.1, 4), g.kit.soft(0xb5894a));
+        roof.position.y = 2.25; roof.rotation.y = Math.PI / 4; home.add(roof);
+        home.add(new T.Mesh(new T.BoxGeometry(0.5, 0.9, 0.1), g.kit.soft(0x5a3d1e)).translateZ(0.81).translateY(0.45));
+        g.store.windows = [];
+        [-1, 1].forEach(function (s) {
+          var win = new T.Mesh(new T.BoxGeometry(0.4, 0.4, 0.1),
+            g.kit.soft(0xf6e7bd, { emissive: 0xf6e7bd, emissiveIntensity: 0.6 }));
+          win.position.set(s * 0.55, 1.0, 0.81); home.add(win); g.store.windows.push(win);
+        });
+        home.position.set(4.4, 0, -0.3); g.group.add(home);
+
+        // waiting loved ones (rebuilt when the count changes)
+        g.store.cluster = new T.Group(); g.group.add(g.store.cluster); g.store.clusterBuilt = -1;
+
+        // frozen coin stack — slides through the gate when a Will is written
+        var stack = new T.Group();
+        for (var r = 0; r < 3; r++) for (var cc = 0; cc < (3 - r); cc++) {
+          var coin = g.kit.coin(0.32);
+          coin.position.set(cc * 0.5 - (2 - r) * 0.25, 0.32 + r * 0.34, 0); stack.add(coin);
+        }
+        stack.position.set(-2.6, 0, 0); g.group.add(stack); g.store.stack = stack;
+        g.store.willPrev = null; g.store.epfT = 0; g.store.hibahT = 0;
+      },
+      update: function (g) {
+        var c = g.colors, dt = g.dt || 0.016, v = g.values;
+        var epf = !!v.epf, hibah = !!v.hibah, will = !!v.will;
         var loved = Math.max(1, Math.round(v.loved || 1));
 
-        stars(g, 22, h * 0.5);
+        for (var i = 0; i < g.store.gateMats.length; i++) {
+          var m = g.store.gateMats[i];
+          m.color.set(will ? c.gold : 0x8a7d63);
+          m.emissive.set(will ? c.goldDark : 0x000000);
+          m.emissiveIntensity = will ? 0.3 : 0;
+        }
+        for (var s = 0; s < g.store.willows.length; s++) {
+          var wv = g.store.willows[s];
+          wv.rotation.z = Math.sin(g.t * 1.4 + s) * 0.18;
+          wv.material.opacity = will ? 0.85 : 0.45;
+        }
+        for (var w = 0; w < g.store.windows.length; w++) g.store.windows[w].material.emissiveIntensity = will ? 0.95 : 0.35;
+        for (var st = 0; st < g.store.stars.length; st++) g.store.stars[st].material.opacity = 0.25 + 0.4 * Math.abs(Math.sin(g.t * 0.8 + st));
 
-        // pixel moon — low enough to clear the HUD bubble/stat strip on top
-        var moonX = Math.round(w * 0.40), moonY = Math.round(h * 0.26);
-        ctx.fillStyle = "rgba(246,231,189,0.8)";
-        ctx.fillRect(moonX, moonY, 7, 7);
-        ctx.fillRect(moonX - 2, moonY + 2, 11, 3);
-        ctx.fillStyle = "rgba(201,161,74,0.4)";
-        ctx.fillRect(moonX + 2, moonY + 3, 2, 2);
-
-        // --- anchors: Capy (left) · Willow archway (centre) · home (right) ---
-        var capH = Math.min(h * 0.26, 30);
-        var capX = Math.round(w * 0.12);
-        var capChestY = Math.round(groundY - capH * 0.45);
-
-        var gateX = Math.round(w * 0.45);
-        var gateH = Math.min(h * 0.52, 52);                 // taller, prominent arch
-        var gateTop = Math.round(groundY - gateH);
-        var openHalf = Math.max(7, Math.round(w * 0.05));   // half the doorway
-        var pillarW = 4;
-        var springY = Math.round(gateTop + gateH * 0.34);   // arch springline
-
-        // home scaled down ~12% to free room for the coin piles + capybaras
-        var houseW = Math.round(Math.min(w * 0.19, 28));
-        var houseH = Math.round(Math.min(h * 0.35, 30));
-        var houseCX = Math.round(w * 0.85);
-        var houseBaseY = groundY;                           // sits low on the ground
-
-        // waiting loved-ones cluster, just in front of (left of) the home
-        var clusterRight = houseCX - Math.round(houseW / 2) - 3;
-        var clusterCX = clusterRight - 8;
-
-        // flight path: Capy's chest → the waiting capybaras, through the gate
-        var sx = capX + 5, sy = capChestY;
-        var ex = clusterCX, ey = groundY - 5;
-        function px(t) { return sx + (ex - sx) * t; }
-        function py(t) { return sy + (ey - sy) * t; }
-
-        // --- thin grass ground (structures sit on top) ---------------------
-        ctx.fillStyle = BRICK;
-        ctx.fillRect(0, groundY, w, h - groundY);
-        ctx.fillStyle = "rgba(159,216,196,0.5)";
-        ctx.fillRect(0, groundY, w, 1);
-
-        // --- the cleared path (gold once a Will is written, else faint) -----
-        if (will) {
-          for (var bt = 0.04; bt < 0.99; bt += 0.045) {
-            var bx = Math.round(px(bt)), by = Math.round(py(bt));
-            ctx.fillStyle = GOLD;
-            ctx.fillRect(bx, by + 5, 3, 2);
-            ctx.fillStyle = GOLD_DARK;
-            ctx.fillRect(bx, by + 7, 1, 2);
-          }
-        } else {
-          for (var dt2 = 0.06; dt2 < 0.96; dt2 += 0.09) {
-            ctx.fillStyle = "rgba(242,236,224,0.20)";
-            ctx.fillRect(Math.round(px(dt2)), Math.round(py(dt2)) + 5, 1, 1);
+        if (g.store.clusterBuilt !== loved) {
+          g.store.clusterBuilt = loved;
+          while (g.store.cluster.children.length) g.store.cluster.remove(g.store.cluster.children[0]);
+          for (var k = 0; k < loved; k++) {
+            var mc = makeMiniCapy(g), rowI = k >= 4 ? 1 : 0, colI = rowI ? k - 4 : k;
+            mc.position.set(3.0 - colI * 0.7, 0, 0.4 - rowI * 0.7); mc.rotation.y = -0.6;
+            g.store.cluster.add(mc);
           }
         }
 
-        // --- HIBAH: a glowing teal conduit + fast motes (instant transfer) --
-        if (hibah) {
-          for (var ct = 0.02; ct < 1; ct += 0.025) {
-            var cx2 = Math.round(px(ct)), cy2 = Math.round(py(ct));
-            var pulse = (Math.sin(g.t * 6 - ct * 12) + 1) / 2;
-            ctx.fillStyle = "rgba(159,216,196," + (0.22 + pulse * 0.5).toFixed(2) + ")";
-            ctx.fillRect(cx2, cy2 + 1, 2, 2);
+        if (g.store.willPrev !== null && g.store.willPrev !== will && g.gsap && !g.reduced) {
+          g.gsap.killTweensOf(g.store.stack.position);
+          if (will) {
+            g.gsap.to(g.store.stack.position, { x: 3.0, duration: 0.9, ease: "power2.inOut" });
+            g.gsap.to(g.store.stack.position, { y: 1.2, duration: 0.45, yoyo: true, repeat: 1, ease: "sine.inOut" });
+          } else {
+            g.gsap.to(g.store.stack.position, { x: -2.6, y: 0, duration: 0.6, ease: "power2.out" });
           }
-          var motes = g.reduced ? 3 : 5;
-          for (var m2 = 0; m2 < motes; m2++) {
-            var mt = g.reduced ? (m2 / motes) : ((g.t * 0.9 + m2 / motes) % 1);
-            var mx = Math.round(px(mt)), my = Math.round(py(mt));
-            ctx.fillStyle = TEAL;
-            ctx.fillRect(mx, my, 3, 3);
-            ctx.fillStyle = GOLD_LIGHT;
-            ctx.fillRect(mx + 1, my + 1, 1, 1);
-          }
+        } else if (g.reduced || g.store.willPrev === null) {
+          g.store.stack.position.set(will ? 3.0 : -2.6, 0, 0);
         }
+        g.store.willPrev = will;
 
-        // --- the WILLOW GATE: a vintage stone archway -----------------------
-        var lit = will;
-        var stone = lit ? GOLD : "rgba(231,192,105,0.34)";
-        var stoneHi = lit ? GOLD_LIGHT : "rgba(246,231,189,0.32)";
-        var stoneLo = lit ? GOLD_DARK : "rgba(122,90,30,0.42)";
-        var lpx = gateX - openHalf - pillarW;   // left pillar
-        var rpx = gateX + openHalf;             // right pillar
-        var pillarBot = groundY - 2;
-        ctx.fillStyle = stone;
-        ctx.fillRect(lpx, springY, pillarW, pillarBot - springY);
-        ctx.fillRect(rpx, springY, pillarW, pillarBot - springY);
-        ctx.fillStyle = stoneHi;                // lit left edge
-        ctx.fillRect(lpx, springY, 1, pillarBot - springY);
-        ctx.fillRect(rpx, springY, 1, pillarBot - springY);
-        ctx.fillStyle = stoneLo;                // shaded right edge + seams
-        ctx.fillRect(lpx + pillarW - 1, springY, 1, pillarBot - springY);
-        ctx.fillRect(rpx + pillarW - 1, springY, 1, pillarBot - springY);
-        for (var sy2 = springY + 5; sy2 < pillarBot; sy2 += 6) {
-          ctx.fillRect(lpx, sy2, pillarW, 1);
-          ctx.fillRect(rpx, sy2, pillarW, 1);
+        if (epf && !g.reduced && g.dt) {
+          g.store.epfT += dt;
+          if (g.store.epfT > 0.18) { g.store.epfT = 0; g.particles.spawn({ x: -3.8, y: 1.6, z: 0, vx: 1.4, vy: 0.3, vz: 0, g: -0.4, size: 0.3, life: 1.6, color: c.pink, alpha: 0.95 }); }
         }
-        ctx.fillStyle = stone;                  // chunky base plinths → reads as a gate
-        ctx.fillRect(lpx - 1, pillarBot, pillarW + 2, 2);
-        ctx.fillRect(rpx - 1, pillarBot, pillarW + 2, 2);
-        // the arch ring — stepped voussoir blocks curving over the doorway
-        var rC = openHalf + pillarW / 2;
-        var archVR = springY - gateTop;
-        var steps = 8;
-        for (var a = 0; a <= steps; a++) {
-          var ang = Math.PI * (a / steps);
-          var ox = gateX - Math.cos(ang) * rC;
-          var oy = springY - Math.sin(ang) * archVR;
-          ctx.fillStyle = stone;
-          ctx.fillRect(Math.round(ox - pillarW / 2), Math.round(oy), pillarW, 5);
-          ctx.fillStyle = stoneHi;
-          ctx.fillRect(Math.round(ox - pillarW / 2), Math.round(oy), pillarW, 1);
+        if (hibah && !g.reduced && g.dt) {
+          g.store.hibahT += dt;
+          if (g.store.hibahT > 0.1) { g.store.hibahT = 0; g.particles.spawn({ x: -3.6, y: 1.2, z: 0.2, vx: 3.0, vy: 0.4, vz: 0, size: 0.26, life: 1.1, color: c.teal, additive: true }); }
         }
-        // drooping willow strands from the archway underside
-        ctx.fillStyle = lit ? "rgba(159,216,196,0.85)" : "rgba(159,216,196,0.32)";
-        for (var s = 0; s < 5; s++) {
-          var wx = gateX - openHalf + 1 + s * Math.round((openHalf * 2 - 2) / 4);
-          var sway = g.reduced ? 0 : Math.round(Math.sin(g.t * 1.4 + s) * 1);
-          ctx.fillRect(wx + sway, springY + 1, 1, 5 + (s % 2) * 4);
-        }
-
-        // --- the family HOME (right, larger, sitting low) -------------------
-        var hx0 = houseCX - Math.round(houseW / 2);
-        var bodyTop = houseBaseY - Math.round(houseH * 0.6);
-        ctx.fillStyle = "#d8b86a";
-        ctx.fillRect(hx0, bodyTop, houseW, houseBaseY - bodyTop);
-        ctx.fillStyle = GOLD_DARK;
-        ctx.fillRect(hx0, bodyTop, houseW, 1);
-        ctx.fillRect(hx0, houseBaseY - 1, houseW, 1);
-        var roofH = Math.round(houseH * 0.42);
-        var roofTopY = bodyTop - roofH;
-        var halfW = Math.round(houseW / 2) + 1;
-        for (var ry = 0; ry <= roofH; ry++) {
-          var ww = Math.round(halfW * 2 * (ry / roofH)) + 1;
-          ctx.fillStyle = "#b5894a";
-          ctx.fillRect(houseCX - Math.round(ww / 2), roofTopY + ry, ww, 1);
-        }
-        ctx.fillStyle = "#7a5a1e";              // chimney
-        ctx.fillRect(hx0 + houseW - 5, roofTopY + 2, 3, roofH - 2);
-        var winGlow = will ? "rgba(246,231,189,0.95)" : "rgba(246,231,189,0.55)";
-        var dwW = Math.max(3, Math.round(houseW * 0.26));
-        var dwH = Math.round(houseH * 0.4);
-        ctx.fillStyle = "#5a3d1e";              // doorway
-        ctx.fillRect(houseCX - Math.round(dwW / 2), houseBaseY - dwH, dwW, dwH);
-        ctx.fillStyle = winGlow;               // lit windows
-        ctx.fillRect(hx0 + 2, bodyTop + 3, 3, 3);
-        ctx.fillRect(hx0 + houseW - 5, bodyTop + 3, 3, 3);
-
-        // --- waiting loved ones: small capybaras in front of the home -------
-        for (var i = 0; i < loved; i++) {
-          var rowIdx = i >= 4 ? 1 : 0;          // wrap to a back row past 4
-          var colIdx = rowIdx ? i - 4 : i;
-          var mcx = clusterRight - colIdx * 8 - rowIdx * 4;
-          var mby = groundY - rowIdx * 3;
-          miniCapy(g, mcx, mby, true);
-        }
-
-        // --- the FROZEN COINS mechanic: the Will SLIDES the stash through ---
-        var fcXL = Math.round(w * 0.30);          // locked, on Capy's side
-        var fcXR = Math.round(w * 0.63);          // cleared, on the family's side
-        // detect the Will toggle flipping → start the slide (or re-freeze)
-        if (will && !legacyCoins.will) legacyCoins.t0 = g.t;
-        if (!will) legacyCoins.t0 = -1;
-        legacyCoins.will = will;
-        var MOVE = 0.9;                            // slide duration (seconds)
-        var moveP = !will ? 0
-          : (g.reduced || legacyCoins.t0 < 0) ? 1
-          : clamp((g.t - legacyCoins.t0) / MOVE, 0, 1);
-
-        if (!will) {
-          // locked on the Capy's (left) side, encased in frosted ice
-          var st = coinStack(g, fcXL, groundY, true);
-          var shim = g.reduced ? 0.5 : 0.30 + 0.3 * ((Math.sin(g.t * 2) + 1) / 2);
-          ctx.fillStyle = "rgba(206,234,255," + shim.toFixed(2) + ")";
-          ctx.fillRect(st.x0 - 2, st.top - 2, st.w + 4, 1);
-          ctx.fillRect(st.x0 - 2, groundY - 1, st.w + 4, 1);
-          ctx.fillRect(st.x0 - 2, st.top - 2, 1, groundY - st.top + 1);
-          ctx.fillRect(st.x0 + st.w + 1, st.top - 2, 1, groundY - st.top + 1);
-          if (!g.reduced) {
-            for (var fp = 0; fp < 5; fp++) {
-              var fy = st.top + ((g.t * 6 + fp * 5) % (groundY - st.top));
-              ctx.fillStyle = "rgba(224,242,255,0.5)";
-              ctx.fillRect(st.x0 + (fp * 4) % st.w, Math.round(fy), 1, 1);
-            }
-          }
-        } else if (moveP < 1) {
-          // IN TRANSIT: the icy stash flies horizontally through the arch centre
-          var mx2 = Math.round(fcXL + (fcXR - fcXL) * moveP);
-          var lift = Math.round(Math.sin(moveP * Math.PI) * gateH * 0.4);
-          coinStack(g, mx2, groundY - lift, true);
-          if (!g.reduced && Math.random() < 0.6) {   // frost trail behind them
-            g.particles.spawn({
-              x: mx2 - 8, y: groundY - lift - 6, vx: -5, vy: -2,
-              size: 1, life: 0.5, color: "rgba(188,220,240,0.9)", alpha: 0.85
-            });
-          }
-        } else {
-          // ARRIVED: coins land on the family's side and shine, freshly unlocked
-          var st2 = coinStack(g, fcXR, groundY, false);
-          var twk = (Math.sin(g.t * 5) + 1) / 2;
-          ctx.fillStyle = "rgba(246,231,189," + (0.4 + twk * 0.6).toFixed(2) + ")";
-          ctx.fillRect(fcXR - 2, st2.top - 3, 5, 1);   // sparkle cross on the cap
-          ctx.fillRect(fcXR, st2.top - 5, 1, 5);
-          if (!g.reduced && Math.random() < 0.5) {
-            g.particles.spawn({
-              x: fcXR + (Math.random() - 0.5) * 14, y: groundY - 4 - Math.random() * 12,
-              vx: 0, vy: -6, size: 1, life: 0.7, color: GOLD_LIGHT, alpha: 1
-            });
-          }
-        }
-
-        // --- corner status labels (small pixel scale), clear of the centre
-        // and tucked just under the HUD bubble / stat chip ------------------
-        if (!will) {
-          // top-left corner, mapping to the frozen stash on the left below
-          ptext(g, "Frozen Coins", 3, Math.round(h * 0.34), "rgba(206,234,255,0.95)", "left", 6);
-        } else {
-          // top-right corner, sitting above the house + the shining coin pile.
-          // kept short ("passed") so it clears the wider 2-line speech bubble
-          var ry1 = Math.round(h * 0.28);
-          ptext(g, "Coins passed", w - 3, ry1, "rgba(246,231,189,0.95)", "right", 6);
-          ptext(g, "to loved ones", w - 3, ry1 + 8, "rgba(246,231,189,0.95)", "right", 6);
-        }
-
-        // --- EPF: a continuous stream of love hearts to the loved ones ------
-        if (epf) {
-          var nH = Math.min(6, 3 + loved);
-          for (var k = 0; k < nH; k++) {
-            var t = g.reduced ? (0.2 + 0.7 * (k / nH)) : ((g.t * 0.45 + k / nH) % 1);
-            heart(ctx, Math.round(px(t) - 2), Math.round(py(t) - 1), RED);
-            if (t > 0.93 && !g.reduced && Math.random() < 0.25) {
-              g.particles.spawn({
-                x: ex, y: ey, vx: (Math.random() - 0.5) * 5, vy: -3,
-                size: 1, life: 0.6, color: GOLD_LIGHT, alpha: 0.9
-              });
-            }
-          }
-        }
-
-        // --- Capy, drawn last so it always reads on top --------------------
-        mascot.draw(ctx, capX, groundY, capH, { gaze: 0.8 });
+        g.mascot.setGaze(0.5);
       }
     }
   });
