@@ -506,15 +506,30 @@
 
           <div class="journey__board">
             <div class="journey__stage">
-              <canvas id="journeyCanvas" role="img" aria-label="Interactive 8-bit financial scene starring Capy, the pixel capybara"></canvas>
-              <div class="journey__hud">
-                <div class="journey__bubble" id="journeyBubble" aria-live="polite"></div>
-                <span class="journey__stat" id="journeyStat"></span>
+              <div class="journey__scene">
+                <canvas id="journeyCanvas" role="img" aria-label="Interactive 8-bit financial scene starring Capy, the pixel capybara"></canvas>
+                <div class="journey__hud">
+                  <span class="journey__stat" id="journeyStat"></span>
+                </div>
+                <div class="journey__vibe">
+                  <span class="journey__vibe-label">Power</span>
+                  <span class="journey__vibe-track"><span class="journey__vibe-fill" id="journeyVibe"></span></span>
+                  <span class="journey__vibe-pct" id="journeyVibePct">0%</span>
+                </div>
               </div>
-              <div class="journey__vibe">
-                <span class="journey__vibe-label">Power</span>
-                <span class="journey__vibe-track"><span class="journey__vibe-fill" id="journeyVibe"></span></span>
-                <span class="journey__vibe-pct" id="journeyVibePct">0%</span>
+
+              <!-- Capy's dialogue box: he reacts to your numbers (mood) and
+                   delivers the read-out as your pixel financial advisor -->
+              <div class="journey__advisor" aria-live="polite">
+                <div class="journey__advisor-tag">
+                  <span class="journey__advisor-name">Capy</span>
+                  <span class="journey__advisor-mood" id="journeyMood">Stable</span>
+                </div>
+                <p class="journey__bubble" id="journeyBubble"></p>
+                <div class="journey__advisor-msg">
+                  <p class="journey__headline" id="journeyHeadline"></p>
+                  <p class="journey__coach" id="journeyCoach"></p>
+                </div>
               </div>
             </div>
 
@@ -522,11 +537,20 @@
               <p class="journey__panel-eyebrow" id="journeyLevelTag">World 1-1</p>
               <h3 class="journey__panel-title" id="journeyTitle">The Coin Pipes</h3>
               <div class="journey__controls" id="journeyControls"></div>
-              <div class="journey__readout">
-                <p class="journey__headline" id="journeyHeadline"></p>
-                <p class="journey__coach" id="journeyCoach"></p>
+
+              <!-- Walk through every world with Prev / Next; the "real plan"
+                   CTA only unlocks in the final (Legacy) world -->
+              <div class="journey__nav">
+                <button type="button" class="journey__nav-btn journey__nav-btn--prev" id="journeyPrevBtn">
+                  <span aria-hidden="true">◄</span> Prev
+                </button>
+                <span class="journey__nav-progress" id="journeyNavProgress">1 / 4</span>
+                <button type="button" class="journey__nav-btn journey__nav-btn--next" id="journeyNextBtn">
+                  Next <span aria-hidden="true">►</span>
+                </button>
               </div>
-              <button type="button" class="journey__cta" id="journeyPlanBtn">Turn this into a real plan</button>
+
+              <button type="button" class="journey__cta" id="journeyPlanBtn" hidden>Turn this into a real plan</button>
             </div>
           </div>
 

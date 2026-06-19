@@ -1128,6 +1128,30 @@
   var vibeEl = document.getElementById("journeyVibe");
   var vibePctEl = document.getElementById("journeyVibePct");
   var vibeBoxEl = document.querySelector(".journey__vibe");
+  var moodEl = document.getElementById("journeyMood");
+  var prevBtn = document.getElementById("journeyPrevBtn");
+  var nextBtn = document.getElementById("journeyNextBtn");
+  var navProgressEl = document.getElementById("journeyNavProgress");
+  var planBtnEl = document.getElementById("journeyPlanBtn");
+  var lastWorldIndex = engine.order.length - 1;
+
+  // Capy's mood, written out as a friendly advisor label
+  var MOOD_LABELS = {
+    stable: "Stable", joyful: "Thriving", growth: "Growing",
+    cautious: "Cautious", "risk-averse": "Cautious", concerned: "Worried",
+    serene: "At peace", calm: "Calm", thoughtful: "Thinking",
+    happy: "Thriving", worried: "Worried"
+  };
+
+  // hop to the world `delta` steps away (used by Prev / Next)
+  function goWorld(delta) {
+    var i = engine.order.indexOf(engine.levelId);
+    var j = i + delta;
+    if (j < 0 || j > lastWorldIndex) return;
+    engine.start(engine.order[j]);
+  }
+  if (prevBtn) prevBtn.addEventListener("click", function () { goWorld(-1); });
+  if (nextBtn) nextBtn.addEventListener("click", function () { goWorld(1); });
 
   var progress = {};
   var chips = {};
@@ -1398,6 +1422,14 @@
     buildControls(e.def);
     for (var id in chips) chips[id].classList.toggle("is-active", id === e.id);
     if (vibeBoxEl) vibeBoxEl.classList.remove("is-green", "is-red");
+
+    // Prev / Next walk the worlds in order; the "real plan" CTA only
+    // unlocks in the final (Legacy) world so players visit every stop first.
+    if (navProgressEl) navProgressEl.textContent = (i + 1) + " / " + engine.order.length;
+    if (prevBtn) prevBtn.disabled = i === 0;
+    if (nextBtn) nextBtn.disabled = i === lastWorldIndex;
+    if (planBtnEl) planBtnEl.hidden = i !== lastWorldIndex;
+
     lastSay = "";
   });
 
@@ -1410,6 +1442,7 @@
     }
     headlineEl.textContent = s.headline || "";
     coachEl.textContent = s.coach || "";
+    if (moodEl && s.mood) moodEl.textContent = MOOD_LABELS[s.mood] || s.mood;
     statEl.textContent = s.stat || "";
     statEl.style.display = s.stat ? "" : "none";
     if (s.say && s.say !== lastSay) {
