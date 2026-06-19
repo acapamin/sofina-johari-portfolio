@@ -188,6 +188,10 @@
   createParticleField(document.getElementById("ctaCanvas"), {
     count: 450, color: 0x9fd8c4, size: 0.04, opacity: 0.5, parallax: false
   });
+  // same ambient starfield as the hero, behind Capy inside the toolkit box
+  createParticleField(document.getElementById("journeyBgCanvas"), {
+    count: 520, color: 0x9fd8c4, size: 0.05, opacity: 0.6, parallax: false
+  });
 
   /* ---------- Story water simulation ----------
      GPU height-field ripple solver (ping-pong render targets) layered

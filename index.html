@@ -505,31 +505,29 @@
           <div class="journey__levels" role="tablist" aria-label="Financial levels" id="journeyLevels"></div>
 
           <div class="journey__board">
-            <!-- Standardised scene: Capy reacts to your numbers (mood) and
-                 "speaks" the read-out through the conversation bubble -->
+            <!-- Standardised scene: hero-style particle backdrop, Capy
+                 reacting (mood) in the box, and a cloud that speaks the
+                 read-out with its tail pointing at his mouth -->
             <div class="journey__stage">
+              <canvas class="journey__bg" id="journeyBgCanvas" aria-hidden="true"></canvas>
+
               <div class="journey__speech" aria-live="polite">
-                <div class="journey__speech-tag">
-                  <span class="journey__advisor-name">Capy</span>
-                  <span class="journey__advisor-mood" id="journeyMood">Stable</span>
-                </div>
                 <p class="journey__bubble" id="journeyBubble"></p>
                 <div class="journey__advisor-msg">
                   <p class="journey__headline" id="journeyHeadline"></p>
                   <p class="journey__coach" id="journeyCoach"></p>
                 </div>
+                <span class="journey__speech-tail" aria-hidden="true"></span>
               </div>
 
               <div class="journey__capy">
                 <canvas id="journeyCanvas" role="img" aria-label="Capy, the pixel capybara, reacting to your numbers"></canvas>
-                <div class="journey__hud">
-                  <span class="journey__stat" id="journeyStat"></span>
-                </div>
-                <div class="journey__vibe">
-                  <span class="journey__vibe-label">Power</span>
-                  <span class="journey__vibe-track"><span class="journey__vibe-fill" id="journeyVibe"></span></span>
-                  <span class="journey__vibe-pct" id="journeyVibePct">0%</span>
-                </div>
+              </div>
+
+              <div class="journey__vibe">
+                <span class="journey__vibe-label">Power</span>
+                <span class="journey__vibe-track"><span class="journey__vibe-fill" id="journeyVibe"></span></span>
+                <span class="journey__vibe-pct" id="journeyVibePct">0%</span>
               </div>
             </div>
 
@@ -541,13 +539,9 @@
               <!-- Walk through every world with Prev / Next; the "real plan"
                    CTA only unlocks in the final (Legacy) world -->
               <div class="journey__nav">
-                <button type="button" class="journey__nav-btn journey__nav-btn--prev" id="journeyPrevBtn">
-                  <span aria-hidden="true">◄</span> Prev
-                </button>
+                <button type="button" class="journey__nav-btn journey__nav-btn--prev" id="journeyPrevBtn">Previous</button>
                 <span class="journey__nav-progress" id="journeyNavProgress">1 / 4</span>
-                <button type="button" class="journey__nav-btn journey__nav-btn--next" id="journeyNextBtn">
-                  Next <span aria-hidden="true">►</span>
-                </button>
+                <button type="button" class="journey__nav-btn journey__nav-btn--next" id="journeyNextBtn">Next</button>
               </div>
 
               <button type="button" class="journey__cta" id="journeyPlanBtn" hidden>Turn this into a real plan</button>
@@ -615,9 +609,9 @@
         <div class="tools__classic reveal">
           <span class="tools__classic-label">Prefer the classic calculators?</span>
           <div class="tools__classic-links">
-            <a href="https://widgets.planyourfuture.today/oversea-study?agent-id=5580&country=MY&agent-name=Sofina%20Johari" target="_blank" rel="noopener">Education cost <span aria-hidden="true">→</span></a>
-            <a href="https://widgets.planyourfuture.today/insurance-planner?agent-id=5580&country=MY&agent-name=Sofina%20Johari" target="_blank" rel="noopener">Insurance gap <span aria-hidden="true">→</span></a>
-            <a href="https://widgets.planyourfuture.today/retirement-planner?agent-id=5580&country=MY&agent-name=Sofina%20Johari" target="_blank" rel="noopener">Retirement fund <span aria-hidden="true">→</span></a>
+            <a href="https://widgets.planyourfuture.today/oversea-study?agent-id=5580&country=MY&agent-name=Sofina%20Johari" target="_blank" rel="noopener">Education cost</a>
+            <a href="https://widgets.planyourfuture.today/insurance-planner?agent-id=5580&country=MY&agent-name=Sofina%20Johari" target="_blank" rel="noopener">Insurance gap</a>
+            <a href="https://widgets.planyourfuture.today/retirement-planner?agent-id=5580&country=MY&agent-name=Sofina%20Johari" target="_blank" rel="noopener">Retirement fund</a>
           </div>
         </div>
       </div>

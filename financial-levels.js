@@ -1130,37 +1130,25 @@
   }
   var standardScene = {
     draw: function (g) {
+      // the canvas is transparent so the hero-style particle field behind it
+      // shows through; we draw only Capy (+ a faint mood aura that is part of
+      // his reaction). He sits high in the band so the cloud's tail reaches
+      // his face, reading as Capy speaking the message.
       var ctx = g.ctx, w = g.w, h = g.h;
-      var groundY = h - Math.max(8, Math.round(h * 0.16));
-
-      // calm 8-bit sky + twinkling stars
-      stars(g, 16, groundY - 4);
-
-      // mood-tinted glow halo behind Capy
       var mood = (g.state && g.state.mood) || "stable";
-      var capH = clamp(Math.round(h * 0.52), 26, 78);
+      var capH = clamp(Math.round(h * 0.74), 30, 128);
       var cx = Math.round(w / 2);
+      // leave headroom up top so Capy's ears never clip at the peak of a hop
+      var groundY = Math.round(capH + h * 0.13);
+
       var haloY = groundY - capH * 0.5;
-      var halo = ctx.createRadialGradient(cx, haloY, 2, cx, haloY, capH * 1.05);
+      var halo = ctx.createRadialGradient(cx, haloY, 2, cx, haloY, capH * 0.85);
       halo.addColorStop(0, moodGlow(mood));
       halo.addColorStop(1, "rgba(0,0,0,0)");
       ctx.fillStyle = halo;
       ctx.fillRect(0, 0, w, h);
 
-      // ground strip with a gold horizon line
-      ctx.fillStyle = "#0a1a14";
-      ctx.fillRect(0, groundY, w, h - groundY);
-      ctx.fillStyle = "rgba(231,192,105,0.55)";
-      ctx.fillRect(0, groundY, w, 1);
-      // a few chunky tufts so the floor isn't bare
-      ctx.fillStyle = "rgba(92,184,122,0.5)";
-      for (var i = 0; i < w; i += 14) {
-        var th = 1 + ((i * 7) % 3);
-        ctx.fillRect(i + 4, groundY - th, 1, th);
-      }
-
-      // Capy, centred, looking toward the user
-      g.mascot.draw(ctx, cx, groundY, capH, { gaze: 0.4 });
+      g.mascot.draw(ctx, cx, groundY, capH, {});
     }
   };
   engine.order.forEach(function (id) { engine.levels[id].scene = standardScene; });
@@ -1495,8 +1483,10 @@
     headlineEl.textContent = s.headline || "";
     coachEl.textContent = s.coach || "";
     if (moodEl && s.mood) moodEl.textContent = MOOD_LABELS[s.mood] || s.mood;
-    statEl.textContent = s.stat || "";
-    statEl.style.display = s.stat ? "" : "none";
+    if (statEl) {
+      statEl.textContent = s.stat || "";
+      statEl.style.display = s.stat ? "" : "none";
+    }
     if (s.say && s.say !== lastSay) {
       lastSay = s.say;
       bubbleEl.textContent = s.say;

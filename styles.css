@@ -708,109 +708,96 @@ ul { list-style: none; }
   gap: 1rem;
   align-items: stretch;
 }
-/* The stage is now a standardised scene: a conversation bubble on top
-   (Capy speaking the read-out) sitting above Capy himself, who emotes the
-   mood. Same layout for every world — only Capy's reaction + words change. */
+/* The stage is a standardised scene: the hero's particle starfield drifts
+   behind Capy, who reacts (mood) inside the box while a cloud speaks the
+   read-out, its tail pointing down at his face. Same layout every world. */
 .journey__stage {
   position: relative;
-  min-height: 440px;
+  min-height: 430px;
   border-radius: 0;
   overflow: hidden;
-  background: radial-gradient(130% 90% at 50% 0%, #163729 0%, #0d231c 72%);
+  background: radial-gradient(130% 95% at 50% 12%, #163729 0%, #0c2019 72%);
   border: 3px solid var(--ink);
   box-shadow: 0 0 0 3px var(--gold), 10px 12px 0 rgba(11, 31, 26, 0.2);
   display: flex;
   flex-direction: column;
+  justify-content: center;   /* float Capy + cloud in the middle of the box */
+  padding-bottom: 2.4rem;    /* clear the power bar pinned at the bottom */
 }
-/* ===== Capy's conversation bubble — holds the message summary ===== */
+/* hero-style particle field, behind everything in the box */
+.journey__bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  display: block;
+  pointer-events: none;
+}
+
+/* ===== Capy's cloud — speaks the message summary ===== */
 .journey__speech {
   position: relative;
   z-index: 3;
-  flex: 0 1 auto;
-  margin: 0.9rem 0.9rem 0;
-  padding: 0.75rem 0.9rem 0.85rem;
+  align-self: center;
+  width: max-content;
+  max-width: min(88%, 40ch);
+  margin: 1.1rem auto 0;
+  padding: 0.85rem 1.15rem 0.95rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  background: linear-gradient(180deg, #fffdf8 0%, #f5ecda 100%);
+  gap: 0.45rem;
+  text-align: center;
+  background: #fbf7ee;
   border: 3px solid var(--ink);
-  box-shadow: 4px 4px 0 rgba(11, 31, 26, 0.35);
+  border-radius: 26px;
+  box-shadow: 5px 6px 0 rgba(11, 31, 26, 0.28);
 }
-/* downward tail so the bubble reads as coming from Capy below it */
-.journey__speech::after {
-  content: "";
+/* cloud "tail" — shrinking puffs that descend toward Capy's face */
+.journey__speech-tail,
+.journey__speech-tail::before,
+.journey__speech-tail::after {
   position: absolute;
-  left: 2.2rem;
-  bottom: -15px;
-  width: 0;
-  height: 0;
-  border-left: 11px solid transparent;
-  border-right: 11px solid transparent;
-  border-top: 15px solid var(--ink);
+  background: #fbf7ee;
+  border: 3px solid var(--ink);
+  border-radius: 50%;
 }
-.journey__speech::before {
+.journey__speech-tail {
+  left: 50%;
+  bottom: -16px;
+  transform: translateX(-50%);
+  width: 18px;
+  height: 18px;
+}
+.journey__speech-tail::before {
   content: "";
-  position: absolute;
-  left: calc(2.2rem + 3px);
-  bottom: -9px;
-  z-index: 1;
-  width: 0;
-  height: 0;
-  border-left: 8px solid transparent;
-  border-right: 8px solid transparent;
-  border-top: 11px solid #f5ecda;
+  left: 50%;
+  top: 15px;
+  transform: translateX(-50%);
+  width: 12px;
+  height: 12px;
 }
-.journey__speech-tag {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  flex-wrap: wrap;
-}
-.journey__advisor-name {
-  font-family: var(--font-pixel);
-  font-size: 0.58rem;
-  line-height: 1;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--ink);
-  background: var(--gold);
-  border: 2px solid var(--ink);
-  box-shadow: 2px 2px 0 rgba(11, 31, 26, 0.4);
-  padding: 0.28rem 0.5rem;
-}
-.journey__advisor-mood {
-  font-family: var(--font-pixel);
-  font-size: 0.5rem;
-  line-height: 1;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #8a6a1e;
-  position: relative;
-  padding-left: 0.85rem;
-}
-.journey__advisor-mood::before {
+.journey__speech-tail::after {
   content: "";
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 8px;
-  height: 8px;
-  background: var(--gold);
-  box-shadow: 0 0 5px rgba(201, 161, 74, 0.9);
+  left: 50%;
+  top: 27px;
+  transform: translateX(-50%);
+  width: 7px;
+  height: 7px;
 }
 /* Capy's spoken quip — the punchy, mood-flavoured line */
 .journey__bubble {
   margin: 0;
   font-family: var(--font-pixel);
-  font-size: 0.52rem;
-  line-height: 1.6;
+  font-size: 0.56rem;
+  line-height: 1.7;
   text-transform: uppercase;
   color: var(--ink);
   overflow-wrap: anywhere;
   word-break: break-word;
 }
 .journey__bubble:empty { display: none; }
+.journey__advisor-msg { display: flex; flex-direction: column; gap: 0.35rem; text-align: left; }
 .journey__advisor-msg:empty { display: none; }
 .journey__bubble.is-pop { animation: bubblePop 0.3s steps(3); }
 @keyframes bubblePop {
@@ -818,13 +805,14 @@ ul { list-style: none; }
   100% { transform: none; opacity: 1; }
 }
 
-/* ===== Capy's stage band — the canvas where he reacts ===== */
+/* ===== Capy's stage band — transparent canvas over the starfield ===== */
 .journey__capy {
   position: relative;
+  z-index: 2;
   flex: 0 0 auto;
-  height: 158px;
-  margin-top: auto;          /* sink Capy to the floor, bubble floats above */
-  overflow: hidden;
+  height: 210px;
+  margin-top: -0.2rem;       /* tuck Capy's head up under the cloud tail */
+  overflow: visible;
 }
 .journey__capy canvas {
   position: absolute;
@@ -834,39 +822,6 @@ ul { list-style: none; }
   display: block;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
-}
-/* CRT scanlines over Capy's stage only — keeps the bubble text crisp */
-.journey__capy::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.14) 0 1px, transparent 1px 3px);
-}
-.journey__hud {
-  position: absolute;
-  top: 0.5rem;
-  left: 0.6rem;
-  right: 0.6rem;
-  z-index: 2;
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  pointer-events: none;
-}
-.journey__stat {
-  flex-shrink: 0;
-  background: rgba(11, 31, 26, 0.85);
-  color: var(--gold-soft);
-  border: 2px solid rgba(201, 161, 74, 0.7);
-  padding: 0.4rem 0.5rem;
-  font-family: var(--font-pixel);
-  font-size: 0.5rem;
-  line-height: 1;
-  text-transform: uppercase;
-  white-space: nowrap;
 }
 .journey__vibe {
   position: absolute;
@@ -1183,15 +1138,20 @@ ul { list-style: none; }
 }
 .journey__key-label { font-size: 0.8rem; font-weight: 600; color: var(--text); line-height: 1.2; }
 
-.journey__advisor-msg { display: flex; flex-direction: column; gap: 0.35rem; }
 .journey__headline {
-  font-family: var(--font-display);
-  font-size: 1rem;
-  line-height: 1.35;
+  font-family: var(--font-pixel);
+  font-size: 0.6rem;
+  line-height: 1.75;
   color: var(--ink);
 }
 .journey__headline:empty { display: none; }
-.journey__coach { font-size: 0.82rem; line-height: 1.45; color: var(--text-muted); white-space: pre-line; }
+.journey__coach {
+  font-family: var(--font-pixel);
+  font-size: 0.5rem;
+  line-height: 1.95;
+  color: #5d513f;
+  white-space: pre-line;
+}
 .journey__coach:empty { display: none; }
 
 /* ===== World navigation — walk through every world in order ===== */
@@ -1206,7 +1166,7 @@ ul { list-style: none; }
 .journey__nav-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  justify-content: center;
   font-family: var(--font-pixel);
   font-size: 0.55rem;
   line-height: 1.4;
@@ -1291,6 +1251,48 @@ ul { list-style: none; }
   transition: color 0.25s;
 }
 .tools__classic-links a:hover { color: var(--gold); }
+
+/* ===== Toolkit typography — one retro family everywhere, size is the only
+   variable. Body copy stays small with generous line-height so Press Start
+   2P remains legible on mobile. ===== */
+.tools .section-eyebrow,
+.tools .section-title,
+.tools .section-title em,
+.tools__intro,
+.tools__classic-label,
+.tools__classic-links a,
+.journey__control-label,
+.journey__control-sub,
+.journey__control output,
+.journey__c-ctrl output,
+.journey__micro-label,
+.journey__micro-sub,
+.journey__micro output,
+.journey__key-label,
+.journey__pct,
+.journey__fine {
+  font-family: var(--font-pixel);
+}
+.tools .section-title {
+  font-size: clamp(1.2rem, 3.4vw, 2rem);
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+.tools .section-title em { font-style: normal; }
+.tools .section-eyebrow { font-size: 0.6rem; letter-spacing: 0.14em; }
+.tools__intro { font-size: 0.66rem; line-height: 2; max-width: 60ch; }
+.journey__control-label { font-size: 0.58rem; line-height: 1.65; font-weight: 400; }
+.journey__control-sub { font-size: 0.5rem; line-height: 1.7; }
+.journey__control output,
+.journey__c-ctrl output,
+.journey__micro output { font-size: 0.58rem; font-weight: 400; }
+.journey__micro-label { font-size: 0.52rem; line-height: 1.5; font-weight: 400; }
+.journey__micro-sub { font-size: 0.46rem; line-height: 1.5; }
+.journey__key-label { font-size: 0.56rem; line-height: 1.6; font-weight: 400; }
+.journey__pct { font-size: 0.85em; font-weight: 400; }
+.journey__fine { font-size: 0.56rem; line-height: 1.9; font-style: normal; }
+.tools__classic-label { font-size: 0.58rem; letter-spacing: 0.1em; }
+.tools__classic-links a { font-size: 0.62rem; line-height: 1.8; }
 
 /* ---------- Videos ---------- */
 .videos { padding: clamp(5rem, 10vw, 9rem) 0; background: var(--cream-deep); }
@@ -1760,7 +1762,8 @@ ul { list-style: none; }
   .story__media { order: -1; padding: 1rem 0; }
   .services__grid { grid-template-columns: 1fr 1fr; }
   .journey__board { grid-template-columns: 1fr; }
-  .journey__stage { min-height: 380px; }
+  .journey__stage { min-height: 400px; }
+  .journey__capy { height: 196px; }   /* tablet: roomy Capy on the wide stage */
   .stats__grid { grid-template-columns: 1fr 1fr; gap: 2rem; }
   .credentials__groups { grid-template-columns: 1fr; }
   .testimonials__grid { grid-template-columns: 1fr; }
@@ -1796,16 +1799,12 @@ ul { list-style: none; }
     height: auto;
     box-shadow: 0 0 0 3px var(--gold), 5px 6px 0 rgba(11, 31, 26, 0.2);
   }
-  /* speech bubble on top, compact Capy stage below */
-  .journey__speech { margin: 0.55rem 0.55rem 0; padding: 0.5rem 0.6rem 0.6rem; gap: 0.3rem; }
-  .journey__speech::after { left: 1.4rem; }
-  .journey__speech::before { left: calc(1.4rem + 3px); }
-  .journey__capy { height: 116px; margin-top: 0.45rem; }
-  .journey__hud { top: 0.4rem; left: 0.45rem; right: 0.45rem; }
-  .journey__vibe { left: 0.6rem; right: 0.6rem; bottom: 0.45rem; }
-  .journey__advisor-name { font-size: 0.5rem; padding: 0.22rem 0.4rem; }
-  .journey__advisor-mood { font-size: 0.44rem; }
-  .journey__bubble { font-size: 0.46rem; line-height: 1.5; }
+  /* cloud on top, compact Capy stage below, power bar pinned to the box floor */
+  .journey__stage { min-height: 360px; }
+  .journey__speech { margin: 0.7rem auto 0; padding: 0.6rem 0.85rem 0.7rem; gap: 0.3rem; max-width: 90%; border-radius: 20px; }
+  .journey__capy { height: 150px; margin-top: -0.1rem; }
+  .journey__vibe { left: 0.6rem; right: 0.6rem; bottom: 0.5rem; }
+  .journey__bubble { font-size: 0.5rem; line-height: 1.65; }
   .journey__panel { gap: 0.3rem; padding: 0.55rem 0.6rem; box-shadow: 4px 4px 0 rgba(11, 31, 26, 0.15); }
   .journey__panel-eyebrow { font-size: 0.46rem; }
   .journey__panel-title { font-size: 0.6rem; margin-top: -0.3rem; }
@@ -1836,15 +1835,15 @@ ul { list-style: none; }
   .journey__control--split .journey__c-ctrl { gap: 0.1rem; }
   .journey__group-head { font-size: 0.48rem; padding-bottom: 0.25rem; line-height: 1.4; }
   .journey__group-head:not(:first-child) { margin-top: 0.1rem; }
-  .journey__control-sub { font-size: 0.6rem; line-height: 1.15; margin-top: 0.05rem; }
-  .journey__control-label { font-size: 0.68rem; line-height: 1.25; }
-  .journey__control output, .journey__c-ctrl output { font-size: 0.7rem; }
+  .journey__control-sub { font-size: 0.44rem; line-height: 1.55; margin-top: 0.1rem; }
+  .journey__control-label { font-size: 0.52rem; line-height: 1.55; }
+  .journey__control output, .journey__c-ctrl output { font-size: 0.52rem; }
   .journey__range { height: 20px; }
   .journey__stash-head { margin-bottom: 0.15rem; }
   .journey__stash-row { gap: 0.4rem; }
-  .journey__micro-label { font-size: 0.62rem; }
-  .journey__micro-sub { font-size: 0.5rem; }
-  .journey__micro output { font-size: 0.62rem; }
+  .journey__micro-label { font-size: 0.46rem; line-height: 1.4; }
+  .journey__micro-sub { font-size: 0.4rem; line-height: 1.4; }
+  .journey__micro output { font-size: 0.48rem; }
   .journey__micro .journey__range { height: 18px; }
   .journey__toggle-track { width: 36px; height: 20px; }
   .journey__toggle-track::after { width: 12px; height: 12px; }
@@ -1854,15 +1853,15 @@ ul { list-style: none; }
   .journey__keys { padding: 0.3rem 0.4rem; gap: 0.2rem; }
   .journey__keys-head { font-size: 0.48rem; margin-bottom: 0.1rem; line-height: 1.4; }
   .journey__key { gap: 0.55rem; min-height: 30px; padding: 0.1rem; }
-  .journey__key-label { font-size: 0.68rem; line-height: 1.2; }
-  .journey__advisor-msg { gap: 0.25rem; }
-  .journey__headline { font-size: 0.82rem; line-height: 1.3; }
-  .journey__coach { font-size: 0.74rem; line-height: 1.4; }
+  .journey__key-label { font-size: 0.5rem; line-height: 1.5; }
+  .journey__advisor-msg { gap: 0.3rem; }
+  .journey__headline { font-size: 0.54rem; line-height: 1.6; }
+  .journey__coach { font-size: 0.46rem; line-height: 1.85; }
   .journey__nav { padding-top: 0.4rem; }
-  .journey__nav-btn { font-size: 0.46rem; padding: 0.45rem 0.6rem; }
+  .journey__nav-btn { font-size: 0.46rem; padding: 0.5rem 0.6rem; }
   .journey__nav-progress { font-size: 0.46rem; }
-  .journey__cta { margin-top: 0.4rem; padding: 0.5rem 0.7rem; font-size: 0.46rem; }
-  .journey__fine { font-size: 0.68rem; margin-top: 0.6rem; }
+  .journey__cta { margin-top: 0.4rem; padding: 0.55rem 0.7rem; font-size: 0.48rem; }
+  .journey__fine { font-size: 0.5rem; margin-top: 0.7rem; line-height: 1.8; }
   .hero { padding-top: 6rem; }
   .hero__scroll { display: none; }
   .hero__actions .btn { width: 100%; max-width: 320px; }
