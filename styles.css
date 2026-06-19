@@ -753,38 +753,6 @@ ul { list-style: none; }
   border-radius: 26px;
   box-shadow: 5px 6px 0 rgba(11, 31, 26, 0.28);
 }
-/* cloud "tail" — shrinking puffs that descend toward Capy's face */
-.journey__speech-tail,
-.journey__speech-tail::before,
-.journey__speech-tail::after {
-  position: absolute;
-  background: #fbf7ee;
-  border: 3px solid var(--ink);
-  border-radius: 50%;
-}
-.journey__speech-tail {
-  left: 50%;
-  bottom: -16px;
-  transform: translateX(-50%);
-  width: 18px;
-  height: 18px;
-}
-.journey__speech-tail::before {
-  content: "";
-  left: 50%;
-  top: 15px;
-  transform: translateX(-50%);
-  width: 12px;
-  height: 12px;
-}
-.journey__speech-tail::after {
-  content: "";
-  left: 50%;
-  top: 27px;
-  transform: translateX(-50%);
-  width: 7px;
-  height: 7px;
-}
 /* Capy's spoken quip — the punchy, mood-flavoured line */
 .journey__bubble {
   margin: 0;
@@ -1139,16 +1107,17 @@ ul { list-style: none; }
 .journey__key-label { font-size: 0.8rem; font-weight: 600; color: var(--text); line-height: 1.2; }
 
 .journey__headline {
-  font-family: var(--font-pixel);
-  font-size: 0.6rem;
-  line-height: 1.75;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 400;
+  line-height: 1.35;
   color: var(--ink);
 }
 .journey__headline:empty { display: none; }
 .journey__coach {
-  font-family: var(--font-pixel);
-  font-size: 0.5rem;
-  line-height: 1.95;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  line-height: 1.5;
   color: #5d513f;
   white-space: pre-line;
 }
@@ -1252,15 +1221,7 @@ ul { list-style: none; }
 }
 .tools__classic-links a:hover { color: var(--gold); }
 
-/* ===== Toolkit typography — one retro family everywhere, size is the only
-   variable. Body copy stays small with generous line-height so Press Start
-   2P remains legible on mobile. ===== */
-.tools .section-eyebrow,
-.tools .section-title,
-.tools .section-title em,
-.tools__intro,
-.tools__classic-label,
-.tools__classic-links a,
+/* ===== Toolkit panel controls — game-style pixel labels ===== */
 .journey__control-label,
 .journey__control-sub,
 .journey__control output,
@@ -1273,14 +1234,6 @@ ul { list-style: none; }
 .journey__fine {
   font-family: var(--font-pixel);
 }
-.tools .section-title {
-  font-size: clamp(1.2rem, 3.4vw, 2rem);
-  line-height: 1.5;
-  letter-spacing: 0;
-}
-.tools .section-title em { font-style: normal; }
-.tools .section-eyebrow { font-size: 0.6rem; letter-spacing: 0.14em; }
-.tools__intro { font-size: 0.66rem; line-height: 2; max-width: 60ch; }
 .journey__control-label { font-size: 0.58rem; line-height: 1.65; font-weight: 400; }
 .journey__control-sub { font-size: 0.5rem; line-height: 1.7; }
 .journey__control output,
@@ -1291,8 +1244,6 @@ ul { list-style: none; }
 .journey__key-label { font-size: 0.56rem; line-height: 1.6; font-weight: 400; }
 .journey__pct { font-size: 0.85em; font-weight: 400; }
 .journey__fine { font-size: 0.56rem; line-height: 1.9; font-style: normal; }
-.tools__classic-label { font-size: 0.58rem; letter-spacing: 0.1em; }
-.tools__classic-links a { font-size: 0.62rem; line-height: 1.8; }
 
 /* ---------- Videos ---------- */
 .videos { padding: clamp(5rem, 10vw, 9rem) 0; background: var(--cream-deep); }
@@ -3056,11 +3007,11 @@ ul { list-style: none; }
   margin-top: 0.15rem;
 }
 .plan-modal__title {
-  font-family: var(--font-pixel);
+  font-family: var(--font-display);
   font-weight: 400;
-  font-size: 0.82rem;
-  line-height: 1.5;
-  text-transform: uppercase;
+  font-size: 1.4rem;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
   color: var(--cream);
   margin-top: 0.35rem;
 }

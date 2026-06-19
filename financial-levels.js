@@ -1136,7 +1136,7 @@
       // his face, reading as Capy speaking the message.
       var ctx = g.ctx, w = g.w, h = g.h;
       var mood = (g.state && g.state.mood) || "stable";
-      var capH = clamp(Math.round(h * 0.74), 30, 128);
+      var capH = clamp(Math.round(h * 0.85), 30, 180);
       var cx = Math.round(w / 2);
       // leave headroom up top so Capy's ears never clip at the peak of a hop
       var groundY = Math.round(capH + h * 0.13);

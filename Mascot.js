@@ -37,8 +37,9 @@
     c: "#bfe6f2"    // sweat / tear (cool)
   };
 
-  // 24 wide × 26 tall, facing the viewer. Face features are overlays.
+  // 24 wide × 42 tall — head + full body + legs, facing the viewer.
   var BODY = [
+    // head (rows 0-17)
     ".....oo.........oo......",
     "....obbo........obbo....",
     "...obbbbbbbbbbbbbbbbo...",
@@ -57,6 +58,7 @@
     "...obbbbssssssssbbbbo...",
     "....odbbbbbbbbbbbbdo....",
     ".....oddbbbbbbbbddo.....",
+    // tuxedo top (rows 18-25)
     "....jjjjwwwttwwwjjjj....",
     "..jjjjjjwwttttwwjjjjjj..",
     ".jjjjjjjwwwwwwwwjjjjjjj.",
@@ -64,7 +66,26 @@
     "jJjjjjjjwwwwwwwwjjjjjjJj",
     "jJjjjjjjwwwwwwwwjjjjjjJj",
     "jjjjjjjjwwwwwwwwjjjjjjjj",
-    "jjjjjjjjwwwwwwwwjjjjjjjj"
+    "jjjjjjjjwwwwwwwwjjjjjjjj",
+    // barrel body (rows 26-33)
+    "jjjjjjjjwwwwwwwwjjjjjjjj",
+    "jjjjjjjjwwwwwwwwjjjjjjjj",
+    "jjjjjjjjwwwwwwwwjjjjjjjj",
+    "jjjjjjjjwwwwwwwwjjjjjjjj",
+    "jjjjjjjjwwwwwwwwjjjjjjjj",
+    ".jjjjjjjwwwwwwwwjjjjjjj.",
+    "..jjjjjjwwwwwwwwjjjjjj..",
+    "...jjjjjwwwwwwwwjjjjj...",
+    // belly (rows 34-37)
+    "...ojbbbwwwwwwwwbbbjo...",
+    "...obbbbbbbbbbbbbbbbо...",
+    "..obbbbbbbbbbbbbbbbbbo..",
+    ".obbbbbbbbbbbbbbbbbbbbo.",
+    // legs (rows 38-41)
+    "..ojbbbb......bbbbjo....",
+    "..ojbbbb......bbbbjo....",
+    "..ojbbbb......bbbbjo....",
+    "..oddddd......dddddо...."
   ];
 
   /* face feature overlays — [x, y, paletteChar] (eyes rows 7-8, mouth 13-14) */
@@ -94,7 +115,7 @@
   };
   var BLUSH = [[3,9,"r"],[4,9,"r"],[19,9,"r"],[20,9,"r"]];
 
-  var SPR_W = 24, SPR_H = 26;
+  var SPR_W = 24, SPR_H = 42;
   var frameCache = {};
 
   function buildFrame(eyes, brow, mouth, blush) {
