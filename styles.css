@@ -710,18 +710,20 @@ ul { list-style: none; }
 }
 .journey__stage {
   position: relative;
-  min-height: 440px;
+  min-height: 380px;
   border-radius: 0;
   overflow: hidden;
   background: #0d231c;
   border: 3px solid var(--ink);
   box-shadow: 0 0 0 3px var(--gold), 10px 12px 0 rgba(11, 31, 26, 0.2);
+  display: flex;
+  flex-direction: column;
 }
 .journey__stage canvas {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  flex: 1 1 auto;
   width: 100%;
-  height: 100%;
+  min-height: 170px;
   display: block;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
@@ -735,69 +737,17 @@ ul { list-style: none; }
   pointer-events: none;
   background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.14) 0 1px, transparent 1px 3px);
 }
-/* HUD strip: speech bubble + level stat laid out with flex so they
-   can never overlap each other (or canvas text — there is none now) */
-.journey__hud {
-  position: absolute;
-  top: 0.7rem;
-  left: 0.7rem;
-  right: 0.7rem;
-  z-index: 2;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.5rem;
-  pointer-events: none;
-}
-.journey__bubble {
-  /* flexible, content-sized bubble: shrinks to its text and is capped so it
-     can never grow across the stat chip or hide the canvas sprites below */
-  width: fit-content;
-  max-width: min(58%, 22ch);
-  height: auto;
-  background: var(--cream);
-  color: var(--ink);
-  border: 2px solid var(--ink);
-  border-radius: 0;
-  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.45);
-  padding: 0.4rem 0.6rem;
-  font-family: var(--font-pixel);
-  font-size: 0.52rem;
-  line-height: 1.6;
-  text-transform: uppercase;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-.journey__stat {
-  flex-shrink: 0;
-  background: rgba(11, 31, 26, 0.85);
-  color: var(--gold-soft);
-  border: 2px solid rgba(201, 161, 74, 0.7);
-  padding: 0.4rem 0.5rem;
-  font-family: var(--font-pixel);
-  font-size: 0.5rem;
-  line-height: 1;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-.journey__bubble.is-pop { animation: bubblePop 0.3s steps(3); }
-@keyframes bubblePop {
-  0% { transform: translateY(6px); opacity: 0; }
-  100% { transform: none; opacity: 1; }
-}
 .journey__vibe {
-  position: absolute;
-  left: 1rem;
-  right: 1rem;
-  bottom: 0.9rem;
+  position: relative;
   z-index: 2;
+  margin: 0 1rem 0.7rem;
   display: flex;
   align-items: center;
   gap: 0.7rem;
 }
 .journey__vibe-label {
   font-family: var(--font-pixel);
-  font-size: 0.62rem;
+  font-size: 0.54rem;
   font-weight: 700;
   text-transform: uppercase;
   color: var(--gold-soft);
@@ -831,7 +781,7 @@ ul { list-style: none; }
 }
 .journey__vibe-pct {
   font-family: var(--font-pixel);
-  font-size: 0.5rem;
+  font-size: 0.54rem;
   color: var(--gold-soft);
   min-width: 2.1rem;
   text-align: right;
@@ -1100,34 +1050,82 @@ ul { list-style: none; }
 }
 .journey__key-label { font-size: 0.8rem; font-weight: 600; color: var(--text); line-height: 1.2; }
 
-.journey__readout { border-top: 1px solid var(--border); padding-top: 1rem; }
-.journey__headline {
-  font-family: var(--font-display);
-  font-size: 1.05rem;
-  line-height: 1.4;
-  color: var(--ink);
+.journey__summary {
+  position: relative;
+  z-index: 2;
+  margin: 0.7rem 0.7rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  background: #fffdf8;
+  border: 3px solid var(--ink);
+  box-shadow: 6px 6px 0 rgba(11, 31, 26, 0.15);
+  padding: 0.65rem 0.75rem;
 }
-.journey__coach { margin-top: 0.45rem; font-size: 0.88rem; color: var(--text-muted); white-space: pre-line; }
-.journey__cta {
-  margin-top: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  align-self: flex-start;
+.journey__summary .journey__headline {
   font-family: var(--font-pixel);
-  font-size: 0.6rem;
-  line-height: 1.6;
+  font-size: 0.5rem;
+  line-height: 1.55;
   text-transform: uppercase;
   color: var(--ink);
-  background: var(--gold);
+}
+.journey__summary .journey__coach {
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+  white-space: pre-line;
+}
+.journey__nav {
+  margin-top: auto;
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+.journey__nav-btn,
+.journey__cta {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-pixel);
+  font-size: 0.52rem;
+  line-height: 1.2;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--ink);
   border: 2px solid var(--ink);
-  box-shadow: 4px 4px 0 rgba(11, 31, 26, 0.4);
-  padding: 0.7rem 0.95rem;
+  cursor: pointer;
   transition: transform 0.15s steps(2), box-shadow 0.15s, background-color 0.2s;
+}
+.journey__nav-btn {
+  flex: 1 1 0;
+  background: #fffdf8;
+  box-shadow: 3px 3px 0 rgba(11, 31, 26, 0.25);
+  padding: 0.45rem 0.5rem;
+}
+.journey__nav-btn:hover { background: var(--cream); transform: translate(-1px, -1px); box-shadow: 4px 4px 0 rgba(11, 31, 26, 0.25); }
+.journey__nav-btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 rgba(11, 31, 26, 0.25); }
+.journey__nav-btn:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+.journey__nav-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+.journey__nav-btn[hidden] { display: none; }
+.journey__cta {
+  flex: 1 1 0;
+  background: var(--gold);
+  box-shadow: 4px 4px 0 rgba(11, 31, 26, 0.4);
+  padding: 0.45rem 0.6rem;
 }
 .journey__cta:hover { background: var(--gold-soft); transform: translate(-1px, -1px); box-shadow: 5px 5px 0 rgba(11, 31, 26, 0.4); }
 .journey__cta:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 rgba(11, 31, 26, 0.4); }
 .journey__cta:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+.journey__cta[hidden] { display: none; }
+/* Legacy: Prev narrower, Plan gets more room */
+.journey__nav.is-legacy .journey__nav-btn { flex: 0 0 32%; }
+.journey__nav.is-legacy .journey__cta { flex: 1 1 0; }
 .journey__fine {
   margin-top: 1.1rem;
   text-align: center;
@@ -1636,98 +1634,31 @@ ul { list-style: none; }
   .story__media { order: -1; padding: 1rem 0; }
   .services__grid { grid-template-columns: 1fr 1fr; }
   .journey__board { grid-template-columns: 1fr; }
-  .journey__stage { min-height: 380px; }
-  .stats__grid { grid-template-columns: 1fr 1fr; gap: 2rem; }
-  .credentials__groups { grid-template-columns: 1fr; }
-  .testimonials__grid { grid-template-columns: 1fr; }
-  .ebook__inner { grid-template-columns: 1fr; text-align: center; }
-  .ebook__cover { display: grid; place-items: center; }
-  .ebook__book-wrap { margin-inline: auto; }
-  .ebook__visual { margin-inline: auto; }
-  .ebook__sub, .ebook__note { margin-inline: auto; }
-}
-
-@media (max-width: 620px) {
-  .services__grid { grid-template-columns: 1fr; }
-  .videos__grid { grid-template-columns: 1fr; }
-
-  /* Compact one-screen game layout: stage + controls + summary
-     should fit a phone viewport without scrolling between them. */
-  .journey { margin-top: 1.6rem; }
   .journey__levels {
     flex-wrap: nowrap;
     justify-content: flex-start;
     overflow-x: auto;
+    overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
-    margin-bottom: 0.8rem;
-    padding: 2px 2px 6px;
+    gap: 0.45rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.2rem;
   }
   .journey__levels::-webkit-scrollbar { display: none; }
-  .journey__chip { flex-shrink: 0; font-size: 0.5rem; padding: 0.4rem 0.65rem 0.4rem 0.35rem; }
-  .journey__chip-num { width: 20px; height: 20px; font-size: 0.5rem; }
-  .journey__board { gap: 0.5rem; }
-  .journey__stage {
-    min-height: 0;
-    height: 178px;
-    box-shadow: 0 0 0 3px var(--gold), 5px 6px 0 rgba(11, 31, 26, 0.2);
-  }
-  .journey__hud { top: 0.45rem; left: 0.45rem; right: 0.45rem; }
-  .journey__bubble { max-width: min(56%, 20ch); font-size: 0.46rem; padding: 0.3rem 0.45rem; line-height: 1.5; }
-  .journey__vibe { left: 0.6rem; right: 0.6rem; bottom: 0.55rem; }
-  .journey__panel { gap: 0.3rem; padding: 0.55rem 0.6rem; box-shadow: 4px 4px 0 rgba(11, 31, 26, 0.15); }
-  .journey__panel-eyebrow { font-size: 0.46rem; }
-  .journey__panel-title { font-size: 0.6rem; margin-top: -0.3rem; }
-  /* Sliders pair up two per row so four inputs stay compact.
-     Each control stacks label → value → slider, with the value and
-     slider anchored to the bottom of the cell so the pair always
-     lines up perfectly even if a label ever wraps. */
-  .journey__controls { grid-template-columns: 1fr 1fr; gap: 0.45rem 0.8rem; align-items: stretch; }
-  .journey__control { display: flex; flex-direction: column; }
-  .journey__control--toggle { grid-column: 1 / -1; }
-  .journey__control-head {
-    flex: 1;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: flex-end;
-    gap: 0;
-    margin-bottom: 0;
-  }
-  /* grouped (Cashflow): compact two-column rows so all four sliders, both
-     section headers and the readout fit one mobile screen without scrolling */
-  .journey__controls--grouped { grid-template-columns: 1fr; gap: 0.35rem; }
-  .journey__control--split {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 42%;
-    align-items: center;
-    gap: 0.1rem 0.5rem;
-  }
-  .journey__control--split .journey__c-ctrl { gap: 0.1rem; }
-  .journey__group-head { font-size: 0.48rem; padding-bottom: 0.25rem; line-height: 1.4; }
-  .journey__group-head:not(:first-child) { margin-top: 0.1rem; }
-  .journey__control-sub { font-size: 0.6rem; line-height: 1.15; margin-top: 0.05rem; }
-  .journey__control-label { font-size: 0.68rem; line-height: 1.25; }
-  .journey__control output, .journey__c-ctrl output { font-size: 0.7rem; }
-  .journey__range { height: 20px; }
-  .journey__stash-head { margin-bottom: 0.15rem; }
-  .journey__stash-row { gap: 0.4rem; }
-  .journey__micro-label { font-size: 0.62rem; }
-  .journey__micro-sub { font-size: 0.5rem; }
-  .journey__micro output { font-size: 0.62rem; }
-  .journey__micro .journey__range { height: 18px; }
-  .journey__toggle-track { width: 36px; height: 20px; }
-  .journey__toggle-track::after { width: 12px; height: 12px; }
-  .journey__toggle input:checked + .journey__toggle-track::after { transform: translateX(16px); }
-  /* Willow Gate keys: full-width toggles kept tight so the canvas, switches
-     and commentary all fit one mobile screen without vertical scrolling */
-  .journey__keys { padding: 0.3rem 0.4rem; gap: 0.2rem; }
-  .journey__keys-head { font-size: 0.48rem; margin-bottom: 0.1rem; line-height: 1.4; }
-  .journey__key { gap: 0.55rem; min-height: 30px; padding: 0.1rem; }
-  .journey__key-label { font-size: 0.68rem; line-height: 1.2; }
-  .journey__readout { padding-top: 0.35rem; }
-  .journey__headline { font-size: 0.86rem; line-height: 1.3; }
-  .journey__coach { font-size: 0.74rem; line-height: 1.4; margin-top: 0.2rem; }
-  .journey__cta { margin-top: 0.25rem; padding: 0.45rem 0.7rem; font-size: 0.46rem; }
+  .journey__chip { flex: 0 0 auto; white-space: nowrap; }
+  .journey__stage { min-height: 320px; }
+  .journey__stage canvas { min-height: 130px; }
+  .journey__summary { margin: 0.5rem 0.5rem 0; padding: 0.45rem 0.5rem; gap: 0.2rem; }
+  .journey__summary .journey__headline { font-size: 0.38rem; line-height: 1.5; }
+  .journey__summary .journey__coach { font-size: 0.58rem; line-height: 1.3; }
+  .journey__vibe { margin: 0 0.6rem 0.5rem; }
+  .journey__vibe-label,
+  .journey__vibe-pct { font-size: 0.46rem; }
+  .journey__nav { gap: 0.35rem; }
+  .journey__nav-btn,
+  .journey__cta { min-height: 38px; font-size: 0.42rem; padding: 0.35rem 0.3rem; }
+  .journey__nav.is-legacy .journey__nav-btn { flex: 0 0 28%; }
   .journey__fine { font-size: 0.68rem; margin-top: 0.6rem; }
   .hero { padding-top: 6rem; }
   .hero__scroll { display: none; }

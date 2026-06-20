@@ -124,6 +124,24 @@
     ctx.globalAlpha = 1;
   }
 
+  /* Minimal scene: only Capybara + the HTML Power bar overlay.
+     Capybara is centred vertically in the canvas with equal top/bottom
+     gaps so it stays equidistant from the summary box and power bar. */
+  function drawOnlyCapybara(g) {
+    var ctx = g.ctx, w = g.w, h = g.h;
+    ctx.fillStyle = "#0d231c";
+    ctx.fillRect(0, 0, w, h);
+
+    var gap = 3; // internal pixels; equal top and bottom clearance
+    // Capybara fills the available canvas height minus the fixed gaps,
+    // only constrained horizontally so it never overflows the canvas width.
+    var maxCapyByWidth = w * 0.9 * (13 / 17);
+    var capySize = Math.min(h - 2 * gap, maxCapyByWidth);
+    var capyBottom = gap + capySize;
+
+    mascot.draw(ctx, w / 2, capyBottom, capySize, { gaze: 0 });
+  }
+
   /* World 1-4 · short pyramid of pixel coins. `frozen` paints them frosted
      blue (locked in probate); otherwise bright gold (cleared for the family).
      Returns its bounds so the caller can frame it in ice. */
@@ -263,60 +281,7 @@
       };
     },
     scene: {
-      draw: function (g) {
-        var ctx = g.ctx, w = g.w, h = g.h;
-        var groundY = h - 14;
-        stars(g, 14, h * 0.4);
-
-        // "?" pay block
-        var bs = 14;
-        var bx = w / 2 - bs / 2, by = 8 + (g.reduced ? 0 : Math.round(Math.abs(Math.sin(g.t * 2)) * -2));
-        qBlock(g, bx, by, bs);
-
-        var rate = clamp(g.m.rate, 0, 0.6);
-        var spendShare = clamp(g.m.spendShare, 0, 1.5);
-        var totalSpend = (g.values.fixed || 0) + (g.values.debt || 0) + (g.values.other || 0);
-        var spendCx = w * 0.32, saveCx = w * 0.68;
-
-        // spending pipe (money down the drain); labels hug the left
-        // edge so the coin arc never crosses the text
-        var pw = 18, pipeTop = groundY - 26;
-        pipe(g, spendCx, pipeTop, pw, groundY, "#2e7d4f", "#1b4a2f", "#5cb87a");
-        ptext(g, "SPEND", 3, pipeTop - 12, TEAL, "left");
-        ptext(g, rmShort(totalSpend), 3, pipeTop - 2, TEAL, "left");
-
-        // savings vault filling with coin rows; labels hug the right edge
-        var vw = 34, vh = 28;
-        var vx = Math.round(saveCx - vw / 2), vTop = groundY - vh;
-        ctx.fillStyle = "#0a1a14";
-        ctx.fillRect(vx, vTop, vw, vh);
-        var fillRows = Math.floor(clamp(rate / 0.4, 0, 1) * 4);
-        for (var r = 0; r < fillRows; r++) coinRow(g, vx + 4, groundY - 7 - r * 5, 6);
-        ctx.fillStyle = GOLD_DARK;
-        ctx.fillRect(vx, vTop, 2, vh); ctx.fillRect(vx + vw - 2, vTop, 2, vh);
-        ctx.fillRect(vx, groundY - 2, vw, 2);
-        ctx.fillStyle = GOLD;
-        ctx.fillRect(vx - 1, vTop, 4, 2); ctx.fillRect(vx + vw - 3, vTop, 4, 2);
-        ptext(g, "SAVE", w - 3, vTop - 12, GOLD, "right");
-        ptext(g, rmShort(g.m.savings), w - 3, vTop - 2, GOLD, "right");
-
-        // coins spurting from the block (saved coins drop into the
-        // left half of the vault, clear of the right-edge labels)
-        if (!g.reduced && g.dt) {
-          if (Math.random() < Math.min(0.8, spendShare * 0.45)) spawnCoin(g, w / 2, by + bs, spendCx, pipeTop);
-          if (rate > 0.01 && Math.random() < Math.min(0.8, rate * 2)) spawnCoin(g, w / 2, by + bs, saveCx - 8, vTop);
-          if (spendShare > 1 && Math.random() < 0.3) {
-            g.particles.spawn({
-              x: spendCx + (Math.random() - 0.5) * pw, y: pipeTop + 4,
-              vx: (Math.random() - 0.5) * 14, vy: -20, g: 90,
-              size: 2, life: 0.9, color: RED, alpha: 0.9
-            });
-          }
-        }
-
-        brickGround(g, groundY);
-        mascot.draw(ctx, w / 2, groundY, Math.min(h * 0.26, 40), { gaze: rate >= 0.05 ? 0.5 : -0.5 });
-      }
+      draw: function (g) { drawOnlyCapybara(g); }
     }
   });
 
@@ -580,12 +545,7 @@
       };
     },
     scene: {
-      draw: function (g) {
-        var groundY = g.h - 14;
-        stars(g, 12, g.h * 0.35);
-        // both defences, always — the form below decides nothing here
-        drawCapyDefenses(g, groundY);
-      }
+      draw: function (g) { drawOnlyCapybara(g); }
     }
   });
 
@@ -663,104 +623,7 @@
       };
     },
     scene: {
-      draw: function (g) {
-        var ctx = g.ctx, w = g.w, h = g.h;
-        var groundY = h - 12;
-        var SCALE = 1.3;
-        var ratio = clamp(g.m.ratio, 0, SCALE);
-        stars(g, 14, h * 0.4);
-
-        // staircase: a "money mound" launchpad (step 0) sized by current stash,
-        // then climbing steps rising to the projected-pot height
-        var nSteps = 8;
-        var stairX0 = Math.round(w * 0.1);
-        var poleX = Math.round(w * 0.86);
-        var stairSpan = poleX - stairX0;
-        var maxClimb = groundY - 22;
-        var goalClimb = maxClimb / SCALE;               // height of the GOAL line
-        var climb = maxClimb * (ratio / SCALE);         // projected-pot height
-        var startR = clamp(g.m.startRatio == null ? 0 : g.m.startRatio, 0, 1);
-        var launchH = Math.min(climb, goalClimb * startR);  // stash's share of the goal
-        var ea = Math.exp(2) - 1;
-        var tops = [];
-        for (var i = 0; i < nSteps; i++) {
-          var sh;
-          if (i === 0) {
-            sh = launchH;                               // the launchpad foundation
-          } else {
-            var f = (Math.exp(2 * i / (nSteps - 1)) - 1) / ea;   // 0→1 across climbing steps
-            sh = launchH + (climb - launchH) * f;
-          }
-          sh = Math.max(2, Math.round(sh));
-          tops.push(groundY - sh);
-          var x = stairX0 + Math.round(i * stairSpan / nSteps);
-          var xw = stairX0 + Math.round((i + 1) * stairSpan / nSteps) - x;
-          if (i === 0 && launchH > 6) {
-            // thick golden money-mound foundation, with coin texture
-            ctx.fillStyle = "#c9a14a";
-            ctx.fillRect(x, groundY - sh, xw, sh);
-            for (var cyy = groundY - sh + 3; cyy < groundY - 2; cyy += 5) {
-              for (var cxx = x + 2; cxx < x + xw - 2; cxx += 5) {
-                ctx.fillStyle = GOLD_LIGHT;
-                ctx.fillRect(cxx, cyy, 2, 2);
-              }
-            }
-            ctx.fillStyle = GOLD_DARK;
-            ctx.fillRect(x + xw - 1, groundY - sh, 1, sh);
-            ctx.fillStyle = GOLD;
-            ctx.fillRect(x, groundY - sh, xw, 1);
-          } else {
-            ctx.fillStyle = BRICK;
-            ctx.fillRect(x, groundY - sh, xw, sh);
-            ctx.fillStyle = BRICK_DARK;
-            for (var yy = groundY - sh + 4; yy < groundY; yy += 5) ctx.fillRect(x, yy, xw, 1);
-            ctx.fillRect(x + xw - 1, groundY - sh, 1, sh);
-            ctx.fillStyle = GOLD;
-            ctx.fillRect(x, groundY - sh, xw, 1);
-          }
-        }
-
-        // goal line
-        var goalY = Math.round(groundY - maxClimb / SCALE);
-        ctx.fillStyle = "rgba(231,192,105,0.5)";
-        for (var dx2 = stairX0; dx2 < w * 0.9; dx2 += 6) ctx.fillRect(dx2, goalY, 3, 1);
-        ptext(g, "GOAL", stairX0 + 2, goalY - 4, "rgba(231,192,105,0.8)", "left");
-
-        // flagpole — the flag rises with the funding ratio
-        var poleTop = goalY - 6;
-        ctx.fillStyle = "#8aa89c";
-        ctx.fillRect(poleX, poleTop, 2, groundY - poleTop);
-        ctx.fillStyle = GOLD_LIGHT;
-        ctx.fillRect(poleX - 1, poleTop - 3, 4, 3);
-        var flagY = Math.round(lerp(groundY - 10, poleTop + 2, clamp(ratio, 0, 1)));
-        ctx.fillStyle = ratio >= 1 ? GOLD : "#c9a14a";
-        ctx.fillRect(poleX - 9, flagY, 9, 4);
-        ctx.fillRect(poleX - 6, flagY + 4, 6, 2);
-
-        // fireworks when the goal is beaten
-        if (ratio >= 1 && !g.reduced && Math.random() < 0.05) {
-          var fx2 = poleX - 10 + Math.random() * 20, fy2 = poleTop - 4 - Math.random() * 10;
-          for (var s2 = 0; s2 < 8; s2++) {
-            var ang = (s2 / 8) * Math.PI * 2;
-            g.particles.spawn({
-              x: fx2, y: fy2,
-              vx: Math.cos(ang) * 20, vy: Math.sin(ang) * 20,
-              size: 1, life: 0.7, color: s2 % 2 ? GOLD_LIGHT : TEAL, alpha: 1
-            });
-          }
-        }
-
-        brickGround(g, groundY);
-
-        // Capy climbs the staircase on a loop — standard horizontal motion.
-        // The launchpad foundation (step 0) is what lifts the start tier; the
-        // Capy's left↔right position no longer tracks the stash.
-        var p = g.reduced ? 0.6 : (g.t * 0.07) % 1;
-        var stepIdx = Math.min(nSteps - 1, Math.floor(p * nSteps));
-        var capX = stairX0 + p * stairSpan;
-        var capY = tops[stepIdx];
-        mascot.draw(ctx, capX, capY, Math.min(h * 0.2, 32), { walk: g.t * 6, gaze: 0.8 });
-      }
+      draw: function (g) { drawOnlyCapybara(g); }
     }
   });
 
@@ -856,260 +719,7 @@
       };
     },
     scene: {
-      draw: function (g) {
-        var ctx = g.ctx, w = g.w, h = g.h;
-        var groundY = h - 14;                  // floor line matches World 1-1
-        var v = g.values;
-        var epf = !!v.epf;                     // nominees → a stream of love
-        var hibah = !!v.hibah;                 // Hibah → an instant wealth conduit
-        var will = !!v.will;                   // Will → the coins clear the gate
-        var loved = Math.max(1, Math.round(v.loved || 1));
-
-        stars(g, 22, h * 0.5);
-
-        // pixel moon — low enough to clear the HUD bubble/stat strip on top
-        var moonX = Math.round(w * 0.40), moonY = Math.round(h * 0.26);
-        ctx.fillStyle = "rgba(246,231,189,0.8)";
-        ctx.fillRect(moonX, moonY, 7, 7);
-        ctx.fillRect(moonX - 2, moonY + 2, 11, 3);
-        ctx.fillStyle = "rgba(201,161,74,0.4)";
-        ctx.fillRect(moonX + 2, moonY + 3, 2, 2);
-
-        // --- anchors: Capy (left) · Willow archway (centre) · home (right) ---
-        var capH = Math.min(h * 0.26, 30);
-        var capX = Math.round(w * 0.12);
-        var capChestY = Math.round(groundY - capH * 0.45);
-
-        var gateX = Math.round(w * 0.45);
-        var gateH = Math.min(h * 0.52, 52);                 // taller, prominent arch
-        var gateTop = Math.round(groundY - gateH);
-        var openHalf = Math.max(7, Math.round(w * 0.05));   // half the doorway
-        var pillarW = 4;
-        var springY = Math.round(gateTop + gateH * 0.34);   // arch springline
-
-        // home scaled down ~12% to free room for the coin piles + capybaras
-        var houseW = Math.round(Math.min(w * 0.19, 28));
-        var houseH = Math.round(Math.min(h * 0.35, 30));
-        var houseCX = Math.round(w * 0.85);
-        var houseBaseY = groundY;                           // sits low on the ground
-
-        // waiting loved-ones cluster, just in front of (left of) the home
-        var clusterRight = houseCX - Math.round(houseW / 2) - 3;
-        var clusterCX = clusterRight - 8;
-
-        // flight path: Capy's chest → the waiting capybaras, through the gate
-        var sx = capX + 5, sy = capChestY;
-        var ex = clusterCX, ey = groundY - 5;
-        function px(t) { return sx + (ex - sx) * t; }
-        function py(t) { return sy + (ey - sy) * t; }
-
-        // --- thin grass ground (structures sit on top) ---------------------
-        ctx.fillStyle = BRICK;
-        ctx.fillRect(0, groundY, w, h - groundY);
-        ctx.fillStyle = "rgba(159,216,196,0.5)";
-        ctx.fillRect(0, groundY, w, 1);
-
-        // --- the cleared path (gold once a Will is written, else faint) -----
-        if (will) {
-          for (var bt = 0.04; bt < 0.99; bt += 0.045) {
-            var bx = Math.round(px(bt)), by = Math.round(py(bt));
-            ctx.fillStyle = GOLD;
-            ctx.fillRect(bx, by + 5, 3, 2);
-            ctx.fillStyle = GOLD_DARK;
-            ctx.fillRect(bx, by + 7, 1, 2);
-          }
-        } else {
-          for (var dt2 = 0.06; dt2 < 0.96; dt2 += 0.09) {
-            ctx.fillStyle = "rgba(242,236,224,0.20)";
-            ctx.fillRect(Math.round(px(dt2)), Math.round(py(dt2)) + 5, 1, 1);
-          }
-        }
-
-        // --- HIBAH: a glowing teal conduit + fast motes (instant transfer) --
-        if (hibah) {
-          for (var ct = 0.02; ct < 1; ct += 0.025) {
-            var cx2 = Math.round(px(ct)), cy2 = Math.round(py(ct));
-            var pulse = (Math.sin(g.t * 6 - ct * 12) + 1) / 2;
-            ctx.fillStyle = "rgba(159,216,196," + (0.22 + pulse * 0.5).toFixed(2) + ")";
-            ctx.fillRect(cx2, cy2 + 1, 2, 2);
-          }
-          var motes = g.reduced ? 3 : 5;
-          for (var m2 = 0; m2 < motes; m2++) {
-            var mt = g.reduced ? (m2 / motes) : ((g.t * 0.9 + m2 / motes) % 1);
-            var mx = Math.round(px(mt)), my = Math.round(py(mt));
-            ctx.fillStyle = TEAL;
-            ctx.fillRect(mx, my, 3, 3);
-            ctx.fillStyle = GOLD_LIGHT;
-            ctx.fillRect(mx + 1, my + 1, 1, 1);
-          }
-        }
-
-        // --- the WILLOW GATE: a vintage stone archway -----------------------
-        var lit = will;
-        var stone = lit ? GOLD : "rgba(231,192,105,0.34)";
-        var stoneHi = lit ? GOLD_LIGHT : "rgba(246,231,189,0.32)";
-        var stoneLo = lit ? GOLD_DARK : "rgba(122,90,30,0.42)";
-        var lpx = gateX - openHalf - pillarW;   // left pillar
-        var rpx = gateX + openHalf;             // right pillar
-        var pillarBot = groundY - 2;
-        ctx.fillStyle = stone;
-        ctx.fillRect(lpx, springY, pillarW, pillarBot - springY);
-        ctx.fillRect(rpx, springY, pillarW, pillarBot - springY);
-        ctx.fillStyle = stoneHi;                // lit left edge
-        ctx.fillRect(lpx, springY, 1, pillarBot - springY);
-        ctx.fillRect(rpx, springY, 1, pillarBot - springY);
-        ctx.fillStyle = stoneLo;                // shaded right edge + seams
-        ctx.fillRect(lpx + pillarW - 1, springY, 1, pillarBot - springY);
-        ctx.fillRect(rpx + pillarW - 1, springY, 1, pillarBot - springY);
-        for (var sy2 = springY + 5; sy2 < pillarBot; sy2 += 6) {
-          ctx.fillRect(lpx, sy2, pillarW, 1);
-          ctx.fillRect(rpx, sy2, pillarW, 1);
-        }
-        ctx.fillStyle = stone;                  // chunky base plinths → reads as a gate
-        ctx.fillRect(lpx - 1, pillarBot, pillarW + 2, 2);
-        ctx.fillRect(rpx - 1, pillarBot, pillarW + 2, 2);
-        // the arch ring — stepped voussoir blocks curving over the doorway
-        var rC = openHalf + pillarW / 2;
-        var archVR = springY - gateTop;
-        var steps = 8;
-        for (var a = 0; a <= steps; a++) {
-          var ang = Math.PI * (a / steps);
-          var ox = gateX - Math.cos(ang) * rC;
-          var oy = springY - Math.sin(ang) * archVR;
-          ctx.fillStyle = stone;
-          ctx.fillRect(Math.round(ox - pillarW / 2), Math.round(oy), pillarW, 5);
-          ctx.fillStyle = stoneHi;
-          ctx.fillRect(Math.round(ox - pillarW / 2), Math.round(oy), pillarW, 1);
-        }
-        // drooping willow strands from the archway underside
-        ctx.fillStyle = lit ? "rgba(159,216,196,0.85)" : "rgba(159,216,196,0.32)";
-        for (var s = 0; s < 5; s++) {
-          var wx = gateX - openHalf + 1 + s * Math.round((openHalf * 2 - 2) / 4);
-          var sway = g.reduced ? 0 : Math.round(Math.sin(g.t * 1.4 + s) * 1);
-          ctx.fillRect(wx + sway, springY + 1, 1, 5 + (s % 2) * 4);
-        }
-
-        // --- the family HOME (right, larger, sitting low) -------------------
-        var hx0 = houseCX - Math.round(houseW / 2);
-        var bodyTop = houseBaseY - Math.round(houseH * 0.6);
-        ctx.fillStyle = "#d8b86a";
-        ctx.fillRect(hx0, bodyTop, houseW, houseBaseY - bodyTop);
-        ctx.fillStyle = GOLD_DARK;
-        ctx.fillRect(hx0, bodyTop, houseW, 1);
-        ctx.fillRect(hx0, houseBaseY - 1, houseW, 1);
-        var roofH = Math.round(houseH * 0.42);
-        var roofTopY = bodyTop - roofH;
-        var halfW = Math.round(houseW / 2) + 1;
-        for (var ry = 0; ry <= roofH; ry++) {
-          var ww = Math.round(halfW * 2 * (ry / roofH)) + 1;
-          ctx.fillStyle = "#b5894a";
-          ctx.fillRect(houseCX - Math.round(ww / 2), roofTopY + ry, ww, 1);
-        }
-        ctx.fillStyle = "#7a5a1e";              // chimney
-        ctx.fillRect(hx0 + houseW - 5, roofTopY + 2, 3, roofH - 2);
-        var winGlow = will ? "rgba(246,231,189,0.95)" : "rgba(246,231,189,0.55)";
-        var dwW = Math.max(3, Math.round(houseW * 0.26));
-        var dwH = Math.round(houseH * 0.4);
-        ctx.fillStyle = "#5a3d1e";              // doorway
-        ctx.fillRect(houseCX - Math.round(dwW / 2), houseBaseY - dwH, dwW, dwH);
-        ctx.fillStyle = winGlow;               // lit windows
-        ctx.fillRect(hx0 + 2, bodyTop + 3, 3, 3);
-        ctx.fillRect(hx0 + houseW - 5, bodyTop + 3, 3, 3);
-
-        // --- waiting loved ones: small capybaras in front of the home -------
-        for (var i = 0; i < loved; i++) {
-          var rowIdx = i >= 4 ? 1 : 0;          // wrap to a back row past 4
-          var colIdx = rowIdx ? i - 4 : i;
-          var mcx = clusterRight - colIdx * 8 - rowIdx * 4;
-          var mby = groundY - rowIdx * 3;
-          miniCapy(g, mcx, mby, true);
-        }
-
-        // --- the FROZEN COINS mechanic: the Will SLIDES the stash through ---
-        var fcXL = Math.round(w * 0.30);          // locked, on Capy's side
-        var fcXR = Math.round(w * 0.63);          // cleared, on the family's side
-        // detect the Will toggle flipping → start the slide (or re-freeze)
-        if (will && !legacyCoins.will) legacyCoins.t0 = g.t;
-        if (!will) legacyCoins.t0 = -1;
-        legacyCoins.will = will;
-        var MOVE = 0.9;                            // slide duration (seconds)
-        var moveP = !will ? 0
-          : (g.reduced || legacyCoins.t0 < 0) ? 1
-          : clamp((g.t - legacyCoins.t0) / MOVE, 0, 1);
-
-        if (!will) {
-          // locked on the Capy's (left) side, encased in frosted ice
-          var st = coinStack(g, fcXL, groundY, true);
-          var shim = g.reduced ? 0.5 : 0.30 + 0.3 * ((Math.sin(g.t * 2) + 1) / 2);
-          ctx.fillStyle = "rgba(206,234,255," + shim.toFixed(2) + ")";
-          ctx.fillRect(st.x0 - 2, st.top - 2, st.w + 4, 1);
-          ctx.fillRect(st.x0 - 2, groundY - 1, st.w + 4, 1);
-          ctx.fillRect(st.x0 - 2, st.top - 2, 1, groundY - st.top + 1);
-          ctx.fillRect(st.x0 + st.w + 1, st.top - 2, 1, groundY - st.top + 1);
-          if (!g.reduced) {
-            for (var fp = 0; fp < 5; fp++) {
-              var fy = st.top + ((g.t * 6 + fp * 5) % (groundY - st.top));
-              ctx.fillStyle = "rgba(224,242,255,0.5)";
-              ctx.fillRect(st.x0 + (fp * 4) % st.w, Math.round(fy), 1, 1);
-            }
-          }
-        } else if (moveP < 1) {
-          // IN TRANSIT: the icy stash flies horizontally through the arch centre
-          var mx2 = Math.round(fcXL + (fcXR - fcXL) * moveP);
-          var lift = Math.round(Math.sin(moveP * Math.PI) * gateH * 0.4);
-          coinStack(g, mx2, groundY - lift, true);
-          if (!g.reduced && Math.random() < 0.6) {   // frost trail behind them
-            g.particles.spawn({
-              x: mx2 - 8, y: groundY - lift - 6, vx: -5, vy: -2,
-              size: 1, life: 0.5, color: "rgba(188,220,240,0.9)", alpha: 0.85
-            });
-          }
-        } else {
-          // ARRIVED: coins land on the family's side and shine, freshly unlocked
-          var st2 = coinStack(g, fcXR, groundY, false);
-          var twk = (Math.sin(g.t * 5) + 1) / 2;
-          ctx.fillStyle = "rgba(246,231,189," + (0.4 + twk * 0.6).toFixed(2) + ")";
-          ctx.fillRect(fcXR - 2, st2.top - 3, 5, 1);   // sparkle cross on the cap
-          ctx.fillRect(fcXR, st2.top - 5, 1, 5);
-          if (!g.reduced && Math.random() < 0.5) {
-            g.particles.spawn({
-              x: fcXR + (Math.random() - 0.5) * 14, y: groundY - 4 - Math.random() * 12,
-              vx: 0, vy: -6, size: 1, life: 0.7, color: GOLD_LIGHT, alpha: 1
-            });
-          }
-        }
-
-        // --- corner status labels (small pixel scale), clear of the centre
-        // and tucked just under the HUD bubble / stat chip ------------------
-        if (!will) {
-          // top-left corner, mapping to the frozen stash on the left below
-          ptext(g, "Frozen Coins", 3, Math.round(h * 0.34), "rgba(206,234,255,0.95)", "left", 6);
-        } else {
-          // top-right corner, sitting above the house + the shining coin pile.
-          // kept short ("passed") so it clears the wider 2-line speech bubble
-          var ry1 = Math.round(h * 0.28);
-          ptext(g, "Coins passed", w - 3, ry1, "rgba(246,231,189,0.95)", "right", 6);
-          ptext(g, "to loved ones", w - 3, ry1 + 8, "rgba(246,231,189,0.95)", "right", 6);
-        }
-
-        // --- EPF: a continuous stream of love hearts to the loved ones ------
-        if (epf) {
-          var nH = Math.min(6, 3 + loved);
-          for (var k = 0; k < nH; k++) {
-            var t = g.reduced ? (0.2 + 0.7 * (k / nH)) : ((g.t * 0.45 + k / nH) % 1);
-            heart(ctx, Math.round(px(t) - 2), Math.round(py(t) - 1), RED);
-            if (t > 0.93 && !g.reduced && Math.random() < 0.25) {
-              g.particles.spawn({
-                x: ex, y: ey, vx: (Math.random() - 0.5) * 5, vy: -3,
-                size: 1, life: 0.6, color: GOLD_LIGHT, alpha: 0.9
-              });
-            }
-          }
-        }
-
-        // --- Capy, drawn last so it always reads on top --------------------
-        mascot.draw(ctx, capX, groundY, capH, { gaze: 0.8 });
-      }
+      draw: function (g) { drawOnlyCapybara(g); }
     }
   });
 
@@ -1123,8 +733,6 @@
   var tagEl = document.getElementById("journeyLevelTag");
   var headlineEl = document.getElementById("journeyHeadline");
   var coachEl = document.getElementById("journeyCoach");
-  var bubbleEl = document.getElementById("journeyBubble");
-  var statEl = document.getElementById("journeyStat");
   var vibeEl = document.getElementById("journeyVibe");
   var vibePctEl = document.getElementById("journeyVibePct");
   var vibeBoxEl = document.querySelector(".journey__vibe");
@@ -1384,7 +992,6 @@
     }
   }
 
-  var lastSay = "";
   engine.on("level", function (e) {
     var i = engine.order.indexOf(e.id);
     tagEl.textContent = "World 1-" + (i + 1) + " · " + e.def.name;
@@ -1398,7 +1005,7 @@
     buildControls(e.def);
     for (var id in chips) chips[id].classList.toggle("is-active", id === e.id);
     if (vibeBoxEl) vibeBoxEl.classList.remove("is-green", "is-red");
-    lastSay = "";
+    updateNav();
   });
 
   engine.on("state", function (s) {
@@ -1410,15 +1017,6 @@
     }
     headlineEl.textContent = s.headline || "";
     coachEl.textContent = s.coach || "";
-    statEl.textContent = s.stat || "";
-    statEl.style.display = s.stat ? "" : "none";
-    if (s.say && s.say !== lastSay) {
-      lastSay = s.say;
-      bubbleEl.textContent = s.say;
-      bubbleEl.classList.remove("is-pop");
-      void bubbleEl.offsetWidth; // restart the pop animation
-      bubbleEl.classList.add("is-pop");
-    }
     progress[engine.levelId] = s.score || 0;
 
     if (s.power) {
@@ -1608,6 +1206,8 @@
 
   /* ---------- modal plumbing ---------- */
   var planBtn = document.getElementById("journeyPlanBtn");
+  var prevBtn = document.getElementById("journeyPrevBtn");
+  var nextBtn = document.getElementById("journeyNextBtn");
   var planModal = document.getElementById("planModal");
   var planBackdrop = document.getElementById("planModalBackdrop");
   var planClose = document.getElementById("planModalClose");
@@ -1620,6 +1220,25 @@
   var SOFINA_EMAIL = "sofinajohari.uwealth@gmail.com";
   var currentReport = null;
   var lastFocus = null;
+
+  function updateNav() {
+    if (!engine.levelId) return;
+    var idx = engine.order.indexOf(engine.levelId);
+    var last = engine.order.length - 1;
+    if (prevBtn) prevBtn.disabled = idx <= 0;
+    if (nextBtn) nextBtn.hidden = idx >= last;
+    if (planBtn) planBtn.hidden = idx !== last;
+    var navEl = document.querySelector(".journey__nav");
+    if (navEl) navEl.classList.toggle("is-legacy", idx === last);
+  }
+  function goPrev() {
+    var idx = engine.order.indexOf(engine.levelId);
+    if (idx > 0) engine.start(engine.order[idx - 1]);
+  }
+  function goNext() {
+    var idx = engine.order.indexOf(engine.levelId);
+    if (idx >= 0 && idx < engine.order.length - 1) engine.start(engine.order[idx + 1]);
+  }
 
   function setStatus(msg, kind) {
     if (!planStatusEl) return;
@@ -1793,6 +1412,8 @@
   }
 
   if (planBtn) planBtn.addEventListener("click", openPlan);
+  if (prevBtn) prevBtn.addEventListener("click", goPrev);
+  if (nextBtn) nextBtn.addEventListener("click", goNext);
   if (planClose) planClose.addEventListener("click", closePlan);
   if (planBackdrop) planBackdrop.addEventListener("click", closePlan);
   if (planPrintBtn) planPrintBtn.addEventListener("click", function () {

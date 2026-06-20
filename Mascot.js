@@ -189,38 +189,6 @@
     ctx.drawImage(spr, dx, dy, dw, dh);
     ctx.restore();
 
-    // ambient effects (drawn in screen space, pixel-aligned)
-    var headX = Math.round(x), headY = dy;
-    if (m.sparkle) {
-      for (var i = 0; i < 2; i++) {
-        var ang = t * 2 + i * Math.PI;
-        var sx2 = Math.round(headX + Math.cos(ang) * dw * 0.7);
-        var sy2 = Math.round(headY + dh * 0.3 + Math.sin(ang * 1.3) * dh * 0.4);
-        ctx.globalAlpha = 0.4 + 0.6 * Math.abs(Math.sin(t * 3 + i * 1.7));
-        ctx.fillStyle = PAL.G;
-        ctx.fillRect(sx2, sy2 - px, px, px * 3);
-        ctx.fillRect(sx2 - px, sy2, px * 3, px);
-        ctx.globalAlpha = 1;
-      }
-    }
-    if (m.sweat) {
-      var drop = (t * 14) % 16;
-      ctx.globalAlpha = Math.max(0, 1 - drop / 16);
-      ctx.fillStyle = "#9fd8c4";
-      ctx.fillRect(Math.round(x + dw * 0.42), Math.round(headY + drop), px, px * 2);
-      ctx.globalAlpha = 1;
-    }
-    if (m.hearts) {
-      var cyc = (t * 0.5) % 1;
-      ctx.globalAlpha = Math.max(0, 0.8 - cyc);
-      ctx.fillStyle = PAL.r;
-      var hx2 = Math.round(x + dw * 0.4), hy2 = Math.round(headY - 4 - cyc * 14);
-      ctx.fillRect(hx2, hy2, px, px);
-      ctx.fillRect(hx2 + px * 2, hy2, px, px);
-      ctx.fillRect(hx2, hy2 + px, px * 3, px);
-      ctx.fillRect(hx2 + px, hy2 + px * 2, px, px);
-      ctx.globalAlpha = 1;
-    }
   };
 
   global.Mascot = Mascot;

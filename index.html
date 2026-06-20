@@ -506,11 +506,11 @@
 
           <div class="journey__board">
             <div class="journey__stage">
-              <canvas id="journeyCanvas" role="img" aria-label="Interactive 8-bit financial scene starring Capy, the pixel capybara"></canvas>
-              <div class="journey__hud">
-                <div class="journey__bubble" id="journeyBubble" aria-live="polite"></div>
-                <span class="journey__stat" id="journeyStat"></span>
+              <div class="journey__summary">
+                <p class="journey__headline" id="journeyHeadline"></p>
+                <p class="journey__coach" id="journeyCoach"></p>
               </div>
+              <canvas id="journeyCanvas" role="img" aria-label="Interactive 8-bit financial scene starring Capy, the pixel capybara"></canvas>
               <div class="journey__vibe">
                 <span class="journey__vibe-label">Power</span>
                 <span class="journey__vibe-track"><span class="journey__vibe-fill" id="journeyVibe"></span></span>
@@ -522,11 +522,11 @@
               <p class="journey__panel-eyebrow" id="journeyLevelTag">World 1-1</p>
               <h3 class="journey__panel-title" id="journeyTitle">The Coin Pipes</h3>
               <div class="journey__controls" id="journeyControls"></div>
-              <div class="journey__readout">
-                <p class="journey__headline" id="journeyHeadline"></p>
-                <p class="journey__coach" id="journeyCoach"></p>
+              <div class="journey__nav">
+                <button type="button" class="journey__nav-btn journey__nav-btn--prev" id="journeyPrevBtn">Prev</button>
+                <button type="button" class="journey__nav-btn journey__nav-btn--next" id="journeyNextBtn">Next</button>
+                <button type="button" class="journey__cta" id="journeyPlanBtn">Turn this into a real plan</button>
               </div>
-              <button type="button" class="journey__cta" id="journeyPlanBtn">Turn this into a real plan</button>
             </div>
           </div>
 
