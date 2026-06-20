@@ -502,7 +502,11 @@
         <p class="tools__intro reveal">Move the sliders and watch Capy react to your numbers — no sign-up, no jargon, just your finances made visible.</p>
 
         <div class="journey reveal" id="journey">
-          <div class="journey__levels" role="tablist" aria-label="Financial levels" id="journeyLevels"></div>
+          <div class="journey__nav" id="journeyNav">
+            <button type="button" class="journey__nav-arrow" id="journeyPrev" aria-label="Previous world" disabled>&#8592;</button>
+            <div class="journey__nav-pips" id="journeyNavPips"></div>
+            <button type="button" class="journey__nav-arrow" id="journeyNext" aria-label="Next world">&#8594;</button>
+          </div>
 
           <div class="journey__board">
             <!-- Animation box: three stacked, never-overlapping components —
@@ -514,6 +518,7 @@
                   <p class="journey__msg-title" id="journeyHeadline"></p>
                   <span class="journey__msg-stat" id="journeyStat"></span>
                 </div>
+                <p class="journey__msg-say" id="journeySay"></p>
                 <p class="journey__msg-coach" id="journeyCoach"></p>
               </div>
               <div class="journey__capy">
@@ -531,6 +536,7 @@
               <h3 class="journey__panel-title" id="journeyTitle">The Coin Pipes</h3>
               <div class="journey__controls" id="journeyControls"></div>
               <button type="button" class="journey__cta" id="journeyPlanBtn">Turn this into a real plan</button>
+              <p class="journey__cta-lock" id="journeyPlanLock" hidden></p>
             </div>
           </div>
 
