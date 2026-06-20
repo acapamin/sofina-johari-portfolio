@@ -19,7 +19,6 @@
   --border-on-dark: rgba(242, 236, 224, 0.16);
   --font-display: "Fraunces", Georgia, serif;
   --font-body: "Instrument Sans", -apple-system, Helvetica, sans-serif;
-  --font-pixel: "Press Start 2P", "Courier New", monospace;
   --container: 1200px;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -646,356 +645,307 @@ ul { list-style: none; }
   font-size: 1.02rem;
 }
 
+/* ============================================================
+   THE STRUCTURAL BLUEPRINT — premium "Your Toolkit"
+   Academic-luxury restyle: slate canvas, gold accents, no pixels.
+   ============================================================ */
 .journey { margin-top: clamp(2.5rem, 5vw, 3.5rem); }
 
-/* level select chips */
+/* ---- desktop pagination tabs ---- */
 .journey__levels {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 0.6rem;
-  margin-bottom: 1.4rem;
+  gap: 0.5rem;
+  margin-bottom: 1.6rem;
 }
-.journey__chip {
+.journey__tab {
   display: inline-flex;
   align-items: center;
   gap: 0.55rem;
-  padding: 0.5rem 0.85rem 0.5rem 0.45rem;
-  border-radius: 0;
-  border: 2px solid var(--ink);
-  background: #fffdf8;
-  box-shadow: 3px 3px 0 rgba(11, 31, 26, 0.3);
+  padding: 0.55rem 1rem 0.55rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
   cursor: pointer;
-  touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  font-family: var(--font-pixel);
-  font-size: 0.55rem;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   color: var(--text-muted);
-  transition: transform 0.15s steps(2), background-color 0.2s, color 0.2s, box-shadow 0.15s;
+  transition: color 0.3s var(--ease-out), border-color 0.3s var(--ease-out), background-color 0.3s var(--ease-out);
 }
-.journey__chip:hover { color: var(--ink); transform: translate(-1px, -1px); box-shadow: 4px 4px 0 rgba(11, 31, 26, 0.3); }
-.journey__chip:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 rgba(11, 31, 26, 0.3); }
-.journey__chip:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
-.journey__chip-num {
+.journey__tab:hover { color: var(--ink); border-color: var(--gold); }
+.journey__tab:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+.journey__tab-num {
   display: grid;
   place-items: center;
   width: 26px;
   height: 26px;
-  border-radius: 0;
-  background: rgba(201, 161, 74, 0.18);
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  font-family: var(--font-display);
+  font-size: 0.74rem;
+  letter-spacing: 0;
   color: var(--gold);
-  font-family: var(--font-pixel);
-  font-size: 0.6rem;
-  transition: background-color 0.2s, color 0.2s;
+  transition: background-color 0.3s, color 0.3s, border-color 0.3s;
 }
-.journey__chip.is-active { background: var(--ink); color: var(--gold-soft); }
-.journey__chip.is-active .journey__chip-num { background: var(--gold); color: var(--ink); }
-.journey__chip-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 0;
-  background: var(--border);
-  transition: background-color 0.25s, box-shadow 0.25s;
+.journey__tab.is-active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--cream);
 }
-.journey__chip.is-done .journey__chip-dot { background: var(--gold); box-shadow: 0 0 6px rgba(201, 161, 74, 0.9); }
+.journey__tab.is-active .journey__tab-num { background: var(--gold); border-color: var(--gold); color: var(--ink); }
+.journey__tab.is-done:not(.is-active) .journey__tab-num { border-color: var(--gold); color: var(--gold); }
 
-/* stage + panel */
+/* ---- board: stage + panel ---- */
 .journey__board {
   display: grid;
-  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-  gap: 1rem;
+  grid-template-columns: minmax(0, 6fr) minmax(0, 5fr);
+  gap: 1.25rem;
   align-items: stretch;
 }
-/* The animation box stacks three components vertically and grows to fit
-   them, so they can never overlap: (1) message box, (2) Capy canvas,
-   (3) power bar. The canvas region (.journey__capy) flex-grows and has a
-   min-height, so when the message box gets tall the box gets taller and
-   Capy keeps its space rather than being covered. */
+
+/* ---- (left) the live blueprint stage ---- */
 .journey__stage {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.7rem;
-  padding: 0.7rem;
-  min-height: 440px;
-  border-radius: 0;
-  background: #0d231c;
-  border: 3px solid var(--ink);
-  box-shadow: 0 0 0 3px var(--gold), 10px 12px 0 rgba(11, 31, 26, 0.2);
+  gap: 1rem;
+  padding: clamp(1.1rem, 2.5vw, 1.6rem);
+  min-height: 460px;
+  border-radius: 14px;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(201, 161, 74, 0.10), transparent 60%),
+    linear-gradient(165deg, #102822 0%, var(--ink) 70%);
+  border: 1px solid rgba(242, 236, 224, 0.10);
+  box-shadow: 0 24px 60px -28px rgba(11, 31, 26, 0.6);
+  overflow: hidden;
+  touch-action: pan-y;
 }
 
-/* (1) MESSAGE BOX — the summary that used to sit under the sliders. Its
-   height follows its text; the stage flexes to absorb it. */
-.journey__msg {
-  flex: 0 0 auto;
-  z-index: 2;
-  background: var(--cream);
-  color: var(--ink);
-  border: 2px solid var(--ink);
-  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.45);
-  padding: 0.55rem 0.7rem;
-}
-.journey__msg-head {
+/* readout: power index label + percentage */
+.journey__readout {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 0.6rem;
+  gap: 1rem;
 }
-.journey__msg-title {
-  font-family: var(--font-pixel);
-  font-size: 0.62rem;
-  line-height: 1.6;
-  text-transform: uppercase;
-  color: var(--ink);
-}
-.journey__msg-stat {
-  flex-shrink: 0;
-  font-family: var(--font-pixel);
-  font-size: 0.5rem;
-  line-height: 1;
-  text-transform: uppercase;
-  white-space: nowrap;
-  color: var(--ink);
-  background: var(--gold-soft);
-  border: 2px solid var(--ink);
-  padding: 0.25rem 0.4rem;
-}
-.journey__msg-coach {
-  margin-top: 0.4rem;
-  font-size: 0.82rem;
-  line-height: 1.5;
-  color: #2c4a40;
-  white-space: pre-line;
-}
-.journey__msg.is-pop { animation: bubblePop 0.3s steps(3); }
-@keyframes bubblePop {
-  0% { transform: translateY(6px); opacity: 0; }
-  100% { transform: none; opacity: 1; }
-}
-
-/* (2) CAPY — the only thing drawn on the canvas now. Flex-grows to fill
-   leftover height, with a floor so Capy is always comfortably visible. */
-.journey__capy {
-  position: relative;
-  flex: 1 1 auto;
-  min-height: 220px;
-  overflow: hidden;
-}
-.journey__capy canvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  display: block;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-}
-/* CRT scanlines, over Capy only */
-.journey__capy::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.14) 0 1px, transparent 1px 3px);
-}
-
-/* (3) POWER BAR — a normal flow row at the foot of the box */
-.journey__vibe {
-  flex: 0 0 auto;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-}
-.journey__vibe-label {
-  font-family: var(--font-pixel);
-  font-size: 0.62rem;
-  font-weight: 700;
+.journey__readout-label {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--gold-soft);
-  white-space: nowrap;
-  letter-spacing: 0.08em;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
 }
-.journey__vibe-track {
-  flex: 1;
-  height: 10px;
-  border-radius: 0;
+.journey__readout-pct {
+  font-family: var(--font-display);
+  font-size: 1.55rem;
+  line-height: 1;
+  color: var(--cream);
+  font-variant-numeric: tabular-nums;
+  transition: color 0.4s;
+}
+.journey__track {
+  height: 4px;
+  border-radius: 999px;
   background: rgba(242, 236, 224, 0.12);
-  border: 2px solid rgba(242, 236, 224, 0.35);
   overflow: hidden;
-  position: relative;
 }
-.journey__vibe-fill {
+.journey__track-fill {
   display: block;
   height: 100%;
   width: 0%;
+  border-radius: 999px;
   background: var(--gold);
-  transition: width 0.5s steps(8);
+  transition: width 0.6s var(--ease-out), background-color 0.4s;
 }
-/* segment notches over the power bar */
-.journey__vibe-track::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(90deg, transparent 0 8px, #0d231c 8px 10px);
-  pointer-events: none;
-}
-.journey__vibe-pct {
-  font-family: var(--font-pixel);
-  font-size: 0.5rem;
-  color: var(--gold-soft);
-  min-width: 2.1rem;
-  text-align: right;
-  white-space: nowrap;
-}
-/* POWER tones — driven by the Cashflow surplus %: green glow when the
-   surplus tops 20%, red when the month runs at a deficit */
-.journey__vibe.is-green .journey__vibe-fill {
-  background: #5cb87a;
-  box-shadow: 0 0 6px rgba(92, 184, 122, 0.95), inset 0 0 2px #aef0c4;
-}
-.journey__vibe.is-green .journey__vibe-track { border-color: rgba(92, 184, 122, 0.7); }
-.journey__vibe.is-green .journey__vibe-label,
-.journey__vibe.is-green .journey__vibe-pct { color: #aef0c4; }
-.journey__vibe.is-red .journey__vibe-fill { background: var(--rust, #d96a4a); box-shadow: none; }
-.journey__vibe.is-red .journey__vibe-track { border-color: rgba(217, 106, 74, 0.7); }
-.journey__vibe.is-red .journey__vibe-label,
-.journey__vibe.is-red .journey__vibe-pct { color: #f0a890; }
+.journey__readout.is-green ~ .journey__track .journey__track-fill,
+.journey__readout.is-green .journey__track-fill { background: #6fc28d; }
+.journey__readout.is-green .journey__readout-pct { color: #aef0c4; }
+.journey__readout.is-red ~ .journey__track .journey__track-fill { background: var(--rust, #d96a4a); }
+.journey__readout.is-red .journey__readout-pct { color: #f0b3a1; }
 
-.journey__panel {
+/* the house blueprint itself */
+.journey__house {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+.journey__house svg {
+  width: 100%;
+  height: 100%;
+  max-height: 280px;
+  overflow: visible;
+}
+.journey__ground {
+  stroke: rgba(242, 236, 224, 0.22);
+  stroke-width: 1.5;
+  stroke-dasharray: 2 6;
+  stroke-linecap: round;
+}
+/* a structural layer — strokes/fills tuned per state by JS opacity */
+.journey__layer {
+  opacity: 0.55;
+  transition: opacity 0.55s var(--ease-out);
+}
+.hs-stroke {
+  fill: none;
+  stroke: rgba(242, 236, 224, 0.85);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  transition: stroke 0.5s, stroke-dasharray 0.5s;
+  vector-effect: non-scaling-stroke;
+}
+.hs-fill { fill: rgba(201, 161, 74, 0.16); transition: fill 0.55s; }
+.hs-line { stroke: rgba(242, 236, 224, 0.45); stroke-width: 1.5; }
+.hs-window { fill: rgba(201, 161, 74, 0.30); }
+.hs-door { fill: rgba(201, 161, 74, 0.42); }
+.hs-accent { fill: var(--gold); transition: fill 0.5s; }
+
+/* active layer: glow it gold to show which stage you are editing */
+.journey__layer.is-active { opacity: 1; }
+.journey__layer.is-active .hs-stroke { stroke: var(--gold-soft); }
+.journey__layer.is-active .hs-fill { fill: rgba(201, 161, 74, 0.32); }
+
+/* a section left at 0% reads as a faint dashed ghost — a visible gap */
+.journey__layer.is-ghost { opacity: 0.4 !important; }
+.journey__layer.is-ghost .hs-stroke,
+.journey__layer.is-ghost .hs-line {
+  stroke: rgba(242, 236, 224, 0.4);
+  stroke-dasharray: 5 5;
+}
+.journey__layer.is-ghost .hs-fill,
+.journey__layer.is-ghost .hs-window,
+.journey__layer.is-ghost .hs-door { fill: transparent; }
+.journey__layer.is-ghost .hs-accent { fill: rgba(242, 236, 224, 0.3); }
+
+/* message box: the live headline + coaching */
+.journey__msg {
+  flex: 0 0 auto;
+  background: rgba(246, 241, 231, 0.06);
+  border: 1px solid rgba(242, 236, 224, 0.12);
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+}
+.journey__msg-title {
+  font-family: var(--font-display);
+  font-size: 1.02rem;
+  line-height: 1.35;
+  color: var(--cream);
+}
+.journey__msg-coach {
+  margin-top: 0.4rem;
+  font-size: 0.86rem;
+  line-height: 1.55;
+  color: var(--text-on-dark-muted);
+  white-space: pre-line;
+}
+.journey__msg-stat { display: none; }
+.journey__msg.is-pop { animation: blueprintPop 0.4s var(--ease-out); }
+@keyframes blueprintPop {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ---- (right) the control / report panel ---- */
+.journey__panel,
+.journey__report {
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
+  gap: 0.65rem;
   background: #fffdf8;
-  border: 3px solid var(--ink);
-  border-radius: 0;
-  box-shadow: 8px 8px 0 rgba(11, 31, 26, 0.15);
-  padding: 1.3rem 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 18px 50px -34px rgba(11, 31, 26, 0.4);
+  padding: clamp(1.2rem, 2.5vw, 1.7rem);
 }
+.journey__panel[hidden],
+.journey__report[hidden] { display: none; }
 .journey__panel-eyebrow {
-  font-family: var(--font-pixel);
-  font-size: 0.55rem;
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--gold);
 }
 .journey__panel-title {
-  font-family: var(--font-pixel);
+  font-family: var(--font-display);
   font-weight: 400;
-  font-size: 0.85rem;
-  line-height: 1.6;
-  text-transform: uppercase;
+  font-size: clamp(1.4rem, 3vw, 1.8rem);
+  line-height: 1.1;
   color: var(--ink);
-  margin-top: -0.5rem;
 }
-.journey__controls { display: grid; gap: 1rem; }
-/* grouped layout (Cashflow): a single, fully-visible stacked column with
-   pixel section headers — no dropdowns, no accordions */
-.journey__controls--grouped { grid-template-columns: 1fr; gap: 0.5rem; }
+.journey__panel-sub {
+  font-size: 0.86rem;
+  font-style: italic;
+  color: var(--text-muted);
+  margin-top: -0.2rem;
+  margin-bottom: 0.3rem;
+}
+
+/* ---- controls ---- */
+.journey__controls { display: grid; gap: 1.1rem; margin-top: 0.2rem; }
+.journey__controls--grouped { grid-template-columns: 1fr; gap: 0.7rem; }
 .journey__group-head {
-  font-family: var(--font-pixel);
-  font-size: 0.52rem;
-  line-height: 1.5;
-  letter-spacing: 0.03em;
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #8a6a2a;
-  padding-bottom: 0.3rem;
-  border-bottom: 2px solid var(--border);
+  color: var(--text-muted);
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--border);
 }
-.journey__group-head:not(:first-child) { margin-top: 0.2rem; }
+.journey__group-head:not(:first-child) { margin-top: 0.4rem; }
 
-/* phased levels (Protection): the visible input view is kept short, and one
-   retro pixel button toggles Brick Shield ⇄ Force Field. Rows use tight
-   spacing so each phase fits one mobile screen without page scrolling. */
-.journey__controls--phased { grid-template-columns: 1fr; gap: 0.3rem; }
-.journey__controls--phased .journey__control--split { gap: 0 0.7rem; }
-.journey__controls--phased .journey__control--split .journey__c-ctrl { gap: 0.05rem; }
-.journey__controls--phased .journey__c-ctrl .journey__range { height: 16px; }
-.journey__controls--phased .journey__c-ctrl output { font-size: 0.74rem; }
-.journey__controls--phased .journey__control--toggle { margin: 0; }
-.journey__controls--phased .journey__control-sub { font-size: 0.58rem; line-height: 1.1; margin-top: 0; }
-.journey__controls--phased .journey__group-head { padding-bottom: 0.2rem; }
-.journey__controls--phased .journey__toggle { gap: 0.5rem; }
-.journey__controls--phased .journey__toggle-track { width: 36px; height: 20px; }
-.journey__controls--phased .journey__toggle-track::after { width: 12px; height: 12px; }
-.journey__controls--phased .journey__toggle input:checked + .journey__toggle-track::after { transform: translateX(16px); }
-.journey__controls--phased .journey__toggle .journey__control-label {
-  font-size: 0.72rem;
-  line-height: 1.2;
-}
-.journey__phase-toggle {
-  margin-top: 0.3rem;
-  width: 100%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  padding: 0.7rem 0.9rem;
-  border: 2px solid var(--ink);
-  border-radius: 0;
-  background: var(--ink);
-  color: var(--gold-soft);
-  box-shadow: 3px 3px 0 rgba(11, 31, 26, 0.3);
-  cursor: pointer;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-  font-family: var(--font-pixel);
-  font-size: 0.55rem;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  transition: transform 0.15s steps(2), box-shadow 0.15s, background-color 0.2s;
-}
-.journey__phase-toggle:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 rgba(11, 31, 26, 0.3); }
-.journey__phase-toggle:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 rgba(11, 31, 26, 0.3); }
-.journey__phase-toggle:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
-
-/* micro-stash: a labelled "Current Stash" header with three compact sliders
-   side-by-side on one row, so existing assets cost almost no vertical space */
 .journey__stash { grid-column: 1 / -1; }
-.journey__stash-head { margin-bottom: 0.3rem; }
-.journey__stash-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.6rem; }
+.journey__stash-head { margin-bottom: 0.4rem; }
+.journey__stash-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.8rem; }
 .journey__micro { display: flex; flex-direction: column; min-width: 0; }
-.journey__micro-label { font-size: 0.74rem; font-weight: 600; color: var(--text); line-height: 1.1; }
-.journey__micro-sub { font-size: 0.56rem; color: var(--text-muted); line-height: 1.1; }
+.journey__micro-label { font-size: 0.78rem; font-weight: 600; color: var(--text); line-height: 1.2; }
+.journey__micro-sub { font-size: 0.62rem; color: var(--text-muted); line-height: 1.2; }
 .journey__micro output {
-  font-size: 0.74rem;
+  font-size: 0.78rem;
   font-weight: 600;
-  color: var(--gold);
+  color: #8a6a2a;
   font-variant-numeric: tabular-nums;
+  margin: 0.1rem 0 0.15rem;
 }
-.journey__micro .journey__range { width: 100%; height: 16px; }
+.journey__micro .journey__range { width: 100%; height: 18px; }
+
 .journey__control-sub {
   display: block;
   font-weight: 400;
-  font-size: 0.68rem;
-  line-height: 1.2;
+  font-size: 0.72rem;
+  line-height: 1.3;
   color: var(--text-muted);
-  margin-top: 0.1rem;
+  margin-top: 0.12rem;
 }
-
-/* compact two-column slider row: info on the left, control on the right */
 .journey__control--split {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(120px, 44%);
   align-items: center;
-  gap: 0.2rem 0.7rem;
+  gap: 0.2rem 0.9rem;
 }
 .journey__c-info { min-width: 0; }
-.journey__c-ctrl { min-width: 0; display: flex; flex-direction: column; gap: 0.2rem; }
+.journey__c-ctrl { min-width: 0; display: flex; flex-direction: column; gap: 0.25rem; }
 .journey__c-ctrl output {
   order: -1;
-  font-size: 0.82rem;
+  font-size: 0.86rem;
   font-weight: 600;
-  color: var(--gold);
+  color: #8a6a2a;
   font-variant-numeric: tabular-nums;
   text-align: right;
   white-space: nowrap;
 }
-.journey__c-ctrl .journey__range { width: 100%; height: 20px; }
-/* dynamic % of take-home shown beside the RM amount */
+.journey__c-ctrl .journey__range { width: 100%; height: 22px; }
 .journey__pct { color: var(--gold); font-weight: 700; font-size: 0.82em; }
 .journey__pct--heavy { color: #b07d1e; }
 .journey__pct--over { color: var(--rust, #d96a4a); }
@@ -1004,17 +954,18 @@ ul { list-style: none; }
   justify-content: space-between;
   align-items: baseline;
   gap: 1rem;
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.35rem;
 }
-.journey__control-label { font-size: 0.86rem; font-weight: 600; color: var(--text); }
+.journey__control-label { font-size: 0.9rem; font-weight: 600; color: var(--text); }
 .journey__control output {
-  font-size: 0.86rem;
+  font-size: 0.88rem;
   font-weight: 600;
-  color: var(--gold);
+  color: #8a6a2a;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
+/* sliders */
 .journey__range {
   -webkit-appearance: none;
   appearance: none;
@@ -1022,43 +973,38 @@ ul { list-style: none; }
   height: 22px;
   background: transparent;
   cursor: pointer;
-  touch-action: manipulation;
 }
 .journey__range::-webkit-slider-runnable-track {
-  height: 5px;
+  height: 3px;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--gold) var(--fill, 50%), rgba(11, 31, 26, 0.12) var(--fill, 50%));
+  background: linear-gradient(90deg, var(--gold) var(--fill, 50%), rgba(11, 31, 26, 0.14) var(--fill, 50%));
 }
 .journey__range::-webkit-slider-thumb {
   -webkit-appearance: none;
   width: 16px;
   height: 16px;
-  border-radius: 0;
-  background: var(--gold);
-  border: 2px solid var(--ink);
-  box-shadow: 2px 2px 0 rgba(11, 31, 26, 0.35);
-  margin-top: -5.5px;
+  border-radius: 50%;
+  background: var(--ink);
+  border: 3px solid var(--gold);
+  box-shadow: 0 2px 6px rgba(11, 31, 26, 0.3);
+  margin-top: -7px;
+  transition: transform 0.2s var(--ease-out);
 }
-.journey__range::-moz-range-track {
-  height: 5px;
-  border-radius: 999px;
-  background: rgba(11, 31, 26, 0.12);
-}
-.journey__range::-moz-range-progress {
-  height: 5px;
-  border-radius: 999px;
-  background: var(--gold);
-}
+.journey__range::-webkit-slider-thumb:hover { transform: scale(1.12); }
+.journey__range::-moz-range-track { height: 3px; border-radius: 999px; background: rgba(11, 31, 26, 0.14); }
+.journey__range::-moz-range-progress { height: 3px; border-radius: 999px; background: var(--gold); }
 .journey__range::-moz-range-thumb {
   width: 14px;
   height: 14px;
-  border-radius: 0;
-  background: var(--gold);
-  border: 2px solid var(--ink);
-  box-shadow: 2px 2px 0 rgba(11, 31, 26, 0.35);
+  border-radius: 50%;
+  background: var(--ink);
+  border: 3px solid var(--gold);
+  box-shadow: 0 2px 6px rgba(11, 31, 26, 0.3);
 }
 .journey__range:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
 
+/* toggles */
+.journey__control--toggle { margin-top: 0.1rem; }
 .journey__toggle {
   display: flex;
   align-items: center;
@@ -1071,80 +1017,174 @@ ul { list-style: none; }
   flex-shrink: 0;
   width: 42px;
   height: 24px;
-  border-radius: 0;
+  border-radius: 999px;
   background: var(--cream-deep);
-  border: 2px solid var(--ink);
+  border: 1px solid var(--border);
   position: relative;
-  transition: background-color 0.25s;
+  transition: background-color 0.3s;
 }
 .journey__toggle-track::after {
   content: "";
   position: absolute;
   top: 2px;
   left: 2px;
-  width: 16px;
-  height: 16px;
-  border-radius: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
   background: #fff;
-  border: 1px solid var(--ink);
-  box-sizing: border-box;
-  transition: transform 0.2s steps(3);
+  box-shadow: 0 1px 3px rgba(11, 31, 26, 0.3);
+  transition: transform 0.25s var(--ease-out);
 }
-.journey__toggle input:checked + .journey__toggle-track { background: var(--gold); }
+.journey__toggle input:checked + .journey__toggle-track { background: var(--gold); border-color: var(--gold); }
 .journey__toggle input:checked + .journey__toggle-track::after { transform: translateX(18px); }
 .journey__toggle input:focus-visible + .journey__toggle-track { outline: 2px solid var(--gold); outline-offset: 2px; }
 
-/* World 1-4 · The Willow Gate — "Legacy Keys": a tight container of three
-   full-width, thumb-friendly toggles (matching the World 1-2 switch format) */
 .journey__keys {
   grid-column: 1 / -1;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-  padding: 0.5rem 0.6rem;
+  gap: 0.45rem;
+  padding: 0.7rem 0.8rem;
   border: 1px solid var(--border);
-  background: rgba(231, 192, 105, 0.05);
+  border-radius: 10px;
+  background: rgba(201, 161, 74, 0.05);
 }
-.journey__keys-head { margin: 0 0 0.15rem; }
-/* a key is a World 1-2 toggle stretched full width for an easy thumb target */
+.journey__keys-head { margin: 0 0 0.2rem; border-bottom: none; padding-bottom: 0; }
 .journey__key {
   width: 100%;
-  gap: 0.7rem;
-  min-height: 34px;
-  padding: 0.15rem 0.1rem;
+  gap: 0.75rem;
+  min-height: 36px;
+  padding: 0.1rem;
 }
-.journey__key-label { font-size: 0.8rem; font-weight: 600; color: var(--text); line-height: 1.2; }
+.journey__key-label { font-size: 0.84rem; font-weight: 600; color: var(--text); line-height: 1.25; }
 
+/* CTA — premium pill */
 .journey__cta {
   margin-top: auto;
+  align-self: flex-start;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  align-self: flex-start;
-  font-family: var(--font-pixel);
-  font-size: 0.6rem;
-  line-height: 1.6;
-  text-transform: uppercase;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.92rem;
+  letter-spacing: 0.01em;
   color: var(--ink);
   background: var(--gold);
-  border: 2px solid var(--ink);
-  box-shadow: 4px 4px 0 rgba(11, 31, 26, 0.4);
-  padding: 0.7rem 0.95rem;
-  transition: transform 0.15s steps(2), box-shadow 0.15s, background-color 0.2s;
+  border: 1px solid var(--gold);
+  border-radius: 999px;
+  padding: 0.8rem 1.5rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.25s var(--ease-out), background-color 0.25s, box-shadow 0.25s;
 }
-.journey__cta:hover { background: var(--gold-soft); transform: translate(-1px, -1px); box-shadow: 5px 5px 0 rgba(11, 31, 26, 0.4); }
-.journey__cta:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 rgba(11, 31, 26, 0.4); }
+.journey__cta:hover { background: var(--gold-soft); transform: translateY(-2px); box-shadow: 0 12px 28px -12px rgba(201, 161, 74, 0.6); }
 .journey__cta:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
-.journey__fine {
-  margin-top: 1.1rem;
-  text-align: center;
+
+/* ---- concluding diagnostic report ---- */
+.journey__scorecard {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.4rem;
+  font-size: 0.88rem;
+}
+.journey__scorecard th[scope="col"] {
+  text-align: left;
+  font-family: var(--font-body);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 0 0 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.journey__scorecard th[scope="col"]:not(:first-child) { text-align: right; }
+.journey__scorecard tbody th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--ink);
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.journey__scorecard td {
+  text-align: right;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.journey__sc-val {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.journey__sc-status {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+}
+.journey__sc-status.is-secure { color: #1d6b39; border-color: rgba(92, 184, 122, 0.5); background: rgba(92, 184, 122, 0.12); }
+.journey__sc-status.is-developing { color: #8a6a2a; border-color: rgba(201, 161, 74, 0.5); background: rgba(201, 161, 74, 0.12); }
+.journey__sc-status.is-exposed,
+.journey__sc-status.is-absent { color: #9a3416; border-color: rgba(217, 106, 74, 0.5); background: rgba(217, 106, 74, 0.1); }
+
+.journey__notes { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.4rem; }
+.journey__note {
+  border-left: 3px solid var(--gold);
+  border-radius: 0 8px 8px 0;
+  background: rgba(201, 161, 74, 0.06);
+  padding: 0.7rem 0.9rem;
+}
+.journey__note.is-warn { border-left-color: var(--rust, #d96a4a); background: rgba(217, 106, 74, 0.07); }
+.journey__note.is-ok { border-left-color: #5cb87a; background: rgba(92, 184, 122, 0.08); }
+.journey__note-title {
+  font-family: var(--font-body);
   font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.journey__note-body { font-size: 0.86rem; line-height: 1.5; color: var(--text-muted); margin-top: 0.25rem; }
+
+.journey__report-actions {
+  margin-top: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.7rem;
+}
+.journey__cta--primary { align-self: stretch; justify-content: center; text-align: center; }
+.journey__report-link {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--ink);
+  border-bottom: 1px solid var(--gold);
+  transition: color 0.25s;
+}
+.journey__report-link:hover { color: var(--gold); }
+.journey__report-link:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+
+.journey__fine {
+  margin-top: 1.4rem;
+  text-align: center;
+  font-size: 0.8rem;
   font-style: italic;
   color: var(--text-muted);
   opacity: 0.85;
 }
 
-/* classic calculator links, kept below the game */
+/* classic calculator links, kept below the toolkit */
 .tools__classic {
   margin-top: clamp(2.5rem, 5vw, 3.5rem);
   display: flex;
@@ -1643,9 +1683,9 @@ ul { list-style: none; }
   .story__media { order: -1; padding: 1rem 0; }
   .services__grid { grid-template-columns: 1fr 1fr; }
   .journey__board { grid-template-columns: 1fr; }
-  /* Board is full-width here, so let Capy have a generous stage of its own */
+  /* Board stacks here: blueprint on top, controls below */
   .journey__stage { min-height: 0; }
-  .journey__capy { min-height: 260px; }
+  .journey__house svg { max-height: 320px; }
   .stats__grid { grid-template-columns: 1fr 1fr; gap: 2rem; }
   .credentials__groups { grid-template-columns: 1fr; }
   .testimonials__grid { grid-template-columns: 1fr; }
@@ -1660,8 +1700,8 @@ ul { list-style: none; }
   .services__grid { grid-template-columns: 1fr; }
   .videos__grid { grid-template-columns: 1fr; }
 
-  /* Compact one-screen game layout: stage + controls + summary
-     should fit a phone viewport without scrolling between them. */
+  /* Phone: tabs scroll horizontally; blueprint sits above the controls
+     and is swipe-able to move between stages. */
   .journey { margin-top: 1.6rem; }
   .journey__levels {
     flex-wrap: nowrap;
@@ -1669,35 +1709,21 @@ ul { list-style: none; }
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
-    margin-bottom: 0.8rem;
+    margin-bottom: 1rem;
     padding: 2px 2px 6px;
   }
   .journey__levels::-webkit-scrollbar { display: none; }
-  .journey__chip { flex-shrink: 0; font-size: 0.5rem; padding: 0.4rem 0.65rem 0.4rem 0.35rem; }
-  .journey__chip-num { width: 20px; height: 20px; font-size: 0.5rem; }
-  .journey__board { gap: 0.5rem; }
-  /* Phone: the box still stacks message → Capy → power bar and grows with
-     the message, but everything is dialled down so Capy stays prominent and
-     the summary text stays readable. */
+  .journey__tab { flex-shrink: 0; font-size: 0.78rem; }
+  .journey__board { gap: 0.9rem; }
   .journey__stage {
     min-height: 0;
-    gap: 0.5rem;
-    padding: 0.5rem;
-    box-shadow: 0 0 0 3px var(--gold), 5px 6px 0 rgba(11, 31, 26, 0.2);
+    gap: 0.8rem;
+    padding: 1rem;
   }
-  .journey__capy { min-height: 150px; }
-  .journey__msg { padding: 0.45rem 0.55rem; box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.45); }
-  .journey__msg-title { font-size: 0.5rem; line-height: 1.5; }
-  .journey__msg-stat { font-size: 0.44rem; padding: 0.2rem 0.32rem; }
-  .journey__msg-coach { font-size: 0.74rem; line-height: 1.4; margin-top: 0.3rem; }
-  .journey__panel { gap: 0.3rem; padding: 0.55rem 0.6rem; box-shadow: 4px 4px 0 rgba(11, 31, 26, 0.15); }
-  .journey__panel-eyebrow { font-size: 0.46rem; }
-  .journey__panel-title { font-size: 0.6rem; margin-top: -0.3rem; }
-  /* Sliders pair up two per row so four inputs stay compact.
-     Each control stacks label → value → slider, with the value and
-     slider anchored to the bottom of the cell so the pair always
-     lines up perfectly even if a label ever wraps. */
-  .journey__controls { grid-template-columns: 1fr 1fr; gap: 0.45rem 0.8rem; align-items: stretch; }
+  .journey__house svg { max-height: 240px; }
+  .journey__panel, .journey__report { padding: 1.1rem 1rem; }
+  /* Sliders pair up two per row so four inputs stay compact. */
+  .journey__controls { grid-template-columns: 1fr 1fr; gap: 0.8rem 1rem; align-items: stretch; }
   .journey__control { display: flex; flex-direction: column; }
   .journey__control--toggle { grid-column: 1 / -1; }
   .journey__control-head {
@@ -1706,41 +1732,19 @@ ul { list-style: none; }
     align-items: flex-start;
     justify-content: flex-end;
     gap: 0;
-    margin-bottom: 0;
+    margin-bottom: 0.25rem;
   }
-  /* grouped (Cashflow): compact two-column rows so all four sliders, both
-     section headers and the readout fit one mobile screen without scrolling */
-  .journey__controls--grouped { grid-template-columns: 1fr; gap: 0.35rem; }
+  .journey__controls--grouped { grid-template-columns: 1fr; gap: 0.7rem; }
   .journey__control--split {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 42%;
     align-items: center;
-    gap: 0.1rem 0.5rem;
+    gap: 0.1rem 0.6rem;
   }
-  .journey__control--split .journey__c-ctrl { gap: 0.1rem; }
-  .journey__group-head { font-size: 0.48rem; padding-bottom: 0.25rem; line-height: 1.4; }
-  .journey__group-head:not(:first-child) { margin-top: 0.1rem; }
-  .journey__control-sub { font-size: 0.6rem; line-height: 1.15; margin-top: 0.05rem; }
-  .journey__control-label { font-size: 0.68rem; line-height: 1.25; }
-  .journey__control output, .journey__c-ctrl output { font-size: 0.7rem; }
-  .journey__range { height: 20px; }
-  .journey__stash-head { margin-bottom: 0.15rem; }
-  .journey__stash-row { gap: 0.4rem; }
-  .journey__micro-label { font-size: 0.62rem; }
-  .journey__micro-sub { font-size: 0.5rem; }
-  .journey__micro output { font-size: 0.62rem; }
-  .journey__micro .journey__range { height: 18px; }
-  .journey__toggle-track { width: 36px; height: 20px; }
-  .journey__toggle-track::after { width: 12px; height: 12px; }
-  .journey__toggle input:checked + .journey__toggle-track::after { transform: translateX(16px); }
-  /* Willow Gate keys: full-width toggles kept tight so the canvas, switches
-     and commentary all fit one mobile screen without vertical scrolling */
-  .journey__keys { padding: 0.3rem 0.4rem; gap: 0.2rem; }
-  .journey__keys-head { font-size: 0.48rem; margin-bottom: 0.1rem; line-height: 1.4; }
-  .journey__key { gap: 0.55rem; min-height: 30px; padding: 0.1rem; }
-  .journey__key-label { font-size: 0.68rem; line-height: 1.2; }
-  .journey__cta { margin-top: 0.25rem; padding: 0.45rem 0.7rem; font-size: 0.46rem; }
-  .journey__fine { font-size: 0.68rem; margin-top: 0.6rem; }
+  .journey__control--split .journey__c-ctrl { gap: 0.15rem; }
+  .journey__stash-row { gap: 0.55rem; }
+  .journey__cta { align-self: stretch; justify-content: center; }
+  .journey__fine { font-size: 0.72rem; margin-top: 1rem; }
   .hero { padding-top: 6rem; }
   .hero__scroll { display: none; }
   .hero__actions .btn { width: 100%; max-width: 320px; }
@@ -2862,9 +2866,8 @@ ul { list-style: none; }
 }
 
 /* ============================================================
-   CAPY QUEST · ROADMAP MODAL  (the "Turn this into a real plan" popup)
-   Pixel-art themed, mobile-contained (single non-scrolling viewport),
-   with a print-perfect report layout.
+   STRUCTURAL DIAGNOSTIC · REPORT MODAL (email-to-Sofina lead capture)
+   Premium restyle: minimal slate/cream, soft shadows, no pixel art.
    ============================================================ */
 
 .plan-modal {
@@ -2881,8 +2884,8 @@ ul { list-style: none; }
 .plan-modal__backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(7, 18, 15, 0.78);
-  backdrop-filter: blur(2px);
+  background: rgba(7, 18, 15, 0.6);
+  backdrop-filter: blur(4px);
 }
 
 .plan-modal__dialog {
@@ -2893,12 +2896,13 @@ ul { list-style: none; }
   width: min(720px, 100%);
   max-height: min(92dvh, 100%);
   background: #fffdf8;
-  border: 3px solid var(--ink);
-  box-shadow: 0 0 0 3px var(--gold), 12px 14px 0 rgba(11, 31, 26, 0.35);
-  animation: planPop 0.18s steps(3) both;
+  border-radius: 16px;
+  box-shadow: 0 40px 90px -30px rgba(11, 31, 26, 0.55);
+  overflow: hidden;
+  animation: planPop 0.3s var(--ease-out) both;
 }
 @keyframes planPop {
-  from { transform: translateY(10px) scale(0.98); opacity: 0; }
+  from { transform: translateY(12px) scale(0.99); opacity: 0; }
   to   { transform: none; opacity: 1; }
 }
 
@@ -2909,15 +2913,15 @@ ul { list-style: none; }
   align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.9rem 1rem;
+  padding: 1.1rem 1.2rem;
   background: var(--ink);
   color: var(--cream);
-  border-bottom: 3px solid var(--gold);
 }
 .plan-modal__eyebrow {
-  font-family: var(--font-pixel);
-  font-size: 0.5rem;
-  letter-spacing: 0.04em;
+  font-family: var(--font-body);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--gold-soft);
 }
@@ -2927,95 +2931,97 @@ ul { list-style: none; }
   gap: 0.6rem;
 }
 .plan-modal__date {
-  font-family: var(--font-pixel);
-  font-size: 0.5rem;
-  letter-spacing: 0.04em;
-  color: var(--gold-soft);
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  color: var(--text-on-dark-muted);
   white-space: nowrap;
-  margin-top: 0.15rem;
+  margin-top: 0.3rem;
 }
 .plan-modal__title {
-  font-family: var(--font-pixel);
+  font-family: var(--font-display);
   font-weight: 400;
-  font-size: 0.82rem;
-  line-height: 1.5;
-  text-transform: uppercase;
+  font-size: 1.25rem;
+  line-height: 1.2;
   color: var(--cream);
-  margin-top: 0.35rem;
+  margin-top: 0.3rem;
 }
 .plan-modal__close {
   flex: 0 0 auto;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   display: grid;
   place-items: center;
-  font-size: 1.3rem;
+  font-size: 1.4rem;
   line-height: 1;
-  color: var(--ink);
-  background: var(--gold);
-  border: 2px solid var(--cream);
+  color: var(--cream);
+  background: rgba(242, 236, 224, 0.1);
+  border: 1px solid var(--border-on-dark);
+  border-radius: 50%;
   cursor: pointer;
-  transition: transform 0.12s steps(2), background-color 0.2s;
+  transition: background-color 0.25s, color 0.25s;
 }
-.plan-modal__close:hover { background: var(--gold-soft); transform: translate(-1px, -1px); }
+.plan-modal__close:hover { background: var(--gold); color: var(--ink); border-color: var(--gold); }
 
-/* the single scroll region — keeps the dialog within one viewport */
+/* the single scroll region */
 .plan-modal__scroll {
   flex: 1 1 auto;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 1rem 1.1rem 0.5rem;
+  padding: 1.3rem 1.4rem 0.6rem;
 }
 
 /* footer actions — fixed, never scrolls */
 .plan-modal__actions {
   flex: 0 0 auto;
   display: flex;
-  gap: 0.6rem;
-  padding: 0.8rem 1rem;
-  border-top: 2px solid var(--border);
+  gap: 0.7rem;
+  padding: 1rem 1.2rem;
+  border-top: 1px solid var(--border);
   background: #f7f1e6;
 }
 .plan-btn {
   flex: 1 1 0;
-  font-family: var(--font-pixel);
-  font-size: 0.55rem;
-  line-height: 1.5;
-  text-transform: uppercase;
-  padding: 0.7rem 0.6rem;
-  border: 2px solid var(--ink);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.92rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
   cursor: pointer;
-  transition: transform 0.12s steps(2), box-shadow 0.15s, background-color 0.2s;
+  transition: transform 0.25s var(--ease-out), box-shadow 0.25s, background-color 0.25s;
 }
-.plan-btn--gold { color: var(--ink); background: var(--gold); box-shadow: 4px 4px 0 rgba(11, 31, 26, 0.4); }
-.plan-btn--gold:hover { background: var(--gold-soft); transform: translate(-1px, -1px); box-shadow: 5px 5px 0 rgba(11, 31, 26, 0.4); }
-.plan-btn--ghost { color: var(--ink); background: #fffdf8; box-shadow: 4px 4px 0 rgba(11, 31, 26, 0.18); }
-.plan-btn--ghost:hover { background: #f1e8d4; transform: translate(-1px, -1px); }
-.plan-btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 rgba(11, 31, 26, 0.4); }
+.plan-btn--gold { color: var(--ink); background: var(--gold); }
+.plan-btn--gold:hover { background: var(--gold-soft); transform: translateY(-2px); box-shadow: 0 12px 28px -12px rgba(201, 161, 74, 0.6); }
+.plan-btn--ghost { color: var(--ink); background: #fffdf8; border-color: var(--border); }
+.plan-btn--ghost:hover { background: #f1e8d4; transform: translateY(-2px); }
+.plan-btn:active { transform: translateY(0); }
 .plan-btn:disabled { opacity: 0.55; cursor: default; transform: none; box-shadow: none; }
 
 /* ---------- the report itself ---------- */
 .plan-report__head {
   text-align: center;
-  border-bottom: 2px dashed var(--border);
-  padding-bottom: 0.8rem;
-  margin-bottom: 0.9rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 1.1rem;
 }
 .plan-report__overall {
-  font-family: var(--font-pixel);
-  font-size: 0.6rem;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--gold-dark, #7a5a1e);
+  color: var(--text-muted);
 }
-.plan-report__overall b { color: var(--ink); font-size: 1.1rem; }
-.plan-report__intro { font-size: 0.85rem; color: var(--text-muted); margin-top: 0.4rem; }
+.plan-report__overall b { font-family: var(--font-display); color: var(--ink); font-size: 1.4rem; font-weight: 400; letter-spacing: 0; margin-left: 0.3rem; }
+.plan-report__intro { font-size: 0.88rem; color: var(--text-muted); margin-top: 0.5rem; }
 
 .plan-world {
-  border: 2px solid var(--ink);
+  border: 1px solid var(--border);
+  border-radius: 12px;
   background: #fffefb;
-  box-shadow: 4px 4px 0 rgba(11, 31, 26, 0.1);
-  padding: 0.85rem 0.9rem;
-  margin-bottom: 0.95rem;
+  padding: 1.1rem 1.15rem;
+  margin-bottom: 1rem;
   break-inside: avoid;
 }
 .plan-world__top {
@@ -3026,197 +3032,195 @@ ul { list-style: none; }
   flex-wrap: wrap;
 }
 .plan-world__tag {
-  font-family: var(--font-pixel);
-  font-size: 0.5rem;
+  font-family: var(--font-body);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--gold);
 }
 .plan-world__name {
-  font-family: var(--font-pixel);
+  font-family: var(--font-display);
   font-weight: 400;
-  font-size: 0.72rem;
-  text-transform: uppercase;
+  font-size: 1.2rem;
   color: var(--ink);
-  margin-top: 0.2rem;
+  margin-top: 0.15rem;
 }
 .plan-world__score {
-  font-family: var(--font-pixel);
-  font-size: 0.55rem;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 600;
   color: var(--ink);
-  background: var(--gold-soft);
-  border: 2px solid var(--ink);
-  padding: 0.25rem 0.45rem;
+  background: rgba(201, 161, 74, 0.16);
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
   white-space: nowrap;
 }
 .plan-bar {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin: 0.55rem 0 0.2rem;
+  gap: 0.6rem;
+  margin: 0.8rem 0 0.2rem;
 }
 .plan-bar__label {
-  font-family: var(--font-pixel);
-  font-size: 0.5rem;
+  font-family: var(--font-body);
+  font-size: 0.66rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--gold-dark, #7a5a1e);
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
   white-space: nowrap;
 }
 .plan-bar__track {
   flex: 1;
-  height: 9px;
-  background: rgba(11, 31, 26, 0.12);
-  border: 1px solid rgba(11, 31, 26, 0.3);
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(11, 31, 26, 0.1);
   overflow: hidden;
 }
 .plan-bar__pct {
-  font-family: var(--font-pixel);
-  font-size: 0.5rem;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
   font-weight: 700;
   color: var(--ink);
   white-space: nowrap;
-  min-width: 2rem;
+  min-width: 2.2rem;
   text-align: right;
 }
-.plan-bar__fill { height: 100%; background: var(--gold); }
+.plan-bar__fill { height: 100%; border-radius: 999px; background: var(--gold); }
 .plan-bar__fill.is-green { background: #5cb87a; }
 .plan-bar__fill.is-red { background: var(--rust, #d96a4a); }
 
 .plan-world__inputs {
   list-style: none;
-  margin: 0.6rem 0 0;
+  margin: 0.8rem 0 0;
   padding: 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.15rem 0.8rem;
+  gap: 0.2rem 1rem;
 }
 .plan-world__inputs li {
   display: flex;
   justify-content: space-between;
   gap: 0.5rem;
-  font-size: 0.74rem;
+  font-size: 0.78rem;
   color: var(--text-muted);
-  border-bottom: 1px dotted var(--border);
-  padding: 0.12rem 0;
+  border-bottom: 1px solid var(--border);
+  padding: 0.22rem 0;
 }
 .plan-world__inputs b { color: var(--ink); font-weight: 600; }
 
-.plan-world__phase { margin-top: 0.6rem; }
+.plan-world__phase { margin-top: 0.7rem; }
 .plan-world__phase-title {
-  font-family: var(--font-pixel);
-  font-size: 0.5rem;
+  font-family: var(--font-body);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--gold-dark, #7a5a1e);
-  margin-bottom: 0.15rem;
+  color: var(--text-muted);
+  margin-bottom: 0.2rem;
 }
 .plan-world__headline {
   font-family: var(--font-display);
-  font-size: 0.95rem;
+  font-size: 1.05rem;
   line-height: 1.35;
   color: var(--ink);
-  margin-top: 0.5rem;
+  margin-top: 0.6rem;
 }
 .plan-world__coach {
-  font-size: 0.82rem;
-  line-height: 1.5;
+  font-size: 0.86rem;
+  line-height: 1.55;
   color: var(--text-muted);
-  margin-top: 0.3rem;
+  margin-top: 0.4rem;
   white-space: pre-line;
 }
-.plan-world__say {
-  font-family: var(--font-pixel);
-  font-size: 0.5rem;
-  text-transform: uppercase;
-  color: var(--gold-dark, #7a5a1e);
-  margin-top: 0.5rem;
-}
-.plan-world__say::before { content: "\201C"; }
-.plan-world__say::after { content: "\201D"; }
 
 /* ---------- send-to-Sofina block ---------- */
 .plan-send {
-  border: 2px dashed var(--border);
+  border: 1px solid var(--border);
+  border-radius: 12px;
   background: #f7f1e6;
-  padding: 0.8rem 0.9rem;
-  margin: 0.4rem 0 0.6rem;
+  padding: 1rem 1.1rem;
+  margin: 0.6rem 0 0.8rem;
 }
 .plan-send__fields {
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
-  margin-bottom: 0.9rem;
-  padding-bottom: 0.9rem;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
   border-bottom: 1px solid var(--border);
 }
 .plan-send__fields-heading {
-  font-family: var(--font-pixel);
-  font-size: 0.5rem;
+  font-family: var(--font-body);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--gold-dark, #7a5a1e);
-  margin-bottom: 0.1rem;
+  color: var(--text-muted);
+  margin-bottom: 0.15rem;
 }
-.plan-send__field { display: flex; flex-direction: column; gap: 0.28rem; }
-.plan-send__field-label { font-size: 0.82rem; font-weight: 600; color: var(--ink); }
+.plan-send__field { display: flex; flex-direction: column; gap: 0.3rem; }
+.plan-send__field-label { font-size: 0.84rem; font-weight: 600; color: var(--ink); }
 .plan-send__field-label span { color: var(--rust, #d96a4a); font-weight: 400; margin-left: 0.1rem; }
 .plan-send__field-input {
   font-family: var(--font-body);
-  font-size: 0.88rem;
-  padding: 0.48rem 0.6rem;
+  font-size: 0.9rem;
+  padding: 0.6rem 0.75rem;
   background: #fffdf8;
-  border: 2px solid var(--ink);
-  border-radius: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
   color: var(--ink);
   appearance: none;
 }
 .plan-send__field-input::placeholder { color: var(--text-muted); opacity: 0.7; }
-.plan-send__field-input:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; border-color: var(--gold); }
+.plan-send__field-input:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; border-color: var(--gold); }
 .plan-send__field-input[aria-invalid="true"],.plan-send__field-input.is-err { border-color: var(--rust, #d96a4a); background: #fbeae4; }
-.plan-send__radio { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.83rem; color: var(--text); margin-top: 0.15rem; }
+.plan-send__radio { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.85rem; color: var(--text); margin-top: 0.15rem; }
 .plan-send__radio input[type="radio"] { width: 16px; height: 16px; accent-color: var(--gold); flex-shrink: 0; }
 .plan-send__label {
   display: block;
-  font-family: var(--font-pixel);
-  font-size: 0.55rem;
-  text-transform: uppercase;
+  font-family: var(--font-body);
+  font-size: 0.84rem;
+  font-weight: 600;
   color: var(--ink);
-  margin-bottom: 0.45rem;
+  margin-bottom: 0.5rem;
 }
-.plan-send__label span { color: var(--text-muted); text-transform: none; }
+.plan-send__label span { color: var(--text-muted); font-weight: 400; }
 .plan-send__remark {
   width: 100%;
   font: inherit;
   font-size: 0.9rem;
   color: var(--ink);
   background: #fffdf8;
-  border: 2px solid var(--ink);
-  padding: 0.55rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
   resize: vertical;
 }
-.plan-send__remark:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.plan-send__remark:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; border-color: var(--gold); }
 .plan-send__status {
-  font-size: 0.82rem;
-  margin-top: 0.5rem;
-  padding: 0.5rem 0.6rem;
-  border: 2px solid var(--ink);
+  font-size: 0.84rem;
+  margin-top: 0.6rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
 }
 .plan-send__status.is-ok { background: #e4f5e9; color: #1d6b39; border-color: #5cb87a; }
 .plan-send__status.is-err { background: #fbeae4; color: #9a3416; border-color: var(--rust, #d96a4a); }
 
 @media (max-width: 620px) {
   .plan-modal { padding: 0; }
-  .plan-modal__dialog { width: 100%; max-height: 100dvh; height: 100dvh; border-width: 0; box-shadow: none; }
-  .plan-modal__title { font-size: 0.66rem; }
+  .plan-modal__dialog { width: 100%; max-height: 100dvh; height: 100dvh; border-radius: 0; box-shadow: none; }
+  .plan-modal__title { font-size: 1.1rem; }
   .plan-modal__date { display: none; }
-  .plan-modal__scroll { padding: 0.8rem 0.8rem 0.4rem; }
+  .plan-modal__scroll { padding: 1rem 1rem 0.5rem; }
   .plan-world__inputs { grid-template-columns: 1fr; }
-  .plan-world__headline { font-size: 0.88rem; }
-  .plan-btn { font-size: 0.48rem; padding: 0.65rem 0.4rem; }
+  .plan-world__headline { font-size: 0.98rem; }
 }
 
 /* ============================================================
-   PRINT — isolate the roadmap into a clean, un-cropped document
+   PRINT — isolate the report into a clean, un-cropped document
    ============================================================ */
 @media print {
   body > *:not(.plan-modal) { display: none !important; }

@@ -498,53 +498,100 @@
     <section class="tools" id="tools">
       <div class="container">
         <p class="section-eyebrow section-eyebrow--center reveal">Your Toolkit</p>
-        <h2 class="section-title section-title--center reveal">Meet <em>Capy.</em></h2>
-        <p class="tools__intro reveal">Move the sliders and watch Capy react to your numbers — no sign-up, no jargon, just your finances made visible.</p>
+        <h2 class="section-title section-title--center reveal">The <em>Architecture</em> of Wealth</h2>
+        <p class="tools__intro reveal">Engineer your financial structure layer by layer — from the foundation up. Move the sliders and watch the blueprint build in real time. No sign-up, no jargon.</p>
 
         <div class="journey reveal" id="journey">
-          <div class="journey__levels" role="tablist" aria-label="Financial levels" id="journeyLevels"></div>
+          <!-- desktop pagination tabs (mobile: swipe the blueprint) -->
+          <div class="journey__levels" role="tablist" aria-label="Structural stages" id="journeyLevels"></div>
 
           <div class="journey__board">
-            <!-- Animation box: three stacked, never-overlapping components —
-                 (1) message box, (2) Capy-only canvas, (3) power bar. The box
-                 grows with the message so the message can never cover Capy. -->
-            <div class="journey__stage">
+            <!-- hidden canvas kept only so the state engine can construct;
+                 every stage paints a no-op scene — all visuals are SVG/DOM -->
+            <canvas id="journeyCanvas" aria-hidden="true" hidden></canvas>
+
+            <!-- STAGE · the live house blueprint -->
+            <div class="journey__stage" id="journeyStage">
+              <div class="journey__readout">
+                <span class="journey__readout-label" id="journeyPowerLabel">Foundation Integrity</span>
+                <span class="journey__readout-pct" id="journeyVibePct">0%</span>
+              </div>
+              <div class="journey__track"><span class="journey__track-fill" id="journeyVibe"></span></div>
+
+              <div class="journey__house">
+                <svg viewBox="0 0 440 320" role="img" aria-label="A live architectural blueprint of your financial structure" xmlns="http://www.w3.org/2000/svg">
+                  <!-- ground reference line -->
+                  <line class="journey__ground" x1="20" y1="266" x2="420" y2="266" />
+
+                  <!-- 04 · external walkway & landscaping ornaments -->
+                  <g class="journey__layer" id="hsLandscape">
+                    <path class="hs-fill hs-stroke" d="M196 266 L244 266 L286 312 L154 312 Z" />
+                    <circle class="hs-fill hs-stroke" cx="70" cy="252" r="14" />
+                    <line class="hs-stroke" x1="70" y1="266" x2="70" y2="240" />
+                    <circle class="hs-fill hs-stroke" cx="372" cy="254" r="11" />
+                    <line class="hs-stroke" x1="372" y1="266" x2="372" y2="244" />
+                    <rect class="hs-fill hs-stroke" x="402" y="232" width="6" height="34" />
+                    <circle class="hs-accent" cx="405" cy="230" r="4" />
+                  </g>
+
+                  <!-- 01 · concrete foundation slab -->
+                  <g class="journey__layer" id="hsFoundation">
+                    <rect class="hs-fill hs-stroke" x="96" y="242" width="248" height="24" />
+                    <line class="hs-line" x1="124" y1="254" x2="316" y2="254" />
+                  </g>
+
+                  <!-- 02 · load-bearing pillars + lintel -->
+                  <g class="journey__layer" id="hsPillars">
+                    <rect class="hs-fill hs-stroke" x="112" y="150" width="16" height="92" />
+                    <rect class="hs-fill hs-stroke" x="174" y="150" width="16" height="92" />
+                    <rect class="hs-fill hs-stroke" x="250" y="150" width="16" height="92" />
+                    <rect class="hs-fill hs-stroke" x="312" y="150" width="16" height="92" />
+                    <rect class="hs-fill hs-stroke" x="104" y="138" width="232" height="14" />
+                  </g>
+
+                  <!-- 03 · outer walls + peak roof (encloses the structure) -->
+                  <g class="journey__layer" id="hsShell">
+                    <rect class="hs-fill hs-stroke" x="120" y="150" width="200" height="92" />
+                    <polygon class="hs-fill hs-stroke" points="104,150 220,78 336,150" />
+                    <rect class="hs-window hs-stroke" x="148" y="172" width="34" height="34" />
+                    <rect class="hs-window hs-stroke" x="258" y="172" width="34" height="34" />
+                    <rect class="hs-door hs-stroke" x="200" y="200" width="40" height="42" />
+                    <circle class="hs-accent" cx="220" cy="120" r="5" />
+                  </g>
+                </svg>
+              </div>
+
               <div class="journey__msg" id="journeyMsg" aria-live="polite">
-                <div class="journey__msg-head">
-                  <p class="journey__msg-title" id="journeyHeadline"></p>
-                  <span class="journey__msg-stat" id="journeyStat"></span>
-                </div>
+                <p class="journey__msg-title" id="journeyHeadline"></p>
                 <p class="journey__msg-coach" id="journeyCoach"></p>
-              </div>
-              <div class="journey__capy">
-                <canvas id="journeyCanvas" role="img" aria-label="Capy, the pixel capybara, reacting to your numbers"></canvas>
-              </div>
-              <div class="journey__vibe">
-                <span class="journey__vibe-label">Power</span>
-                <span class="journey__vibe-track"><span class="journey__vibe-fill" id="journeyVibe"></span></span>
-                <span class="journey__vibe-pct" id="journeyVibePct">0%</span>
+                <span class="journey__msg-stat" id="journeyStat" hidden></span>
               </div>
             </div>
 
-            <div class="journey__panel">
-              <p class="journey__panel-eyebrow" id="journeyLevelTag">World 1-1</p>
-              <h3 class="journey__panel-title" id="journeyTitle">The Coin Pipes</h3>
+            <!-- PANEL · per-stage controls -->
+            <div class="journey__panel" id="journeyPanel">
+              <p class="journey__panel-eyebrow" id="journeyLevelTag">01 / Liquid Capital</p>
+              <h3 class="journey__panel-title" id="journeyTitle">Liquid Capital</h3>
+              <p class="journey__panel-sub" id="journeySub">Establishing Ground Stability</p>
               <div class="journey__controls" id="journeyControls"></div>
-              <button type="button" class="journey__cta" id="journeyPlanBtn">Turn this into a real plan</button>
+              <button type="button" class="journey__cta" id="journeyCta">Next: Erect Pillars</button>
             </div>
+
+            <!-- REPORT · concluding structural diagnostic (built by JS) -->
+            <div class="journey__report" id="journeyReport" hidden></div>
           </div>
 
           <p class="journey__fine">Illustrative numbers only — the assumptions are deliberately simple, and this isn't personal financial advice. For that, scroll down and say hello.</p>
         </div>
 
-        <!-- ===== Capy Quest · Roadmap modal ===== -->
+        <!-- ===== Structural Diagnostic · Report modal ===== -->
         <div class="plan-modal" id="planModal" hidden>
           <div class="plan-modal__backdrop" id="planModalBackdrop"></div>
           <div class="plan-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="planModalTitle">
             <header class="plan-modal__bar">
               <div>
-                <p class="plan-modal__eyebrow">Capy's Quest by Sofina Johari</p>
-                <h3 class="plan-modal__title" id="planModalTitle">Your Money Journey Roadmap</h3>
+                <p class="plan-modal__eyebrow">Financial Architecture by Dr. Sofina Johari</p>
+                <h3 class="plan-modal__title" id="planModalTitle">Your Structural Diagnostic Report</h3>
               </div>
               <div class="plan-modal__bar-end">
                 <span class="plan-modal__date" id="planModalDate"></span>
@@ -586,8 +633,7 @@
             </div>
 
             <footer class="plan-modal__actions">
-              <button type="button" class="plan-btn plan-btn--ghost" id="planPrintBtn">Download PDF</button>
-              <button type="button" class="plan-btn plan-btn--gold" id="planSendBtn">Send to Sofina</button>
+              <button type="button" class="plan-btn plan-btn--gold" id="planSendBtn">Send to Dr. Sofina</button>
             </footer>
           </div>
         </div>
@@ -1049,7 +1095,6 @@
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
-  <script src="Mascot.js"></script>
   <script src="FinancialEngine.js"></script>
   <script src="financial-levels.js"></script>
   <script src="carousel.js"></script>
