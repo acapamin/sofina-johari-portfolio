@@ -708,16 +708,82 @@ ul { list-style: none; }
   gap: 1rem;
   align-items: stretch;
 }
+/* The animation box stacks three components vertically and grows to fit
+   them, so they can never overlap: (1) message box, (2) Capy canvas,
+   (3) power bar. The canvas region (.journey__capy) flex-grows and has a
+   min-height, so when the message box gets tall the box gets taller and
+   Capy keeps its space rather than being covered. */
 .journey__stage {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 0.7rem;
   min-height: 440px;
   border-radius: 0;
-  overflow: hidden;
   background: #0d231c;
   border: 3px solid var(--ink);
   box-shadow: 0 0 0 3px var(--gold), 10px 12px 0 rgba(11, 31, 26, 0.2);
 }
-.journey__stage canvas {
+
+/* (1) MESSAGE BOX — the summary that used to sit under the sliders. Its
+   height follows its text; the stage flexes to absorb it. */
+.journey__msg {
+  flex: 0 0 auto;
+  z-index: 2;
+  background: var(--cream);
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.45);
+  padding: 0.55rem 0.7rem;
+}
+.journey__msg-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+.journey__msg-title {
+  font-family: var(--font-pixel);
+  font-size: 0.62rem;
+  line-height: 1.6;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.journey__msg-stat {
+  flex-shrink: 0;
+  font-family: var(--font-pixel);
+  font-size: 0.5rem;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--ink);
+  background: var(--gold-soft);
+  border: 2px solid var(--ink);
+  padding: 0.25rem 0.4rem;
+}
+.journey__msg-coach {
+  margin-top: 0.4rem;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: #2c4a40;
+  white-space: pre-line;
+}
+.journey__msg.is-pop { animation: bubblePop 0.3s steps(3); }
+@keyframes bubblePop {
+  0% { transform: translateY(6px); opacity: 0; }
+  100% { transform: none; opacity: 1; }
+}
+
+/* (2) CAPY — the only thing drawn on the canvas now. Flex-grows to fill
+   leftover height, with a floor so Capy is always comfortably visible. */
+.journey__capy {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 220px;
+  overflow: hidden;
+}
+.journey__capy canvas {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -726,8 +792,8 @@ ul { list-style: none; }
   image-rendering: pixelated;
   image-rendering: crisp-edges;
 }
-/* CRT scanlines */
-.journey__stage::after {
+/* CRT scanlines, over Capy only */
+.journey__capy::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -735,61 +801,10 @@ ul { list-style: none; }
   pointer-events: none;
   background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.14) 0 1px, transparent 1px 3px);
 }
-/* HUD strip: speech bubble + level stat laid out with flex so they
-   can never overlap each other (or canvas text — there is none now) */
-.journey__hud {
-  position: absolute;
-  top: 0.7rem;
-  left: 0.7rem;
-  right: 0.7rem;
-  z-index: 2;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.5rem;
-  pointer-events: none;
-}
-.journey__bubble {
-  /* flexible, content-sized bubble: shrinks to its text and is capped so it
-     can never grow across the stat chip or hide the canvas sprites below */
-  width: fit-content;
-  max-width: min(58%, 22ch);
-  height: auto;
-  background: var(--cream);
-  color: var(--ink);
-  border: 2px solid var(--ink);
-  border-radius: 0;
-  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.45);
-  padding: 0.4rem 0.6rem;
-  font-family: var(--font-pixel);
-  font-size: 0.52rem;
-  line-height: 1.6;
-  text-transform: uppercase;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-.journey__stat {
-  flex-shrink: 0;
-  background: rgba(11, 31, 26, 0.85);
-  color: var(--gold-soft);
-  border: 2px solid rgba(201, 161, 74, 0.7);
-  padding: 0.4rem 0.5rem;
-  font-family: var(--font-pixel);
-  font-size: 0.5rem;
-  line-height: 1;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-.journey__bubble.is-pop { animation: bubblePop 0.3s steps(3); }
-@keyframes bubblePop {
-  0% { transform: translateY(6px); opacity: 0; }
-  100% { transform: none; opacity: 1; }
-}
+
+/* (3) POWER BAR — a normal flow row at the foot of the box */
 .journey__vibe {
-  position: absolute;
-  left: 1rem;
-  right: 1rem;
-  bottom: 0.9rem;
+  flex: 0 0 auto;
   z-index: 2;
   display: flex;
   align-items: center;
@@ -1100,14 +1115,6 @@ ul { list-style: none; }
 }
 .journey__key-label { font-size: 0.8rem; font-weight: 600; color: var(--text); line-height: 1.2; }
 
-.journey__readout { border-top: 1px solid var(--border); padding-top: 1rem; }
-.journey__headline {
-  font-family: var(--font-display);
-  font-size: 1.05rem;
-  line-height: 1.4;
-  color: var(--ink);
-}
-.journey__coach { margin-top: 0.45rem; font-size: 0.88rem; color: var(--text-muted); white-space: pre-line; }
 .journey__cta {
   margin-top: auto;
   display: inline-flex;
@@ -1636,7 +1643,9 @@ ul { list-style: none; }
   .story__media { order: -1; padding: 1rem 0; }
   .services__grid { grid-template-columns: 1fr 1fr; }
   .journey__board { grid-template-columns: 1fr; }
-  .journey__stage { min-height: 380px; }
+  /* Board is full-width here, so let Capy have a generous stage of its own */
+  .journey__stage { min-height: 0; }
+  .journey__capy { min-height: 260px; }
   .stats__grid { grid-template-columns: 1fr 1fr; gap: 2rem; }
   .credentials__groups { grid-template-columns: 1fr; }
   .testimonials__grid { grid-template-columns: 1fr; }
@@ -1667,14 +1676,20 @@ ul { list-style: none; }
   .journey__chip { flex-shrink: 0; font-size: 0.5rem; padding: 0.4rem 0.65rem 0.4rem 0.35rem; }
   .journey__chip-num { width: 20px; height: 20px; font-size: 0.5rem; }
   .journey__board { gap: 0.5rem; }
+  /* Phone: the box still stacks message → Capy → power bar and grows with
+     the message, but everything is dialled down so Capy stays prominent and
+     the summary text stays readable. */
   .journey__stage {
     min-height: 0;
-    height: 178px;
+    gap: 0.5rem;
+    padding: 0.5rem;
     box-shadow: 0 0 0 3px var(--gold), 5px 6px 0 rgba(11, 31, 26, 0.2);
   }
-  .journey__hud { top: 0.45rem; left: 0.45rem; right: 0.45rem; }
-  .journey__bubble { max-width: min(56%, 20ch); font-size: 0.46rem; padding: 0.3rem 0.45rem; line-height: 1.5; }
-  .journey__vibe { left: 0.6rem; right: 0.6rem; bottom: 0.55rem; }
+  .journey__capy { min-height: 150px; }
+  .journey__msg { padding: 0.45rem 0.55rem; box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.45); }
+  .journey__msg-title { font-size: 0.5rem; line-height: 1.5; }
+  .journey__msg-stat { font-size: 0.44rem; padding: 0.2rem 0.32rem; }
+  .journey__msg-coach { font-size: 0.74rem; line-height: 1.4; margin-top: 0.3rem; }
   .journey__panel { gap: 0.3rem; padding: 0.55rem 0.6rem; box-shadow: 4px 4px 0 rgba(11, 31, 26, 0.15); }
   .journey__panel-eyebrow { font-size: 0.46rem; }
   .journey__panel-title { font-size: 0.6rem; margin-top: -0.3rem; }
@@ -1724,9 +1739,6 @@ ul { list-style: none; }
   .journey__keys-head { font-size: 0.48rem; margin-bottom: 0.1rem; line-height: 1.4; }
   .journey__key { gap: 0.55rem; min-height: 30px; padding: 0.1rem; }
   .journey__key-label { font-size: 0.68rem; line-height: 1.2; }
-  .journey__readout { padding-top: 0.35rem; }
-  .journey__headline { font-size: 0.86rem; line-height: 1.3; }
-  .journey__coach { font-size: 0.74rem; line-height: 1.4; margin-top: 0.2rem; }
   .journey__cta { margin-top: 0.25rem; padding: 0.45rem 0.7rem; font-size: 0.46rem; }
   .journey__fine { font-size: 0.68rem; margin-top: 0.6rem; }
   .hero { padding-top: 6rem; }

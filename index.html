@@ -505,11 +505,19 @@
           <div class="journey__levels" role="tablist" aria-label="Financial levels" id="journeyLevels"></div>
 
           <div class="journey__board">
+            <!-- Animation box: three stacked, never-overlapping components —
+                 (1) message box, (2) Capy-only canvas, (3) power bar. The box
+                 grows with the message so the message can never cover Capy. -->
             <div class="journey__stage">
-              <canvas id="journeyCanvas" role="img" aria-label="Interactive 8-bit financial scene starring Capy, the pixel capybara"></canvas>
-              <div class="journey__hud">
-                <div class="journey__bubble" id="journeyBubble" aria-live="polite"></div>
-                <span class="journey__stat" id="journeyStat"></span>
+              <div class="journey__msg" id="journeyMsg" aria-live="polite">
+                <div class="journey__msg-head">
+                  <p class="journey__msg-title" id="journeyHeadline"></p>
+                  <span class="journey__msg-stat" id="journeyStat"></span>
+                </div>
+                <p class="journey__msg-coach" id="journeyCoach"></p>
+              </div>
+              <div class="journey__capy">
+                <canvas id="journeyCanvas" role="img" aria-label="Capy, the pixel capybara, reacting to your numbers"></canvas>
               </div>
               <div class="journey__vibe">
                 <span class="journey__vibe-label">Power</span>
@@ -522,10 +530,6 @@
               <p class="journey__panel-eyebrow" id="journeyLevelTag">World 1-1</p>
               <h3 class="journey__panel-title" id="journeyTitle">The Coin Pipes</h3>
               <div class="journey__controls" id="journeyControls"></div>
-              <div class="journey__readout">
-                <p class="journey__headline" id="journeyHeadline"></p>
-                <p class="journey__coach" id="journeyCoach"></p>
-              </div>
               <button type="button" class="journey__cta" id="journeyPlanBtn">Turn this into a real plan</button>
             </div>
           </div>
