@@ -438,35 +438,77 @@
      DOM wiring — chips, sliders, coach copy, power meter
      ============================================================ */
 
-  var chipsEl = document.getElementById("journeyLevels");
   var controlsEl = document.getElementById("journeyControls");
   var titleEl = document.getElementById("journeyTitle");
   var tagEl = document.getElementById("journeyLevelTag");
   var headlineEl = document.getElementById("journeyHeadline");
   var coachEl = document.getElementById("journeyCoach");
+  var sayEl = document.getElementById("journeySay");
   var msgEl = document.getElementById("journeyMsg");
   var statEl = document.getElementById("journeyStat");
   var vibeEl = document.getElementById("journeyVibe");
   var vibePctEl = document.getElementById("journeyVibePct");
   var vibeBoxEl = document.querySelector(".journey__vibe");
+  var prevBtn = document.getElementById("journeyPrev");
+  var nextBtn = document.getElementById("journeyNext");
+  var pipsEl = document.getElementById("journeyNavPips");
 
   var progress = {};
-  var chips = {};
+  var pips = {};
+  var visitedWorlds = new Set();
 
-  engine.order.forEach(function (id, i) {
-    var def = engine.levels[id];
-    var b = document.createElement("button");
-    b.className = "journey__chip";
-    b.type = "button";
-    b.setAttribute("role", "tab");
-    b.innerHTML =
-      '<span class="journey__chip-num">' + (i + 1) + "</span>" +
-      "<span>" + def.name + "</span>" +
-      '<span class="journey__chip-dot" aria-hidden="true"></span>';
-    b.addEventListener("click", function () { engine.start(id); });
-    chipsEl.appendChild(b);
-    chips[id] = b;
+  // Build one pip dot per world
+  engine.order.forEach(function (id) {
+    var pip = document.createElement("span");
+    pip.className = "journey__pip";
+    pipsEl.appendChild(pip);
+    pips[id] = pip;
   });
+
+  // Prev / Next click handlers
+  if (prevBtn) prevBtn.addEventListener("click", function () {
+    var idx = engine.order.indexOf(engine.levelId);
+    if (idx > 0) engine.start(engine.order[idx - 1]);
+  });
+  if (nextBtn) nextBtn.addEventListener("click", function () {
+    var idx = engine.order.indexOf(engine.levelId);
+    if (idx < engine.order.length - 1) engine.start(engine.order[idx + 1]);
+  });
+
+  // Update arrow states, pip states, and plan-button visibility
+  function updateNav() {
+    var idx = engine.order.indexOf(engine.levelId);
+    var total = engine.order.length;
+    var isFirst = idx === 0;
+    var isLast = idx === total - 1;
+
+    if (prevBtn) prevBtn.disabled = isFirst;
+    if (nextBtn) nextBtn.style.display = isLast ? "none" : "";
+
+    // Plan button: only visible on last world, enabled when all worlds visited
+    if (planBtn) {
+      planBtn.style.display = isLast ? "" : "none";
+      if (isLast) {
+        var allVisited = engine.order.every(function (id) { return visitedWorlds.has(id); });
+        planBtn.disabled = !allVisited;
+        if (planLockEl) {
+          planLockEl.hidden = allVisited;
+          planLockEl.textContent = allVisited ? "" : "Visit all worlds first to unlock.";
+        }
+      } else if (planLockEl) {
+        planLockEl.hidden = true;
+      }
+    }
+
+    // Pip states
+    engine.order.forEach(function (id) {
+      var pip = pips[id];
+      if (!pip) return;
+      pip.classList.toggle("is-active", id === engine.levelId);
+      pip.classList.toggle("is-visited", visitedWorlds.has(id));
+      pip.classList.toggle("is-done", (progress[id] || 0) >= 60);
+    });
+  }
 
   function fmtVal(inp, v) {
     switch (inp.fmt) {
@@ -707,6 +749,7 @@
 
   var lastMsg = "";
   engine.on("level", function (e) {
+    visitedWorlds.add(e.id);
     var i = engine.order.indexOf(e.id);
     tagEl.textContent = "World 1-" + (i + 1) + " · " + e.def.name;
     titleEl.textContent = e.def.title.split("·")[1].trim();
@@ -717,9 +760,9 @@
       if (e.def.phases[0].title) titleEl.textContent = e.def.phases[0].title;
     }
     buildControls(e.def);
-    for (var id in chips) chips[id].classList.toggle("is-active", id === e.id);
     if (vibeBoxEl) vibeBoxEl.classList.remove("is-green", "is-red");
     lastMsg = "";
+    updateNav();
   });
 
   engine.on("state", function (s) {
@@ -730,6 +773,7 @@
       for (var vk in engine.values) snap[vk] = engine.values[vk];
     }
     headlineEl.textContent = s.headline || "";
+    if (sayEl) sayEl.textContent = s.say ? "“" + s.say + "”" : "";
     coachEl.textContent = s.coach || "";
     statEl.textContent = s.stat || "";
     statEl.style.display = s.stat ? "" : "none";
@@ -765,9 +809,7 @@
       vibeEl.style.width = pct + "%";
       vibePctEl.textContent = pct + "%";
     }
-    engine.order.forEach(function (id) {
-      chips[id].classList.toggle("is-done", (progress[id] || 0) >= 60);
-    });
+    updateNav();
   });
 
   /* ============================================================
@@ -930,6 +972,7 @@
 
   /* ---------- modal plumbing ---------- */
   var planBtn = document.getElementById("journeyPlanBtn");
+  var planLockEl = document.getElementById("journeyPlanLock");
   var planModal = document.getElementById("planModal");
   var planBackdrop = document.getElementById("planModalBackdrop");
   var planClose = document.getElementById("planModalClose");
