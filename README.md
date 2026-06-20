@@ -27,7 +27,7 @@ sofina-johari-portfolio/
 ├── index.html                 # Main HTML document
 ├── styles.css                 # All styling (variables, modals, responsive)
 ├── main.js                    # Core interactions (nav, scroll, animations)
-├── Mascot.js                  # Capy mascot rendering (Three.js)
+├── Mascot.js                  # Capy mascot rendering (8-bit sprite, canvas)
 ├── FinancialEngine.js         # Financial calculation logic
 ├── financial-levels.js        # Interactive levels/stages
 ├── carousel.js                # Services, testimonials, videos carousels
@@ -98,13 +98,46 @@ The website features three lead-capture forms:
 
 **See [FORMS_DOCUMENTATION.md](FORMS_DOCUMENTATION.md) for complete field mappings, entry IDs, and validation rules.**
 
+### Your Toolkit: Capy's Quest Financial Journey
+
+The **Capy's Quest** section (labeled "Your Toolkit" in the UI) is an interactive four-world financial simulator. Each world focuses on a key financial pillar: Cashflow, Protection, Future, and Legacy. The toolkit features a responsive, three-component layout:
+
+1. **Message Box** (top, flexible height)
+   - Displays the current world's headline, coaching guidance, and live key metric
+   - Height adjusts dynamically based on content to prevent overlap with animation
+   - Dark ink background with cream text, animated pop-in on world/headline change
+
+2. **Animation Canvas** (middle, flex-grow)
+   - Renders Capy, the 8-bit capybara mascot, on a minimal stage
+   - Canvas resolution is kept low (160px-240px width) with CSS integer scaling (pixelated effect)
+   - Mascot's mood (facial expression, effects) syncs with computed financial state:
+     - Stable, joyful, growth, cautious, concerned, serene, calm, thoughtful
+     - Mood changes trigger a bounce animation via the `pulse` parameter
+   - Canvas height grows to fill available space, ensuring Capy's feet stay anchored to the ground
+
+3. **Power Bar** (bottom, fixed height)
+   - Visual progress bar showing readiness % for the current world
+   - Labeled with category (Cashflow, Protection, Future, Legacy) and percentage value
+   - Smoothly eases to new values as user adjusts sliders
+
+**Responsive Behavior:**
+- **Desktop (>960px):** Message box ~60px, canvas ≥220px, spacing 0.7rem
+- **Tablet (961–960px):** Message box ~60px, canvas ≥260px
+- **Mobile (≤620px):** Message box ~40px, canvas ≥150px, spacing 0.5rem, smaller fonts
+
+**File Architecture:**
+- `financial-levels.js`: Defines `drawCapyOnly()` scene renderer and state-to-DOM binding
+- `Mascot.js`: Sprite frame caching, mood state engine, particle effects (sparkle/sweat/hearts)
+- `FinancialEngine.js`: Canvas lifecycle, metric easing, render loop coordination
+- `styles.css`: `.journey__stage` (flex column), `.journey__msg`, `.journey__capy`, `.journey__vibe` (power bar)
+
 ---
 
 ## 🚀 Features
 
 ### Interactive Elements
 - **Animated Hero Canvas** — Particle effects background
-- **Capy Financial Journey** — Interactive 8-bit financial simulator with sliders
+- **Capy Financial Journey** — Interactive 8-bit financial simulator with sliders; multi-world toolkit with live guidance
 - **Carousels** — Services, testimonials, and videos with keyboard support
 - **Amy Chatbot** — AI assistant for instant financial questions
 - **Urgency Scale Slider** — 1-10 scale input in contact form

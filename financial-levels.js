@@ -133,7 +133,8 @@
   });
 
   /* ============================================================
-     WORLD 1-2 — Protection: the brick shield
+     WORLD 1-2 — Protection: liability & income strategy
+     (thematic: "brick shield"; visual: bare Capy only)
      ============================================================ */
 
   /* shared global money state — World 1-1 and World 1-2 read & write the
@@ -171,7 +172,7 @@
       var phase = v.phase ? 1 : 0;
       var depWord = deps >= 3 ? "3+" : String(deps);
 
-      // ---- PHASE 1 · liabilities + income replacement (the brick shield) ----
+      // ---- PHASE 1 · liabilities + income replacement ----
       var mrta = v.mrta ? 1 : 0;
       var adjustedMortgage = mrta ? 0 : v.mortgage;              // MRTA settles the mortgage
       var totalLiabilities = adjustedMortgage + v.nonmortgage;
@@ -267,7 +268,8 @@
   });
 
   /* ============================================================
-     WORLD 1-3 — Future: the flagpole climb
+     WORLD 1-3 — Future: retirement readiness
+     (thematic: "flagpole climb"; visual: bare Capy only)
      ============================================================ */
 
   engine.registerLevel("retirement", {
@@ -343,8 +345,8 @@
   });
 
   /* ============================================================
-     WORLD 1-4 — Legacy: the map home
-     (handled gently — a calm night scene, never an alarmed mascot)
+     WORLD 1-4 — Legacy: estate & succession planning
+     (thematic: "willow gate"; visual: bare Capy only; mood stays calm)
      ============================================================ */
 
   engine.registerLevel("legacy", {

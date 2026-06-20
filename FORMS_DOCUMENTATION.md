@@ -6,6 +6,8 @@ The website uses three forms with custom modal UI:
 2. **Contact/Website Application Form** - Comprehensive consultation booking form (Google Forms)
 3. **Capy's Quest Roadmap** - "Send to Sofina" from the Capy financial journey (Netlify Function + Resend email)
 
+**Note:** The **Capy's Quest** interactive simulator (under "Your Toolkit") is a financial calculation engine, not a form submission. It features a redesigned three-component layout: message box (guidance + metric), animation canvas (Capy mascot), and power bar (readiness %). Users adjust sliders to explore financial scenarios; the "Send to Sofina" button in the roadmap modal (triggered by "Turn this into a real plan") captures the complete roadmap.
+
 ---
 
 ## Ebook Gate Form
