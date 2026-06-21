@@ -131,6 +131,133 @@
 
   Mascot.MOOD_ALIASES = { "risk-averse": "cautious", happy: "joyful", worried: "concerned" };
 
+  /* Emotion scale: stress → joy. Used across four financial worlds.
+     Each mood maps to a financial readiness threshold and visual personality.
+  */
+  Mascot.EMOTION_SCALE = [
+    {
+      name: "concerned",
+      rank: 1,
+      category: "Crisis",
+      label: "Distressed",
+      color: "#d96a4a",
+      description: "Anxious, overwhelmed — cashflow negative or debt-heavy",
+      triggers: [
+        "• Monthly deficit (spending > income)",
+        "• Debt-to-income > 35%",
+        "• No medical protection active",
+        "• Estate completely unplanned"
+      ],
+      expression: "Worried eyes, knit brows, sad mouth, sweat droplets",
+      energy: "Frozen — no bounce, sluggish movement (0.9×)"
+    },
+    {
+      name: "cautious",
+      rank: 2,
+      category: "Risk",
+      label: "Alert",
+      color: "#e7c069",
+      description: "Guarded, watchful — risky territory requiring attention",
+      triggers: [
+        "• Weak surplus (0–20% of income)",
+        "• Life protection gap (45–75% of target)",
+        "• Medical coverage < RM 200k",
+        "• Retirement progress < 25% of goal"
+      ],
+      expression: "Open eyes, flat brows, neutral mouth",
+      energy: "Minimal movement — careful pace (1.2×)"
+    },
+    {
+      name: "thoughtful",
+      rank: 3,
+      category: "Reflective",
+      label: "Contemplative",
+      color: "#9fd8c4",
+      description: "Introspective, deliberate — engaged in planning decisions",
+      triggers: [
+        "• Estate planning phase (not yet activated)",
+        "• Evaluating legacy keys and succession"
+      ],
+      expression: "Soft eyes, raised brows (thinking), neutral mouth",
+      energy: "Still and measured — deliberate tempo (1.0×)"
+    },
+    {
+      name: "stable",
+      rank: 4,
+      category: "Baseline",
+      label: "Balanced",
+      color: "#b07d46",
+      description: "Steady, grounded — meeting requirements with tight margins",
+      triggers: [
+        "• Healthy surplus (1–20% of income)",
+        "• Life protection solid (75%+ of target)",
+        "• Medical coverage modest (RM 200k–1M)",
+        "• Retirement progress 50–80% of goal"
+      ],
+      expression: "Open eyes, no brows, neutral mouth",
+      energy: "Normal pace — balanced movement (2.0×)"
+    },
+    {
+      name: "calm",
+      rank: 5,
+      category: "Secure",
+      label: "Peaceful",
+      color: "#9fd8c4",
+      description: "Relaxed, comfortable — solid protections in place",
+      triggers: [
+        "• Good life insurance coverage",
+        "• Modest medical shield (standard private care)",
+        "• Estate partially secured (1–2 keys active)"
+      ],
+      expression: "Soft eyes, no brows, neutral mouth, no blush",
+      energy: "Relaxed movement — unhurried pace (1.4×)"
+    },
+    {
+      name: "serene",
+      rank: 6,
+      category: "Complete",
+      label: "Content",
+      color: "#9fd8c4",
+      description: "At peace, fulfilled — all protections fully activated and secured",
+      triggers: [
+        "• Estate 100% ready (all three legacy keys active)",
+        "• All dependants covered by will/hibah"
+      ],
+      expression: "Closed eyes, rosy blush, floating hearts",
+      energy: "Peaceful rhythm — calm movement (1.0×)"
+    },
+    {
+      name: "growth",
+      rank: 7,
+      category: "Progress",
+      label: "Optimistic",
+      color: "#e7c069",
+      description: "Excited, climbing — making strong progress toward goals",
+      triggers: [
+        "• Retirement savings 80%–110% of goal",
+        "• Steady compounding and contributions"
+      ],
+      expression: "Star eyes (✨), grinning mouth, golden sparkles",
+      energy: "Energetic bounce — upbeat tempo (4.0×)"
+    },
+    {
+      name: "joyful",
+      rank: 8,
+      category: "Thriving",
+      label: "Delighted",
+      color: "#e7c069",
+      description: "Thriving, celebrating — exceeding all targets and goals",
+      triggers: [
+        "• Surplus ≥ 20% of income (Cashflow mastery)",
+        "• Life insurance 100%+ of target (Full brick shield)",
+        "• Medical coverage maxed at RM 1M+ (Force field)",
+        "• Retirement savings 110%+ of goal (Flagpole conquered)"
+      ],
+      expression: "Happy bright eyes, grinning mouth, rosy blush, golden sparkles",
+      energy: "Bouncy, celebratory — high energy (6.0×)"
+    }
+  ];
+
   Mascot.registerMood = function (name, def) {
     Mascot.MOODS[name] = Object.assign({}, Mascot.MOODS.stable, def);
   };
