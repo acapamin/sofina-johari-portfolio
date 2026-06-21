@@ -57,7 +57,7 @@
 
   engine.registerLevel("budget", {
     name: "Cashflow",
-    title: "World 1-1 · The Coin Pipes",
+    title: "Cashflow & Budgeting",
     inputs: [
       { key: "income", group: "INFLOW · The Coin Pool", label: "Monthly Take-Home Pay", min: 1000, max: 20000, step: 100, value: 5000, fmt: "money", base: true },
       { key: "fixed", group: "OUTFLOW · The Drain Pipes & Blocks", label: "Fixed Commitments", sub: "(Rent, Insurance, Utilities, Bills)", min: 0, max: 20000, step: 100, value: 1500, fmt: "money", scaleWith: "income", maxFactor: 1.2 },
@@ -96,8 +96,8 @@
         say = "LEVEL UP! WE'RE GROWING!";
         coach = "You have a healthy surplus of " + pctR + "% (" + money(surplus) + ") "
           + "remaining this month! This is a textbook gold standard. Your capy is in a "
-          + "prime position to route these extra coins into the Protection or Future "
-          + "Funds tabs above!";
+          + "prime position to route these extra coins into the Protection or Retirement "
+          + "tabs above!";
         headline = "You bank " + money(surplus) + " a month — a " + pctR + "% surplus.";
       } else {
         mood = "stable";
@@ -133,46 +133,42 @@
   });
 
   /* ============================================================
-     WORLD 1-2 — Protection: liability & income strategy
-     (thematic: "brick shield"; visual: bare Capy only)
+     PROTECTION — life & health cover on one continuous page
+     (single-screen layout: both pillars are dialled in together and
+     scored as one combined protection readiness; visual: bare Capy only)
      ============================================================ */
 
-  /* shared global money state — World 1-1 and World 1-2 read & write the
-     SAME income, so moving the slider in one world moves it in the other.
-     (World 1-2 now models liabilities explicitly via its own mortgage /
-     non-mortgage sliders, so it no longer borrows World 1-1's debt figure.) */
+  /* shared global money state — Cashflow and Protection read & write the
+     SAME income, so moving the slider in one toolkit moves it in the other.
+     (Protection models liabilities explicitly via its own mortgage /
+     non-mortgage sliders, so it no longer borrows Cashflow's debt figure.) */
   var GLOBAL = { income: 5000, debt: 800 };
-  var insurancePhase = 0;                 // 0 = Brick Shield form · 1 = Force Field form
 
-  var FULL_MED = 1000000;                  // RM 1M annual limit = a maxed force field
-
+  var FULL_MED = 1000000;                  // RM 1M annual limit = fully covered
 
   engine.registerLevel("insurance", {
     name: "Protection",
-    title: "World 1-2 · The Brick Shield",
-    // two progressive input forms, toggled by one retro pixel button. The
-    // canvas always shows both defences; only the form + title swap.
-    phases: [
-      { title: "The Brick Shield", cta: "Check Health Protection" },
-      { title: "The Force Field", cta: "Back to Life Cover" }
-    ],
+    title: "Insurance Protection",
+    // a single continuous form: life-protection inputs flow straight into
+    // health-protection inputs, all visible together (no phase toggle), so
+    // the whole section fits one screen and is scored as one figure.
+    compact: true,
     inputs: [
-      { key: "income", group: "PHASE 1: LIFE PROTECTION", phase: 0, label: "Monthly income", sub: "(Synced with World 1-1)", min: 1000, max: 30000, step: 100, value: 5000, fmt: "money" },
-      { key: "mortgage", group: "PHASE 1: LIFE PROTECTION", phase: 0, label: "Outstanding mortgage debt", min: 0, max: 1500000, step: 10000, value: 300000, fmt: "money" },
-      { key: "mrta", group: "PHASE 1: LIFE PROTECTION", phase: 0, label: "My mortgage is covered by MRTA / MLTA", type: "toggle", value: 0 },
-      { key: "nonmortgage", group: "PHASE 1: LIFE PROTECTION", phase: 0, label: "Outstanding non-mortgage debt", sub: "(Car, cards, PTPTN)", min: 0, max: 500000, step: 5000, value: 50000, fmt: "money" },
-      { key: "deps", group: "PHASE 1: LIFE PROTECTION", phase: 0, label: "Dependants", sub: "(People relying on you)", min: 0, max: 3, step: 1, value: 2, fmt: "deps" },
-      { key: "cover", group: "PHASE 1: LIFE PROTECTION", phase: 0, label: "Existing life / takaful cover", min: 0, max: 2000000, step: 10000, value: 100000, fmt: "money" },
-      { key: "medlimit", group: "PHASE 2: HEALTH PROTECTION", phase: 1, label: "Annual medical card limit", sub: "(RM 0 = no medical card)", min: 0, max: 2000000, step: 100000, value: 500000, fmt: "money" },
-      { key: "ciactive", group: "PHASE 2: HEALTH PROTECTION", phase: 1, label: "Critical illness policy active", type: "toggle", value: 0 }
+      { key: "income", group: "LIFE PROTECTION", label: "Monthly income", sub: "(Synced with Cashflow)", min: 1000, max: 30000, step: 100, value: 5000, fmt: "money" },
+      { key: "mortgage", group: "LIFE PROTECTION", label: "Outstanding mortgage debt", min: 0, max: 1500000, step: 10000, value: 300000, fmt: "money" },
+      { key: "mrta", group: "LIFE PROTECTION", label: "Mortgage covered by MRTA / MLTA", type: "toggle", value: 0 },
+      { key: "nonmortgage", group: "LIFE PROTECTION", label: "Outstanding non-mortgage debt", sub: "(Car, cards, PTPTN)", min: 0, max: 500000, step: 5000, value: 50000, fmt: "money" },
+      { key: "deps", group: "LIFE PROTECTION", label: "Dependants", sub: "(People relying on you)", min: 0, max: 3, step: 1, value: 2, fmt: "deps" },
+      { key: "cover", group: "LIFE PROTECTION", label: "Existing life / takaful cover", min: 0, max: 2000000, step: 10000, value: 100000, fmt: "money" },
+      { key: "medlimit", group: "HEALTH PROTECTION", label: "Annual medical card limit", sub: "(RM 0 = no medical card)", min: 0, max: 2000000, step: 100000, value: 500000, fmt: "money" },
+      { key: "ciactive", group: "HEALTH PROTECTION", label: "Critical illness policy active", type: "toggle", value: 0 }
     ],
     compute: function (v) {
       var income = v.income;
       var deps = Math.round(v.deps);
-      var phase = v.phase ? 1 : 0;
       var depWord = deps >= 3 ? "3+" : String(deps);
 
-      // ---- PHASE 1 · liabilities + income replacement ----
+      // ---- LIFE · liabilities + income replacement ----
       var mrta = v.mrta ? 1 : 0;
       var adjustedMortgage = mrta ? 0 : v.mortgage;              // MRTA settles the mortgage
       var totalLiabilities = adjustedMortgage + v.nonmortgage;
@@ -182,85 +178,65 @@
       var lifeRatio = target > 0 ? cover / target : 1;
       var gap = Math.max(0, target - cover);
 
-      // ---- PHASE 2 · medical card limit (the force field) ----
+      // ---- HEALTH · annual medical card limit ----
       var medlimit = v.medlimit;
       var ciActive = v.ciactive ? 1 : 0;
-      var fieldRatio = clamp(medlimit / FULL_MED, 0, 1);         // full dome at RM 1M
+      var fieldRatio = clamp(medlimit / FULL_MED, 0, 1);         // full cover at RM 1M
 
-      var mood, say, coach, headline, stat, power;
+      // ---- combined protection readiness (both pillars matter equally) ----
+      var lifeR = clamp(lifeRatio, 0, 1);
+      var overall = (lifeR + fieldRatio) / 2;
+      var pct = Math.round(overall * 100);
+      var weak = Math.min(lifeR, fieldRatio);                    // mood tracks the weaker pillar
 
-      if (phase === 0) {
-        // plain-language justification of the (large) target number
-        var why = "Target: " + money(target) + ". Why? ";
-        if (deps === 0) {
-          why += "With no dependants, the goal is simply to clear your "
-            + money(totalLiabilities) + " in active liabilities so no debt is passed on.";
-        } else {
-          why += "With " + depWord + (deps === 1 ? " dependant" : " dependants")
-            + ", your family needs " + (deps === 1 ? "7" : "10")
-            + " years of your income replaced to sustain their lives if you vanish, plus your "
-            + money(totalLiabilities) + " in active liabilities.";
-        }
-        if (mrta) why += " Your mortgage is excluded because your MRTA / MLTA handles it!";
+      var mood = weak >= 0.9 ? "joyful" : weak >= 0.6 ? "stable" : weak >= 0.35 ? "risk-averse" : "concerned";
+      var say = weak >= 0.9 ? "Fully shielded — bring it on!"
+        : weak >= 0.6 ? "Solid cover, a few thin spots."
+        : weak >= 0.35 ? "The shield is flickering..."
+        : "Big gaps to close!";
 
-        if (lifeRatio >= 1) {
-          mood = "joyful";
-          say = "Full wall! Bring it on!";
-          headline = "Brick Shield complete — " + money(cover) + " of a " + money(target) + " target.";
-          coach = why + " Your " + money(cover) + " cover clears this in full — your family is bulletproofed.";
-        } else {
-          mood = lifeRatio >= 0.75 ? "stable" : lifeRatio >= 0.45 ? "risk-averse" : "concerned";
-          say = lifeRatio >= 0.75 ? "A few thin spots up top."
-            : lifeRatio >= 0.45 ? "My wall is flickering..." : "The wall is barely holding!";
-          headline = "Protection gap: " + money(gap) + " of a " + money(target) + " target.";
-          coach = why + " Your " + money(cover) + " cover leaves a " + money(gap)
-            + " gap — usually the cheapest financial problem to solve.";
-        }
-        stat = "SHIELD " + clamp(Math.round(lifeRatio * 100), 0, 120) + "%";
-        power = { pct: clamp(lifeRatio * 100, 0, 100), tone: lifeRatio >= 1 ? "green" : lifeRatio < 0.45 ? "red" : "gold" };
+      // ---- LIFE commentary line ----
+      var famWhy = deps > 0
+        ? " (" + (deps === 1 ? "7" : "10") + " years of income for your " + depWord
+          + (deps === 1 ? " dependant" : " dependants") + " plus " + money(totalLiabilities) + " of debt)"
+        : " (to clear " + money(totalLiabilities) + " of liabilities)";
+      var lifeLine;
+      if (lifeRatio >= 1) {
+        lifeLine = "Life: your " + money(cover) + " cover fully meets the " + money(target) + " target" + famWhy + ".";
       } else {
-        var medComment;
-        if (medlimit === 0) {
-          mood = "concerned"; say = "No medical shield?!"; stat = "MED: NONE";
-          power = { pct: 6, tone: "red" };
-          headline = "Critical risk — no medical card active.";
-          medComment = "🚨 CRITICAL RISK: Public healthcare is highly subsidized, but advanced "
-            + "treatments, specialized implants, and cancer drugs still incur heavy out-of-pocket "
-            + "costs. A major emergency could wipe out your cashflow.";
-        } else if (medlimit < 200000) {
-          mood = "risk-averse"; say = "Weak barrier, watch out."; stat = "MED " + rmShort(medlimit);
-          power = { pct: clamp(fieldRatio * 100, 6, 100), tone: "red" };
-          headline = "Weak barrier — limit under RM 200k.";
-          medComment = "⚠️ WEAK BARRIER: Fine for basic ward stays, but complex surgeries or "
-            + "intensive ICU care at Malaysian private hospitals can easily breach this ceiling "
-            + "in a single admission.";
-        } else if (medlimit < FULL_MED) {
-          mood = "stable"; say = "Modest shield holding."; stat = "MED " + rmShort(medlimit);
-          power = { pct: clamp(fieldRatio * 100, 0, 100), tone: "gold" };
-          headline = "Modest shield — " + money(medlimit) + " annual limit.";
-          medComment = "🧱 MODEST SHIELD: Covers standard private treatments well. However, to stay "
-            + "fully protected against medical inflation and long-term care without out-of-pocket "
-            + "panic, an upgrade to RM 1M+ is ideal.";
-        } else {
-          mood = "joyful"; say = "Force field maxed!"; stat = "MED MAX";
-          power = { pct: 100, tone: "green" };
-          headline = "Force field maxed — " + money(medlimit) + " annual limit.";
-          medComment = "✨ MAXED BARRIER: Secures your health completely. Comfortably covers "
-            + "long-term therapies, specialized surgeries, and private room stays at top private "
-            + "hospitals with no lifetime caps.";
-        }
-        coach = medComment + "\n• Critical Illness: " + (ciActive ? "Active" : "Inactive")
-          + " (Provides a cash payout to replace your income if you need time off work to recover).";
+        lifeLine = "Life: a " + money(gap) + " gap against a " + money(target) + " target" + famWhy
+          + " — usually the cheapest financial problem to solve.";
       }
+      if (mrta) lifeLine += " Mortgage excluded — your MRTA / MLTA covers it.";
+
+      // ---- HEALTH commentary line ----
+      var medLine;
+      if (medlimit === 0) {
+        medLine = "Health: no medical card — a major hospital stay could wipe out your cashflow.";
+      } else if (medlimit < 200000) {
+        medLine = "Health: a " + money(medlimit) + " limit is thin — one complex admission can breach it.";
+      } else if (medlimit < FULL_MED) {
+        medLine = "Health: a " + money(medlimit) + " limit covers standard private care; RM 1M+ is the inflation-proof goal.";
+      } else {
+        medLine = "Health: a " + money(medlimit) + " limit comfortably covers long-term private treatment.";
+      }
+      medLine += " Critical-illness payout " + (ciActive ? "active." : "not yet active.");
+
+      var headline = (lifeRatio >= 1 && fieldRatio >= 1)
+        ? "Fully protected — life and health both covered."
+        : "Protection " + pct + "% — life " + clamp(Math.round(lifeRatio * 100), 0, 999)
+          + "%, health " + Math.round(fieldRatio * 100) + "%.";
+
+      var tone = overall >= 0.9 ? "green" : overall < 0.4 ? "red" : "gold";
 
       return {
         mood: mood,
-        score: clamp(Math.round((phase === 0 ? lifeRatio : fieldRatio) * 100), 0, 100),
-        stat: stat,
+        score: pct,
+        stat: "PROTECT " + pct + "%",
         headline: headline,
-        coach: coach,
+        coach: lifeLine + "\n" + medLine,
         say: say,
-        power: power,
+        power: { pct: clamp(overall * 100, 0, 100), tone: tone },
         metrics: { ratio: clamp(lifeRatio, 0, 1.2), forcefield: fieldRatio }
       };
     },
@@ -268,13 +244,13 @@
   });
 
   /* ============================================================
-     WORLD 1-3 — Future: retirement readiness
-     (thematic: "flagpole climb"; visual: bare Capy only)
+     RETIREMENT — retirement readiness
+     (visual: bare Capy only)
      ============================================================ */
 
   engine.registerLevel("retirement", {
-    name: "Future",
-    title: "World 1-3 · The Flagpole Climb",
+    name: "Retirement",
+    title: "Retirement Planning",
     inputs: [
       { key: "age", label: "Age today", min: 20, max: 60, step: 1, value: 30, fmt: "age" },
       { key: "retireAge", label: "Retirement age", min: 40, max: 70, step: 1, value: 60, fmt: "age" },
@@ -345,13 +321,13 @@
   });
 
   /* ============================================================
-     WORLD 1-4 — Legacy: estate & succession planning
-     (thematic: "willow gate"; visual: bare Capy only; mood stays calm)
+     LEGACY — estate & succession planning
+     (visual: bare Capy only; mood stays calm)
      ============================================================ */
 
   engine.registerLevel("legacy", {
     name: "Legacy",
-    title: "World 1-4 · THE WILLOW GATE",
+    title: "Estate & Legacy Planning",
     inputs: [
       { key: "loved", label: "Loved ones", min: 1, max: 8, step: 1, value: 3, fmt: "people" },
       {
@@ -449,6 +425,11 @@
   var vibeEl = document.getElementById("journeyVibe");
   var vibePctEl = document.getElementById("journeyVibePct");
   var vibeBoxEl = document.querySelector(".journey__vibe");
+  var nextBtn = document.getElementById("journeyNextBtn");
+  var backBtn = document.getElementById("journeyBackBtn");
+  var finalEl = document.getElementById("journeyFinal");
+  var finalPctEl = document.getElementById("journeyFinalPct");
+  var finalFillEl = document.getElementById("journeyFinalFill");
 
   var progress = {};
   var chips = {};
@@ -463,10 +444,69 @@
       '<span class="journey__chip-num">' + (i + 1) + "</span>" +
       "<span>" + def.name + "</span>" +
       '<span class="journey__chip-dot" aria-hidden="true"></span>';
-    b.addEventListener("click", function () { engine.start(id); });
+    b.addEventListener("click", function () { goToStep(i); });
     chipsEl.appendChild(b);
     chips[id] = b;
   });
+
+  // ---- final "Your Plan" step: a chip + a dedicated CTA panel that appears
+  // once the user has navigated through all four toolkits ----
+  var finalStep = engine.order.length;     // step index just past the last toolkit
+  var finalChip = document.createElement("button");
+  finalChip.className = "journey__chip journey__chip--final";
+  finalChip.type = "button";
+  finalChip.setAttribute("role", "tab");
+  finalChip.innerHTML =
+    '<span class="journey__chip-num">★</span>' +
+    "<span>Your Plan</span>" +
+    '<span class="journey__chip-dot" aria-hidden="true"></span>';
+  finalChip.addEventListener("click", function () { goToStep(finalStep); });
+  chipsEl.appendChild(finalChip);
+
+  var currentStep = 0;
+
+  // overall readiness across every toolkit, reused for the final POWER readout
+  function overallReadiness() { return collectReport().overall; }
+
+  function showFinalView(on) {
+    if (controlsEl) controlsEl.hidden = on;
+    if (finalEl) finalEl.hidden = !on;
+    if (nextBtn) nextBtn.hidden = on;
+    if (planBtn) planBtn.hidden = !on;
+  }
+
+  function paintFinalPower() {
+    var pct = clamp(overallReadiness(), 0, 100);
+    if (finalPctEl) finalPctEl.textContent = pct + "%";
+    if (finalFillEl) finalFillEl.style.width = pct + "%";
+    // mirror the overall figure onto the stage POWER bar too
+    vibeEl.style.width = pct + "%";
+    vibePctEl.textContent = pct + "%";
+    if (vibeBoxEl) {
+      vibeBoxEl.classList.remove("is-red");
+      vibeBoxEl.classList.toggle("is-green", pct >= 80);
+    }
+  }
+
+  function goToStep(n) {
+    n = clamp(n, 0, finalStep);
+    currentStep = n;
+    if (backBtn) backBtn.hidden = (n === 0);
+    if (n < finalStep) {
+      showFinalView(false);
+      engine.start(engine.order[n]);   // fires "level" → builds controls, title, tag, chips
+    } else {
+      showFinalView(true);
+      tagEl.textContent = "Final Step";
+      titleEl.textContent = "Your Money Plan";
+      for (var id in chips) chips[id].classList.remove("is-active");
+      finalChip.classList.add("is-active");
+      paintFinalPower();
+    }
+  }
+
+  if (nextBtn) nextBtn.addEventListener("click", function () { goToStep(currentStep + 1); });
+  if (backBtn) backBtn.addEventListener("click", function () { goToStep(currentStep - 1); });
 
   function fmtVal(inp, v) {
     switch (inp.fmt) {
@@ -489,12 +529,11 @@
     // a level that tags its inputs with `group` renders section headers
     // and switches to the compact two-column Cashflow layout
     var hasGroups = def.inputs.some(function (inp) { return inp.group; });
-    // levels that declare `phases` show one progressive input view at a time,
-    // toggled by a single retro pixel button (keeps the panel short → no scroll)
-    var hasPhases = !!def.phases;
-    var curPhase = hasPhases ? insurancePhase : null;
+    // a level can ask for a tighter, single-screen layout (Protection packs
+    // both its life + health pillars onto one page)
+    var isCompact = !!def.compact;
     controlsEl.classList.toggle("journey__controls--grouped", hasGroups);
-    controlsEl.classList.toggle("journey__controls--phased", hasPhases);
+    controlsEl.classList.toggle("journey__controls--compact", isCompact);
 
     var controls = {};                 // key -> { inp, range, output }
     var baseKey = null;                // the inflow slider others scale against
@@ -538,8 +577,6 @@
 
     var lastGroup = null;
     def.inputs.forEach(function (inp) {
-      if (hasPhases && inp.phase !== curPhase) return;   // hide the other phase
-
       // micro-stash: a labelled row of 3 compact sliders sharing one line
       if (inp.type === "microrow") {
         var stash = document.createElement("div");
@@ -580,7 +617,7 @@
         return;
       }
 
-      // legacy keys: full-width, thumb-friendly toggles (World 1-2 switch
+      // legacy keys: full-width, thumb-friendly toggles (Protection switch
       // format) inside one tight container with a section header
       if (inp.type === "keyrow") {
         var keys = document.createElement("div");
@@ -643,10 +680,10 @@
       var id = "jin-" + inp.key;
       var subHtml = inp.sub ? '<span class="journey__control-sub">' + inp.sub + "</span>" : "";
       var theMax = inp.scaleWith ? dynMax(inp) : inp.max;
-      // income & debt are shared world state — seed the slider from GLOBAL so
-      // a value set in World 1-1 shows up here (and vice-versa). Every other
-      // slider seeds from the live engine value, so a phase toggle (which
-      // rebuilds this panel) never loses what the user has already dialled in.
+      // income & debt are shared cross-toolkit state — seed the slider from
+      // GLOBAL so a value set in Cashflow shows up here (and vice-versa). Every
+      // other slider seeds from the live engine value, so rebuilding this panel
+      // never loses what the user has already dialled in.
       var globalKey = inp.key === "income" || inp.key === "debt";
       var current = engine.values[inp.key];
       var theValue = globalKey
@@ -687,37 +724,16 @@
       });
       controlsEl.appendChild(row);
     });
-
-    // progressive phase toggle — one pixel button swaps Life ⇄ Health views
-    if (hasPhases) {
-      var nextPhase = curPhase === 0 ? 1 : 0;
-      var toggle = document.createElement("button");
-      toggle.type = "button";
-      toggle.className = "journey__phase-toggle";
-      toggle.innerHTML = def.phases[curPhase].cta;
-      toggle.addEventListener("click", function () {
-        insurancePhase = nextPhase;
-        engine.setInput("phase", nextPhase);   // swap commentary / power readout
-        if (def.phases[nextPhase].title) titleEl.textContent = def.phases[nextPhase].title;
-        buildControls(def);                      // swap only the form UI (canvas persists)
-      });
-      controlsEl.appendChild(toggle);
-    }
   }
 
   var lastMsg = "";
   engine.on("level", function (e) {
     var i = engine.order.indexOf(e.id);
-    tagEl.textContent = "World 1-" + (i + 1) + " · " + e.def.name;
-    titleEl.textContent = e.def.title.split("·")[1].trim();
-    // phased levels always open on PHASE 1 (with its own panel title)
-    if (e.def.phases) {
-      insurancePhase = 0;
-      engine.values.phase = 0;
-      if (e.def.phases[0].title) titleEl.textContent = e.def.phases[0].title;
-    }
+    tagEl.textContent = "Step " + (i + 1) + " of " + engine.order.length;
+    titleEl.textContent = e.def.title;
     buildControls(e.def);
     for (var id in chips) chips[id].classList.toggle("is-active", id === e.id);
+    if (finalChip) finalChip.classList.remove("is-active");
     if (vibeBoxEl) vibeBoxEl.classList.remove("is-green", "is-red");
     lastMsg = "";
   });
@@ -771,8 +787,8 @@
   });
 
   /* ============================================================
-     CROSS-WORLD ROADMAP — the "Turn this into a real plan" popup
-     Compiles all four worlds (titles, every selection, readiness
+     ROADMAP — the "Turn this into a real plan" popup
+     Compiles all four toolkits (titles, every selection, readiness
      scores and the exact dynamic commentary) into a printable report
      and a Send-to-Sofina submission.
      ============================================================ */
@@ -841,9 +857,9 @@
       // overall readiness for a world = its primary (first) section score
       totalScore += sections[0].st.score || 0;
       worlds.push({
-        tag: "World 1-" + (i + 1),
+        tag: "Toolkit " + (i + 1),
         category: def.name,
-        name: def.title.split("·")[1].trim(),
+        name: def.title,
         inputs: describeInputs(def, vals),
         sections: sections
       });
@@ -863,7 +879,7 @@
   function renderReportHTML(report) {
     var html = '<div class="plan-report__head">'
       + '<p class="plan-report__overall">Overall readiness <b>' + report.overall + '%</b></p>'
-      + '<p class="plan-report__intro">A snapshot of your four-world money quest with Capy. '
+      + '<p class="plan-report__intro">A snapshot of your four-part money toolkit with Capy. '
       + 'Bring this to your session with Sofina.</p></div>';
 
     report.worlds.forEach(function (wld) {
@@ -1125,7 +1141,7 @@
   });
   if (planSendBtn) planSendBtn.addEventListener("click", sendToSofina);
 
-  engine.start(engine.order[0]);
+  goToStep(0);
   // re-measure once layout has settled, and repaint when the pixel font lands
   requestAnimationFrame(function () { engine._resize(); });
   if (document.fonts && document.fonts.ready) {

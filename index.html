@@ -527,10 +527,25 @@
             </div>
 
             <div class="journey__panel">
-              <p class="journey__panel-eyebrow" id="journeyLevelTag">World 1-1</p>
-              <h3 class="journey__panel-title" id="journeyTitle">The Coin Pipes</h3>
+              <p class="journey__panel-eyebrow" id="journeyLevelTag">Step 1 of 4</p>
+              <h3 class="journey__panel-title" id="journeyTitle">Cashflow &amp; Budgeting</h3>
               <div class="journey__controls" id="journeyControls"></div>
-              <button type="button" class="journey__cta" id="journeyPlanBtn">Turn this into a real plan</button>
+
+              <!-- Final step: shown after the user has navigated through every toolkit -->
+              <div class="journey__final" id="journeyFinal" hidden>
+                <p class="journey__final-lead">You've worked through all four toolkits. Here's your overall financial readiness — turn it into a personalised plan with Sofina.</p>
+                <div class="journey__final-power">
+                  <span class="journey__final-power-label">Overall Power</span>
+                  <span class="journey__final-power-pct" id="journeyFinalPct">0%</span>
+                  <span class="journey__final-power-track"><span class="journey__final-power-fill" id="journeyFinalFill"></span></span>
+                </div>
+              </div>
+
+              <div class="journey__nav">
+                <button type="button" class="journey__nav-back" id="journeyBackBtn" hidden>‹ Back</button>
+                <button type="button" class="journey__cta" id="journeyNextBtn">Next ›</button>
+                <button type="button" class="journey__cta journey__cta--plan" id="journeyPlanBtn" hidden>Turn this into a real plan</button>
+              </div>
             </div>
           </div>
 
